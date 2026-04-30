@@ -1,0 +1,160 @@
+<%- include('../layout/header') %>
+<body class="text-gray-800">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex flex-col lg:flex-row gap-8">
+            <aside class="w-full lg:w-72">
+                <%- include('../layout/account-sidebar') %>
+            </aside>
+
+            <div class="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100">
+                <div class="p-8 border-b border-gray-100 flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-gray-900">Edit Profile</h2>
+                    <a href="/profile" class="text-gray-400 hover:text-[#B88E2F] text-sm font-medium">Cancel</a>
+                </div>
+
+                <form id="profileForm" action="/update-profile" method="POST" enctype="multipart/form-data" class="p-8">
+                    
+                    <div class="flex flex-col items-center mb-10">
+                        <div id="image-display" class="w-32 h-32 rounded-full flex items-center justify-center text-4xl font-bold text-white bg-[#B88E2F] border-4 border-gray-50 overflow-hidden shadow-md mb-4">
+                            <% if (user && user.image) { %>
+                                <img id="preview" src="/upload/<%= user.image %>" class="w-full h-full object-cover">
+                            <% } else { %>
+                                <span id="letter"><%= user.name ? user.name.charAt(0).toUpperCase() : 'U' %></span>
+                            <% } %>
+                        </div>
+                        
+                        <input type="file" name="image" id="fileInput" class="hidden" accept="image/*" onchange="previewImage(event)">
+                        
+                        <button type="button" onclick="document.getElementById('fileInput').click()" class="text-[#B88E2F] text-sm font-semibold hover:underline">
+                            <i class="fas fa-camera mr-1"></i> Change Photo
+                        </button>
+                    </div>
+
+                    <div class="space-y-6 max-w-2xl mx-auto">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                            <input type="text" name="name" value="<%= user.name %>" required class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#B88E2F] outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                            <input type="email" name="email" id="emailInput" value="<%= user.email %>" required class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#B88E2F] outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                            <input type="text" name="phone" id="phone" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')" value="<%= user.phone || '' %>" class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#B88E2F] outline-none">
+                        </div>
+                    </div>
+
+                    <div class="mt-10 flex justify-center">
+                        <button type="button" onclick="handleProfileUpdate()" class="bg-[#B88E2F] hover:bg-[#A07B28] text-white px-12 py-3 rounded-lg font-medium shadow-md transition-all">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+    // Image Preview Logic
+    function previewImage(event) {
+        const reader = new FileReader();
+        const file = event.target.files[0];
+        if (file) {
+            reader.onload = function() {
+                const output = document.getElementById('image-display');
+                output.innerHTML = `<img src="${reader.result}" class="w-full h-full object-cover">`;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // Main Function called by Button
+    async function handleProfileUpdate() {
+        const currentEmail = "<%= user.email %>";
+        const newEmail = document.getElementById('emailInput').value;
+
+        if (newEmail !== currentEmail) {
+            try {
+                const response = await fetch('/send-email-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ newEmail })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    const { value: otp } = await Swal.fire({
+                        title: 'Verify New Email',
+                        text: 'Please enter the OTP sent to ' + newEmail,
+                        input: 'text',
+                        inputPlaceholder: 'Enter 6-digit OTP',
+                        showCancelButton: true,
+                        confirmButtonColor: '#B88E2F',
+                        confirmButtonText: 'Verify & Save'
+                    });
+
+                    if (otp) {
+                        verifyOtpAndSubmit(otp);
+                    }
+                } else {
+                    Swal.fire('Error', data.message || 'Could not send OTP', 'error');
+                }
+            } catch (error) {
+                Swal.fire('Error', 'An error occurred. Please try again.', 'error');
+            }
+        } else {
+            submitProfileData(); 
+        }
+    }
+
+    // Function to verify OTP and then submit
+    async function verifyOtpAndSubmit(otp) {
+        try {
+            const response = await fetch('/verify-email-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ otp: otp })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                submitProfileData(); 
+            } else {
+                Swal.fire('Invalid OTP', data.message, 'error');
+            }
+        } catch (error) {
+            Swal.fire('Error', 'Verification failed', 'error');
+        }
+    }
+
+    // Final Submission Function (AJAX)
+    async function submitProfileData() {
+        const form = document.getElementById('profileForm');
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch('/update-profile', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                Swal.fire('Success', 'Profile updated!', 'success').then(() => {
+                    window.location.href = '/profile';
+                });
+            } else {
+                Swal.fire('Update Failed', result.message, 'error');
+            }
+        } catch (error) {
+            Swal.fire('Error', 'An error occurred while updating.', 'error');
+        }
+    }
+</script>
+</body>

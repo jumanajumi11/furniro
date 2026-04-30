@@ -1,0 +1,73 @@
+
+<%- include('../layout/header') %>
+
+<main class="bg-white">
+    <section class="relative h-[500px] md:h-[700px] flex items-center bg-[#F9F1E7]">
+        <div class="absolute inset-0 z-0">
+            <img src="/images/banner.png" 
+                 onerror="this.src='https://res.cloudinary.com/dp9odkfmd/image/upload/v1776920338/image_113_wlmvvt.png'" 
+                 class="w-full h-full object-cover opacity-100" 
+                 alt="New Collection Banner">
+        </div>
+
+        <div class="container mx-auto px-6 md:px-12 relative z-10 flex justify-end">
+            <div class="bg-[#FFF3E3] p-8 md:p-12 max-w-lg rounded-md shadow-sm">
+                <h6 class="tracking-[3px] font-semibold text-gray-800 mb-4 uppercase text-sm">New Arrival</h6>
+                <h1 class="text-4xl md:text-5xl font-bold text-[#B88E2F] leading-tight mb-6">Discover Our <br> New Collection</h1>
+                <p class="text-gray-600 mb-8 leading-relaxed">Experience the finest craftsmanship with our latest furniture designs, tailored for your modern lifestyle.</p>
+                <button class="bg-[#B88E2F] text-white px-12 py-5 font-bold uppercase text-sm hover:bg-[#967524] transition-all duration-300">Buy Now</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-20 px-6 text-center container mx-auto">
+        <h2 class="text-3xl font-bold text-[#333333]">Shop by sofa type</h2>
+        <p class="text-gray-500 mt-2 mb-12">Handpicked collections for your home.</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <% const sofacategories = [
+                { name: 'L-Shaped Sofa', img: 'https://res.cloudinary.com/dp9odkfmd/image/upload/v1776920338/image_113_wlmvvt.png' },
+                { name: '3-Seater Sofa', img: 'https://res.cloudinary.com/dp9odkfmd/image/upload/v1776921475/image_114_kmk1ux.png' },
+                { name: 'Recliner Sofa', img: 'https://res.cloudinary.com/dp9odkfmd/image/upload/v1776921535/image_115_uu5fck.png' }
+            ] %>
+            
+            <% category.forEach(cat => { %>
+                <div class="group cursor-pointer">
+                    <div class="overflow-hidden rounded-xl">
+                        <img src="<%= cat.img %>" alt="<%= cat.name %>" class="w-full h-[400px] object-cover transition-transform duration-500 group-hover:scale-110">
+                    </div>
+                    <h3 class="mt-6 font-bold text-xl text-[#333333]"><%= cat.name %></h3>
+                </div>
+            <% }) %>
+        </div>
+    </section>
+
+    <section class="py-16 px-6 container mx-auto">
+        <h2 class="text-3xl font-bold text-center text-[#3A3A3A] mb-12">Our Products</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <% products.forEach(product => { %>
+                <div class="bg-[#F4F5F7] group relative overflow-hidden transition-all duration-300">
+                    <img src="<%= product.image %>" class="w-full h-72 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-2xl font-semibold text-[#3A3A3A]"><%= product.name %></h3>
+                        <p class="text-gray-500 text-sm py-2 font-medium"><%= product.category %></p>
+                        <p class="font-bold text-xl text-[#3A3A3A]">Rp <%= product.price %></p>
+                    </div>
+                    
+                    <div class="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 gap-4">
+                        <button class="bg-white text-[#B88E2F] px-10 py-3 font-bold shadow-md hover:bg-[#B88E2F] hover:text-white transition-colors">Add to cart</button>
+                        <div class="flex text-white gap-6 font-semibold text-sm">
+                            <span class="flex items-center gap-1 cursor-pointer"><i class="fas fa-share"></i> Share</span>
+                            <span class="flex items-center gap-1 cursor-pointer"><i class="fas fa-heart"></i> Like</span>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+        <div class="text-center mt-12">
+            <button class="border border-[#B88E2F] text-[#B88E2F] px-16 py-3 font-bold hover:bg-[#B88E2F] hover:text-white transition-all">Show More</button>
+        </div>
+    </section>
+</main>
+
+<%- include('../layout/footer') %>

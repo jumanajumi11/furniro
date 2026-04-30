@@ -1,0 +1,150 @@
+<%- include('../layout/account-sidebar') %>
+<%- include('../layout/header') %>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <div class="text-sm text-gray-500 mb-8 flex items-center gap-2">
+            <a href="/" class="hover:text-[#B88E2F]">Home</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <span class="text-gray-800">My Account</span>
+        </div>
+
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">My Account</h1>
+            <p class="text-gray-500">Manage your profile, settings, and preferences.</p>
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-8">
+            
+            <aside class="w-full lg:w-72 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden py-4 h-fit">
+                <nav class="flex flex-col text-sm font-medium">
+                    <a href="/profile" class="flex items-center gap-4 px-6 py-3.5 bg-[#FCF9F4] text-[#B88E2F] border-l-4 border-[#B88E2F]">
+                        <i class="far fa-user text-lg w-5 text-center"></i>
+                        Profile Information
+                    </a>
+                    <a href="/addresses" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                        <i class="fas fa-map-marker-alt text-lg w-5 text-center"></i>
+                        My Addresses
+                    </a>
+                    <a href="/orders" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                        <i class="fas fa-box text-lg w-5 text-center"></i>
+                        My Orders
+                    </a>
+                    <a href="/wishlist" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                        <i class="far fa-heart text-lg w-5 text-center"></i>
+                        My Wishlist
+                    </a>
+                    <a href="/wallet" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                        <i class="fas fa-wallet text-lg w-5 text-center"></i>
+                        My Wallet
+                    </a>
+                    <a href="/coupons" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                        <i class="fas fa-ticket-alt text-lg w-5 text-center"></i>
+                        Coupons
+                    </a>
+                    <a href="/notifications" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                        <i class="far fa-bell text-lg w-5 text-center"></i>
+                        Notifications
+                    </a>
+                    <a href="/security" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                        <i class="fas fa-shield-alt text-lg w-5 text-center"></i>
+                        Security Settings
+                    </a>
+                </nav>
+            </aside>
+
+           
+        
+
+   <div class="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100">
+    <div class="p-8 border-b border-gray-100">
+        <h2 class="text-xl font-bold text-gray-900 mb-1">Profile Details</h2>
+        <p class="text-gray-500 text-sm">View and manage your personal information.</p>
+    </div>
+
+   
+<div class="flex flex-col items-center mb-8">
+    <div class="relative group">
+        <div class="w-32 h-32 rounded-full overflow-hidden bg-[#B88E2F] flex items-center justify-center text-white text-4xl font-bold border-4 border-white shadow-md">
+            <% if (user && user.image && user.image !== "") { %>
+                <img src="/upload/<%= user.image %>" class="w-full h-full object-cover">
+            <% } else { %>
+                <span><%= user.email ? user.email[0].toUpperCase() : 'U' %></span>
+            <% } %>
+        </div>
+
+        <% if (user && user.image && user.image !== "") { %>
+            <form action="/remove-profile-image" method="POST" class="text-center mt-2">
+                <button type="submit" class="text-red-500 text-xs font-medium hover:underline">
+                    Remove Photo
+                </button>
+            </form>
+        <% } %>
+    </div>
+</div>
+
+<div class="bg-white p-6 rounded-lg border border-gray-100">
+    <!-- <h3 class="text-lg font-bold mb-4">Profile Details</h3> -->
+    
+    <div class="space-y-4">
+        <div class="flex border-b pb-2">
+            <span class="w-32 font-medium text-gray-500">Full Name:</span>
+            <span class="text-gray-900"><%= user.name %></span>
+        </div>
+        <div class="flex border-b pb-2">
+            <span class="w-32 font-medium text-gray-500">Email:</span>
+            <span class="text-gray-900"><%= user.email %></span>
+        </div>
+        <div class="flex border-b pb-2">
+            <span class="w-32 font-medium text-gray-500">Phone:</span>
+            <span class="text-gray-900"><%= user.phone || 'Not provided' %></span>
+        </div>
+    </div>
+
+    <div class="mt-8">
+        <a href="/edit-profile" class="inline-block px-8 py-2 bg-[#B88E2F] text-white rounded font-semibold hover:bg-[#a17a26] transition-all">
+            Edit Profile
+        </a>
+    </div>
+</div>
+
+
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function previewImage(event) {
+        const reader = new FileReader();
+        const file = event.target.files[0];
+        
+        if (file) {
+            reader.onload = function() {
+                const previewImg = document.getElementById('profile-img-preview');
+                const initialSpan = document.getElementById('profile-initial');
+                const removeForm = document.getElementById('remove-image-form');
+
+                if (previewImg) {
+                    previewImg.src = reader.result;
+                } else {
+                    
+                    const newImg = document.createElement('img');
+                    newImg.id = 'profile-img-preview';
+                    newImg.src = reader.result;
+                    newImg.className = 'w-full h-full object-cover';
+                    const container = initialSpan.parentNode;
+                    container.removeChild(initialSpan);
+                    container.appendChild(newImg);
+                }
+
+             
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+    
+</script>
+    </main>
+
+<%- include('../layout/footer') %>

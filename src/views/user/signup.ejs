@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .input-error { border: 2px solid #ef4444 !important; }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-md border border-gray-100">
+        
+        <div class="text-center mb-6">
+            <div class="flex justify-center mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-black" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-900">Create Account</h1>
+            <p class="text-gray-500 text-sm mt-1">Join thousands of users shopping with us today</p>
+        </div>
+
+        <% if (error) { %>
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded-lg mb-4 text-sm text-center">
+                <%= error %>
+            </div>
+        <% } %>
+
+        <form id="signupForm" action="/signup" method="POST" class="space-y-4">
+            
+            <div>
+                <label for="name" class="block text-sm font-semibold text-gray-700 mb-1 ml-1">Full Name</label>
+                <input type="text" id="name" name="name" placeholder="jiya merlin" 
+                    class="w-full px-4 py-3 bg-gray-200 border-2 border-transparent rounded-full text-gray-700 focus:bg-white focus:ring-2 focus:ring-yellow-600 outline-none transition-all">
+                <p id="nameError" class="text-red-500 text-[11px] mt-1 ml-4 hidden">Please enter your name.</p>
+            </div>
+
+            <div>
+                <label for="email" class="block text-sm font-semibold text-gray-700 mb-1 ml-1">Email Address</label>
+                <input type="text" id="email" name="email" placeholder="name@example.com" 
+                    class="w-full px-4 py-3 bg-gray-200 border-2 border-transparent rounded-full text-gray-700 focus:bg-white focus:ring-2 focus:ring-yellow-600 outline-none transition-all">
+                <p id="emailError" class="text-red-500 text-[11px] mt-1 ml-4 hidden">Please enter a valid email.</p>
+            </div>
+
+            <div class="relative">
+                <label for="password" class="block text-sm font-semibold text-gray-700 mb-1 ml-1">Password</label>
+                <div class="relative">
+                    <input type="password" id="password" name="password" placeholder="........" 
+                        class="w-full px-4 py-3 bg-gray-200 border-2 border-transparent rounded-full text-gray-700 focus:bg-white focus:ring-2 focus:ring-yellow-600 outline-none transition-all">
+                    <button type="button" onclick="togglePassword('password', 'eyeIcon1')" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                        <svg id="eyeIcon1" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                    </button>
+                </div>
+                <p id="passwordError" class="text-red-500 text-[11px] mt-1 ml-4 hidden"></p>
+            </div>
+
+            <div class="relative">
+                <label for="confirmPassword" class="block text-sm font-semibold text-gray-700 mb-1 ml-1">Confirm Password</label>
+                <div class="relative">
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="........" 
+                        class="w-full px-4 py-3 bg-gray-200 border-2 border-transparent rounded-full text-gray-700 focus:bg-white focus:ring-2 focus:ring-yellow-600 outline-none transition-all">
+                    <button type="button" onclick="togglePassword('confirmPassword', 'eyeIcon2')" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                        <svg id="eyeIcon2" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                    </button>
+                </div>
+                <p id="confirmError" class="text-red-500 text-[11px] mt-1 ml-4 hidden">Passwords do not match.</p>
+            </div>
+
+            <button type="submit" 
+                class="w-full py-3 mt-4 bg-[#c0943c] hover:bg-[#a67d2e] text-white font-bold rounded-full shadow-lg transform active:scale-95 transition-all">
+                Create Account
+            </button>
+        </form>
+
+        <div class="relative flex py-5 items-center">
+            <div class="flex-grow border-t border-gray-300"></div>
+            <span class="flex-shrink mx-4 text-gray-400 text-[10px] uppercase font-bold">Or continue with</span>
+            <div class="flex-grow border-t border-gray-300"></div>
+        </div>
+
+        <a href="/auth/google" class="flex items-center justify-center w-full py-3 bg-white border border-gray-300 rounded-full shadow-sm hover:bg-gray-50 transition-all active:scale-95">
+            <img src="https://www.svgrepo.com/show/355037/google.svg" class="w-5 h-5 mr-3" alt="Google">
+            <span class="text-sm font-semibold text-gray-700">Sign up with Google</span>
+        </a>
+
+        <div class="text-center mt-6 text-sm">
+            <span class="text-gray-500">Already have an account? </span>
+            <a href="/login" class="font-bold text-gray-900 hover:underline">Login</a>
+        </div>
+    </div>
+
+    <script>
+        // Password Visibility Toggle
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                // Show Eye Closed (Hide) Icon
+                icon.innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                `;
+            } else {
+                input.type = 'password';
+                // Show Eye Open (Show) Icon
+                icon.innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                `;
+            }
+        }
+
+        // Frontend Validation
+        const form = document.getElementById('signupForm');
+        
+        form.addEventListener('submit', function(e) {
+            let isValid = true;
+            
+            const name = document.getElementById('name');
+            const email = document.getElementById('email');
+            const password = document.getElementById('password');
+            const confirmPassword = document.getElementById('confirmPassword');
+
+            // Clear previous errors
+            document.querySelectorAll('p[id$="Error"]').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('input').forEach(i => i.classList.remove('input-error'));
+
+            // Name validation
+            if (name.value.trim() === "") {
+                showError('name', 'nameError');
+                isValid = false;
+            }
+
+            // Email validation
+            const emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailReg.test(email.value)) {
+                showError('email', 'emailError');
+                isValid = false;
+            }
+
+            // Password validation (min 8 chars, letter + number)
+            const passVal = password.value;
+            const hasLetter = /[a-zA-Z]/.test(passVal);
+            const hasNumber = /[0-9]/.test(passVal);
+
+            if (passVal.length < 8 || !hasLetter || !hasNumber) {
+                showError('password', 'passwordError', "Min 8 characters with letters & numbers.");
+                isValid = false;
+            }
+
+            // Confirm Password validation
+            if (confirmPassword.value !== passVal || confirmPassword.value === "") {
+                showError('confirmPassword', 'confirmError');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+            }
+        });
+
+        function showError(inputId, errorId, message = null) {
+            const input = document.getElementById(inputId);
+            const errorP = document.getElementById(errorId);
+            input.classList.add('input-error');
+            errorP.classList.remove('hidden');
+            if (message) errorP.innerText = message;
+        }
+    </script>
+</body>
+</html>

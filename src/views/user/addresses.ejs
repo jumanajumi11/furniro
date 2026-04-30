@@ -1,0 +1,354 @@
+
+<%- include('../layout/header') %>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="text-sm text-gray-500 mb-8 flex items-center gap-2">
+        <a href="/" class="hover:text-[#B88E2F]">Home</a>
+        <i class="fas fa-chevron-right text-xs"></i>
+        <span class="text-gray-800">My Account</span>
+    </div>
+
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">My Addresses</h1>
+        <p class="text-gray-500">Add, edit, or manage your saved delivery addresses.</p>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-8">
+        <aside class="w-full lg:w-72 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden py-6 px-4 h-fit">
+            <nav class="flex flex-col text-sm font-medium">
+    <a href="/profile" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+        <i class="far fa-user text-lg w-5 text-center"></i>
+        Profile Information
+    </a>
+    <a href="/addresses" class="flex items-center gap-4 px-6 py-3.5 bg-[#FCF9F4] text-[#B88E2F] border-l-4 border-[#B88E2F]">
+        <i class="fas fa-map-marker-alt text-lg w-5 text-center"></i>
+        My Addresses
+    </a>
+    <a href="/orders" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+        <i class="fas fa-box text-lg w-5 text-center"></i>
+        My Orders
+    </a>
+    <a href="/wishlist" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+        <i class="far fa-heart text-lg w-5 text-center"></i>
+        My Wishlist
+    </a>
+    <a href="/wallet" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+        <i class="fas fa-wallet text-lg w-5 text-center"></i>
+        My Wallet
+    </a>
+    <a href="/coupons" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+        <i class="fas fa-ticket-alt text-lg w-5 text-center"></i>
+        Coupons
+    </a>
+    <a href="/notifications" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+        <i class="far fa-bell text-lg w-5 text-center"></i>
+        Notifications
+    </a>
+    <a href="/security" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+        <i class="fas fa-shield-alt text-lg w-5 text-center"></i>
+        Security Settings
+    </a>
+</nav>
+        </aside>
+
+        <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <% if (locals.user && user.addresses && user.addresses.length > 0) { %>
+                <% user.addresses.forEach(address => { %>
+                    <div class="bg-[#FDFDFD] rounded-2xl p-6 border border-gray-200 flex flex-col justify-between h-full shadow-sm">
+                        <div>
+                            <div class="flex items-center justify-between mb-6">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full <%= address.isDefault ? 'bg-[#FDF4F1] text-[#D16A4D]' : 'bg-[#F1F1F1] text-gray-500' %> flex items-center justify-center">
+                                        <i class="fas <%= address.isDefault ? 'fa-home' : 'fa-building' %>"></i>
+                                    </div>
+                                    <span class="font-bold text-gray-700"><%= address.isDefault ? 'Home' : 'Office' %></span>
+                                </div>
+                                <% if (address.isDefault) { %>
+                                    <span class="px-3 py-1 bg-white text-[#D16A4D] border border-red-200 text-xs font-semibold rounded-md">Default</span>
+                                <% } %>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-800 mb-3"><%= address.name %></h3>
+                            <div class="text-gray-500 text-sm space-y-2 mb-6">
+                                <p><%= address.house %></p>
+                                <p><%= address.locality %>, <%= address.area %></p>
+                                <p><%= address.city %>, <%= address.state %> <%= address.pincode %></p>
+                            </div>
+                            <div class="flex items-center gap-2 text-gray-500 text-sm mb-6 mt-6">
+                                <i class="fas fa-phone-alt"></i>
+                                <span>+91 <%= address.phone %></span>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 mt-auto">
+                            <button class="flex-1 py-2.5 bg-[#EAEAEA] rounded-lg text-gray-700 text-sm font-bold hover:bg-gray-200 transition-colors edit-address-btn"
+                                data-address-id="<%= address._id %>"
+                                data-name="<%= address.name %>"
+                                data-phone="<%= address.phone %>"
+                                data-pincode="<%= address.pincode %>"
+                                data-state="<%= address.state %>"
+                                data-city="<%= address.city %>"
+                                data-locality="<%= address.locality %>"
+                                data-house="<%= address.house %>"
+                                data-area="<%= address.area %>"
+                                data-is-default="<%= address.isDefault %>">
+                                <i class="far fa-edit"></i> Edit
+                            </button>
+                            <form action="/delete-address/<%= address._id %>" method="POST" class="flex-1" onsubmit="return confirm('Are you sure?');">
+                                <button type="submit" class="w-full py-2.5 bg-[#EAEAEA] rounded-lg text-gray-700 text-sm font-bold hover:bg-gray-200 transition-colors">
+                                    <i class="far fa-trash-alt"></i> Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                <% }) %>
+            <% } else { %>
+                <div class="col-span-full text-center py-8 text-gray-500">You haven't added any addresses yet.</div>
+            <% } %>
+
+            <div id="add-address-btn" class="bg-white rounded-2xl p-6 border border-gray-200 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#D16A4D] transition-colors min-h-[320px] shadow-sm">
+                <div class="w-16 h-16 rounded-full bg-[#F2EAE5] flex items-center justify-center mb-6">
+                    <div class="w-8 h-8 rounded-full bg-[#D16A4D] flex items-center justify-center text-white">
+                        <i class="fas fa-plus text-sm"></i>
+                    </div>
+                </div>
+                <h3 class="text-lg font-bold text-[#D16A4D]">Add New Address</h3>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div id="address-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="fixed inset-0 bg-black/50 transition-opacity modal-overlay"></div>
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 sm:p-0">
+        <div class="relative bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:max-w-3xl w-full">
+            <form id="address-form" action="/add-address" method="POST">
+                <div class="bg-white px-8 py-5 border-b border-gray-100 flex items-center justify-between">
+                    <h3 class="text-xl font-bold text-gray-900" id="modal-title">Add New Address</h3>
+                    <button type="button" class="text-gray-400 hover:text-gray-600 close-modal-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="px-8 py-6 max-h-[70vh] overflow-y-auto">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
+                        
+                        <div class="sm:col-span-2 space-y-2">
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">Full Name</label>
+                            <input type="text" name="name" class="block w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none transition-all focus:ring-4 focus:ring-[#B88E2F]/10 focus:border-[#B88E2F]" required>
+                        </div>
+
+                        <div class="sm:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            
+                            <div class="sm:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="space-y-2">
+        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">Phone Number</label>
+        <input type="text" name="phone" id="phone" maxlength="10" 
+               placeholder="10 digit mobile"
+               class="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none transition-all focus:ring-4 focus:ring-[#B88E2F]/10 focus:border-[#B88E2F]" required>
+        <p id="phone-warning" class="text-[10px] text-red-500 font-bold uppercase hidden">Numbers only please!</p>
+    </div>
+
+    <div class="space-y-2">
+        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">Pincode</label>
+        <input type="text" name="pincode" id="pincode" maxlength="6" 
+               placeholder="6 digit pincode"
+               class="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none transition-all focus:ring-4 focus:ring-[#B88E2F]/10 focus:border-[#B88E2F]" required>
+        <p id="pincode-warning" class="text-[10px] text-red-500 font-bold uppercase hidden">Numbers only please!</p>
+    </div>
+</div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">State</label>
+                            <select id="state-select" name="state" class="block w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none focus:border-[#B88E2F]" required>
+                                <option value="" disabled selected>Select State</option>
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">City</label>
+                            <select id="city-select" name="city" class="block w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none focus:border-[#B88E2F]" disabled required>
+                                <option value="" disabled selected>Select City</option>
+                            </select>
+                        </div>
+
+                        <div class="sm:col-span-1 space-y-2">
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">Locality</label>
+                            <input type="text" name="locality" class="block w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none focus:border-[#B88E2F]" required>
+                        </div>
+                        <div class="sm:col-span-1 space-y-2">
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">House / Building</label>
+                            <input type="text" name="house" class="block w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none focus:border-[#B88E2F]" required>
+                        </div>
+
+                        <div class="sm:col-span-2 space-y-2">
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">Area / Street</label>
+                            <input type="text" name="area" class="block w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none focus:border-[#B88E2F]" required>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex items-center">
+                        <input id="default-address" name="isDefault" type="checkbox" class="h-4 w-4 text-[#D16A4D] rounded cursor-pointer">
+                        <label for="default-address" class="ml-2 block text-sm font-semibold text-gray-700 cursor-pointer">Set as default address</label>
+                    </div>
+                </div>
+
+                <div class="bg-white px-8 py-5 border-t border-gray-100 flex items-center gap-4 rounded-b-2xl">
+                    <button type="button" class="flex-1 px-6 py-3.5 border border-gray-200 rounded-xl text-gray-700 close-modal-btn">Cancel</button>
+                    <button type="submit" class="flex-1 px-8 py-3.5 rounded-xl text-white bg-[#B88E2F] hover:bg-[#A27B28] font-bold transition-all">Save Address</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Elements
+    const modal = document.getElementById('address-modal');
+    const form = document.getElementById('address-form');
+    const modalTitle = document.getElementById('modal-title');
+    const stateSelect = document.getElementById('state-select');
+    const citySelect = document.getElementById('city-select');
+    const addBtn = document.getElementById('add-address-btn');
+    const closeBtns = document.querySelectorAll('.close-modal-btn');
+    const overlay = document.querySelector('.modal-overlay');
+    const editBtns = document.querySelectorAll('.edit-address-btn');
+    const phoneInput = document.getElementById('phone');
+    const pincodeInput = document.getElementById('pincode');
+
+    let cityData = {};
+
+    // 1. Reset Form
+    function resetForm() {
+        form.reset();
+        form.action = "/add-address";
+        modalTitle.textContent = "Add New Address";
+        citySelect.innerHTML = '<option value="" disabled selected>Select City</option>';
+        citySelect.disabled = true;
+        document.getElementById('phone-warning').classList.add('hidden');
+        document.getElementById('pincode-warning').classList.add('hidden');
+    }
+
+    // 2. Real-time Number Validation
+    function checkNumeric(input, warningId) {
+        const warning = document.getElementById(warningId);
+        if (!input || !warning) return;
+
+        input.addEventListener('input', function() {
+            
+            if (/[^0-9]/.test(this.value)) {
+                warning.classList.remove('hidden');
+            } else {
+                warning.classList.add('hidden');
+            }
+        });
+    }
+
+    checkNumeric(phoneInput, 'phone-warning');
+    checkNumeric(pincodeInput, 'pincode-warning');
+
+    // 3. Populate Cities
+    function populateCities(selectedState, targetCity = null) {
+        const cities = cityData[selectedState] || [];
+        citySelect.innerHTML = '<option value="" disabled selected>Select City</option>';
+        if (cities.length > 0) {
+            citySelect.disabled = false;
+            cities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                if (targetCity === city) option.selected = true;
+                citySelect.appendChild(option);
+            });
+        }
+    }
+
+    // 4. Fetch State/City Data
+    fetch('https://raw.githubusercontent.com/sab99r/Indian-States-And-Districts/master/states-and-districts.json')
+        .then(res => res.json())
+        .then(data => {
+            stateSelect.innerHTML = '<option value="" disabled selected>Select State</option>';
+            data.states.forEach(stateObj => {
+                cityData[stateObj.state] = stateObj.districts;
+                const option = document.createElement('option');
+                option.value = stateObj.state;
+                option.textContent = stateObj.state;
+                stateSelect.appendChild(option);
+            });
+            if (stateSelect.dataset.targetState) {
+                stateSelect.value = stateSelect.dataset.targetState;
+                populateCities(stateSelect.dataset.targetState, citySelect.dataset.targetCity);
+            }
+        })
+        .catch(err => console.error("Error fetching states:", err));
+
+    stateSelect.addEventListener('change', function() {
+        populateCities(this.value);
+    });
+
+    // 5. Modal Open/Close
+    if (addBtn) {
+        addBtn.addEventListener('click', () => {
+            resetForm();
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        });
+    }
+
+    const closeModal = () => {
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    };
+
+    closeBtns.forEach(btn => btn.addEventListener('click', closeModal));
+    if (overlay) overlay.addEventListener('click', closeModal);
+
+    // 6. Edit Logic
+    editBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const d = this.dataset;
+            resetForm();
+            form.action = "/edit-address/" + d.addressId;
+            modalTitle.textContent = "Edit Address";
+            
+            form.querySelector('input[name="name"]').value = d.name;
+            form.querySelector('input[name="phone"]').value = d.phone;
+            form.querySelector('input[name="pincode"]').value = d.pincode;
+            form.querySelector('input[name="locality"]').value = d.locality;
+            form.querySelector('input[name="house"]').value = d.house;
+            form.querySelector('input[name="area"]').value = d.area;
+            form.querySelector('input[name="isDefault"]').checked = (d.isDefault === 'true');
+
+            if (stateSelect.querySelector(`option[value="${d.state}"]`)) {
+                stateSelect.value = d.state;
+                populateCities(d.state, d.city);
+            } else {
+                stateSelect.dataset.targetState = d.state;
+                citySelect.dataset.targetCity = d.city;
+            }
+
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        });
+    });
+
+    // 7. Form Submit Validation (Fixed Regex)
+    form.addEventListener('submit', (e) => {
+        
+        const phoneVal = phoneInput.value;
+        const pinVal = pincodeInput.value;
+
+        if (/[^0-9]/.test(phoneVal) || /[^0-9]/.test(pinVal)) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid Input',
+                text: 'Please enter numbers only in Phone and Pincode fields!',
+                confirmButtonColor: '#B88E2F'
+            });
+        }
+    });
+});
+</script>
+<%- include('../layout/footer') %>
+

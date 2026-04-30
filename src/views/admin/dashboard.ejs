@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Furniro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F9FAFB;
+        }
+        .sidebar-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+            background: #E5E7EB;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-gray-800 bg-[#F9FAFB]">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-gray-100 flex-col hidden lg:flex z-20 h-full shadow-sm">
+        <!-- Logo -->
+        <div class="h-20 flex items-center px-8 shrink-0">
+            <div class="flex items-center gap-2">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 22L2 12L12 2L22 12L12 22Z" stroke="#B88E2F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 12H22" stroke="#B88E2F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 2V22" stroke="#B88E2F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="text-2xl font-bold text-gray-900 tracking-tight">Furniro</span>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="flex-1 overflow-y-auto sidebar-scroll py-2 px-4 flex flex-col gap-6">
+            
+            <!-- Overview -->
+            <div>
+                <p class="px-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Overview</p>
+                <nav class="space-y-1">
+                    <a href="/admin/dashboard" class="flex items-center gap-3 px-4 py-2.5 bg-gray-100/80 rounded-lg text-gray-900 font-semibold transition-colors">
+                        <svg class="w-5 h-5 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                        Dashboard
+                    </a>
+                    <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        Analytics
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Management -->
+            <div>
+                <p class="px-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Management</p>
+                <nav class="space-y-1">
+                    <a href="/admin/products" class="flex items-center gap-3 px-4 py-2.5 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                        Products
+                    </a>
+                    <a href="/admin/categories" class="flex items-center gap-3 px-4 py-2.5 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                        Categories
+                    </a>
+                    <a href="/admin/orders" class="flex items-center justify-between px-4 py-2.5 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                            Orders
+                        </div>
+                        <span class="bg-green-50 text-green-600 py-0.5 px-2 rounded-full text-xs font-semibold">12</span>
+                    </a>
+                    
+                    <a href="/admin/customers" class="flex items-center gap-3 px-4 py-2.5 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                        Customers
+                    </a>
+                    <a href="/admin/coupons" class="flex items-center gap-3 px-4 py-2.5 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg>
+                        Coupons
+                    </a>
+                    <a href="/admin/banners" class="flex items-center gap-3 px-4 py-2.5 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        Banners
+                    </a>
+                    <a href="/admin/discount" class="flex items-center gap-3 px-4 py-2.5 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Discount
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Settings -->
+            <div>
+                <p class="px-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Settings</p>
+                <nav class="space-y-1">
+                    <a href="/admin/settings" class="flex items-center gap-3 px-4 py-2.5 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        General
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Footer Profile -->
+        <div class="p-4 shrink-0 mt-auto">
+            <a href="/admin/logout" class="flex items-center gap-3 px-4 py-2.5 text-red-500 hover:bg-red-50 rounded-lg font-medium transition-colors mb-6">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                Log Out
+            </a>
+            <div class="flex items-center gap-3 px-2">
+                <div class="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0 border border-gray-200">
+                    <img src="https://ui-avatars.com/api/?name=Admin+User&background=f3f4f6&color=374151" alt="Profile" class="w-full h-full object-cover">
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-[10px] bg-orange-100/80 text-orange-600 px-2 py-0.5 rounded-full font-semibold w-max mb-1 border border-orange-200">Admin View</span>
+                    <span class="text-sm font-semibold text-gray-900 leading-tight">Admin User</span>
+                    <span class="text-xs text-gray-500 truncate w-32">admin@furniro.com</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        
+        <!-- Mobile Header -->
+        <header class="lg:hidden flex items-center justify-between bg-white border-b border-gray-200 p-4 shrink-0 z-20">
+            <div class="flex items-center gap-2">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 22L2 12L12 2L22 12L12 22Z" stroke="#B88E2F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 12H22" stroke="#B88E2F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 2V22" stroke="#B88E2F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="text-xl font-bold text-gray-900">Furniro</span>
+            </div>
+            <button class="text-gray-500 hover:text-gray-900 focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+        </header>
+
+        <!-- Content Area -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-8">
+            <div class="max-w-[1400px] mx-auto w-full">
+                
+                <!-- Breadcrumb & Header -->
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+                    <div>
+                        <div class="flex items-center gap-2 text-sm text-gray-500 mb-3">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+                            <span>Home</span>
+                            <span class="text-gray-400">></span>
+                            <span class="font-medium text-gray-900">Dashboard</span>
+                        </div>
+                        <h1 class="text-3xl font-bold text-gray-900 mb-2">Dashboard Overview</h1>
+                        <p class="text-gray-500 text-sm">Welcome back, here's what's happening with your furniture store today.</p>
+                    </div>
+                    
+                    <div class="flex items-center gap-3">
+                        <button class="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2.5 rounded-lg hover:bg-gray-50 transition-colors shadow-sm font-medium text-sm">
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            Oct 24, 2023
+                        </button>
+                        <button class="flex items-center gap-2 bg-[#65E4A3] text-[#0A4D2E] hover:bg-[#52D492] px-4 py-2.5 rounded-lg transition-colors shadow-sm font-semibold text-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Export Report
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stat Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <!-- Revenue Card -->
+                    <div class="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm relative overflow-hidden">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-600 mb-1">Total Revenue</p>
+                                <h3 class="text-[32px] font-bold text-gray-900 tracking-tight">$45,231</h3>
+                            </div>
+                            <div class="w-[52px] h-[52px] rounded-2xl bg-[#E8F8F0] flex items-center justify-center text-[#21A366]">
+                                <span class="font-bold text-xl">$</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center text-sm mt-6">
+                            <span class="flex items-center text-[#21A366] bg-[#E8F8F0] px-2 py-0.5 rounded-md font-bold text-xs">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                                +20%
+                            </span>
+                            <span class="text-gray-500 ml-2 font-medium">from last month</span>
+                        </div>
+                    </div>
+
+                    <!-- Orders Card -->
+                    <div class="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm relative overflow-hidden">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-600 mb-1">Total Orders</p>
+                                <h3 class="text-[32px] font-bold text-gray-900 tracking-tight">+2,350</h3>
+                            </div>
+                            <div class="w-[52px] h-[52px] rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
+                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19 6h-2c0-2.8-2.2-5-5-5S7 3.2 7 6H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-7-3c1.7 0 3 1.3 3 3H9c0-1.7 1.3-3 3-3z"></path></svg>
+                            </div>
+                        </div>
+                        <div class="flex items-center text-sm mt-6">
+                            <span class="flex items-center text-[#21A366] bg-[#E8F8F0] px-2 py-0.5 rounded-md font-bold text-xs">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                                +15%
+                            </span>
+                            <span class="text-gray-500 ml-2 font-medium">from last month</span>
+                        </div>
+                    </div>
+
+                    <!-- Customers Card -->
+                    <div class="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm relative overflow-hidden">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-600 mb-1">Active Customers</p>
+                                <h3 class="text-[32px] font-bold text-gray-900 tracking-tight">12,234</h3>
+                            </div>
+                            <div class="w-[52px] h-[52px] rounded-2xl bg-orange-50 flex items-center justify-center text-orange-500">
+                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"></path></svg>
+                            </div>
+                        </div>
+                        <div class="flex items-center text-sm mt-6">
+                            <span class="flex items-center text-[#21A366] bg-[#E8F8F0] px-2 py-0.5 rounded-md font-bold text-xs">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                                +4%
+                            </span>
+                            <span class="text-gray-500 ml-2 font-medium">from last month</span>
+                        </div>
+                    </div>
+
+                    <!-- Products Card -->
+                    <div class="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm relative overflow-hidden">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-600 mb-1">Total Products</p>
+                                <h3 class="text-[32px] font-bold text-gray-900 tracking-tight">573</h3>
+                            </div>
+                            <div class="w-[52px] h-[52px] rounded-2xl bg-purple-50 flex items-center justify-center text-purple-600">
+                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l-5.5 9h11zM21.1 12.5l-4.1 4.1 1.4 1.4 5.5-5.5zM3.9 12.5L2.5 13.9l5.5 5.5 1.4-1.4zM10.8 14.5l-1.4 1.4 2.6 2.6 2.6-2.6-1.4-1.4-1.2 1.2z"></path></svg>
+                            </div>
+                        </div>
+                        <div class="flex items-center text-sm mt-6">
+                            <span class="flex items-center text-[#21A366] bg-[#E8F8F0] px-2 py-0.5 rounded-md font-bold text-xs">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                +12
+                            </span>
+                            <span class="text-gray-500 ml-2 font-medium">new added</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Grid Layout -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    
+                    <!-- Sales Chart (Spans 2 columns) -->
+                    <div class="lg:col-span-2 bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <h2 class="text-[17px] font-bold text-gray-900">Sales Overview</h2>
+                                <p class="text-sm text-gray-500 mt-1">Monthly furniture sales performance</p>
+                            </div>
+                            <select class="bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block py-2 px-3 shadow-sm outline-none">
+                                <option>Last 3 months</option>
+                                <option>Last 6 months</option>
+                                <option>This Year</option>
+                            </select>
+                        </div>
+                        <div class="h-[280px] w-full relative">
+                            <canvas id="salesChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Order Status -->
+                    <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm flex flex-col">
+                        <h2 class="text-[17px] font-bold text-gray-900 mb-1">Order Status</h2>
+                        <p class="text-sm text-gray-500 mb-8">Current order fulfillment progress</p>
+
+                        <div class="space-y-6 flex-1">
+                            <!-- Delivered -->
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-2.5 h-2.5 rounded-full bg-[#4ADE80]"></div>
+                                        <span class="text-sm font-bold text-gray-900">Delivered</span>
+                                    </div>
+                                    <span class="text-sm font-semibold text-gray-900">85%</span>
+                                </div>
+                                <div class="w-full bg-gray-100 rounded-full h-[6px] mb-2">
+                                    <div class="bg-[#4ADE80] h-[6px] rounded-full" style="width: 85%"></div>
+                                </div>
+                                <div class="text-right text-xs text-gray-500 font-medium">342 Orders</div>
+                            </div>
+
+                            <!-- Pending -->
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-2.5 h-2.5 rounded-full bg-[#FBBF24]"></div>
+                                        <span class="text-sm font-bold text-gray-900">Pending</span>
+                                    </div>
+                                    <span class="text-sm font-semibold text-gray-900">12%</span>
+                                </div>
+                                <div class="w-full bg-gray-100 rounded-full h-[6px] mb-2">
+                                    <div class="bg-[#FDE68A] h-[6px] rounded-full" style="width: 12%"></div>
+                                </div>
+                                <div class="text-right text-xs text-gray-500 font-medium">48 Orders</div>
+                            </div>
+
+                            <!-- Cancelled -->
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-2.5 h-2.5 rounded-full bg-[#F87171]"></div>
+                                        <span class="text-sm font-bold text-gray-900">Cancelled</span>
+                                    </div>
+                                    <span class="text-sm font-semibold text-gray-900">3%</span>
+                                </div>
+                                <div class="w-full bg-gray-100 rounded-full h-[6px] mb-2">
+                                    <div class="bg-[#FECACA] h-[6px] rounded-full" style="width: 3%"></div>
+                                </div>
+                                <div class="text-right text-xs text-gray-500 font-medium">12 Orders</div>
+                            </div>
+                        </div>
+
+                        <!-- Insight Box -->
+                        <div class="mt-6 bg-[#F8FAFC] rounded-xl p-4 flex gap-3 border border-gray-100">
+                            <div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+                                <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-900 mb-1">Insight</h4>
+                                <p class="text-[13px] text-gray-600 leading-relaxed font-medium">Pending orders have decreased by 5% compared to last week due to faster processing.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Orders Table -->
+                <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden mb-8">
+                    <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                        <div>
+                            <h2 class="text-[17px] font-bold text-gray-900">Recent Orders</h2>
+                            <p class="text-sm text-gray-500 mt-1">Manage and track recent purchases</p>
+                        </div>
+                        <a href="/admin/orders" class="text-sm font-semibold text-gray-600 hover:text-gray-900 flex items-center gap-1">
+                            View All
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </a>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-gray-700 bg-white uppercase border-b border-gray-100">
+                                <tr>
+                                    <th scope="col" class="px-6 py-4 font-bold tracking-wider">Order ID</th>
+                                    <th scope="col" class="px-6 py-4 font-bold tracking-wider">Customer</th>
+                                    <th scope="col" class="px-6 py-4 font-bold tracking-wider">Product</th>
+                                    <th scope="col" class="px-6 py-4 font-bold tracking-wider">Amount</th>
+                                    <th scope="col" class="px-6 py-4 font-bold tracking-wider">Status</th>
+                                    <th scope="col" class="px-6 py-4 font-bold tracking-wider text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                <!-- Row 1 -->
+                                <tr class="hover:bg-gray-50/50 transition-colors">
+                                    <td class="px-6 py-4 font-semibold text-gray-600">#ORD-3291</td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <img src="https://ui-avatars.com/api/?name=Jane+Doe&background=f3f4f6" alt="Jane Doe" class="w-8 h-8 rounded-full object-cover">
+                                            <span class="font-bold text-gray-900">Jane Doe</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 font-medium text-gray-600">Wooden Dining Table</td>
+                                    <td class="px-6 py-4 font-bold text-gray-900">$299.00</td>
+                                    <td class="px-6 py-4">
+                                        <span class="bg-[#E8F8F0] text-[#21A366] py-1 px-3 rounded text-[11px] font-bold">Delivered</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <button class="text-gray-400 hover:text-gray-600">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <!-- Row 2 -->
+                                <tr class="hover:bg-gray-50/50 transition-colors">
+                                    <td class="px-6 py-4 font-semibold text-gray-600">#ORD-3290</td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <img src="https://ui-avatars.com/api/?name=Michael+Smith&background=f3f4f6" alt="Michael Smith" class="w-8 h-8 rounded-full object-cover">
+                                            <span class="font-bold text-gray-900">Michael Smith</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 font-medium text-gray-600">Modern Sofa</td>
+                                    <td class="px-6 py-4 font-bold text-gray-900">$899.00</td>
+                                    <td class="px-6 py-4">
+                                        <span class="bg-orange-50 text-orange-500 py-1 px-3 rounded text-[11px] font-bold">Pending</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <button class="text-gray-400 hover:text-gray-600">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <!-- Row 3 -->
+                                <tr class="hover:bg-gray-50/50 transition-colors">
+                                    <td class="px-6 py-4 font-semibold text-gray-600">#ORD-3289</td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <img src="https://ui-avatars.com/api/?name=Sarah+Johnson&background=f3f4f6" alt="Sarah Johnson" class="w-8 h-8 rounded-full object-cover">
+                                            <span class="font-bold text-gray-900">Sarah Johnson</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 font-medium text-gray-600">Coffee Table</td>
+                                    <td class="px-6 py-4 font-bold text-gray-900">$159.00</td>
+                                    <td class="px-6 py-4">
+                                        <span class="bg-[#E8F8F0] text-[#21A366] py-1 px-3 rounded text-[11px] font-bold">Delivered</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <button class="text-gray-400 hover:text-gray-600">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <!-- Row 4 -->
+                                <tr class="hover:bg-gray-50/50 transition-colors">
+                                    <td class="px-6 py-4 font-semibold text-gray-600">#ORD-3288</td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <img src="https://ui-avatars.com/api/?name=Robert+Brown&background=f3f4f6" alt="Robert Brown" class="w-8 h-8 rounded-full object-cover">
+                                            <span class="font-bold text-gray-900">Robert Brown</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 font-medium text-gray-600">Wooden Chair Set</td>
+                                    <td class="px-6 py-4 font-bold text-gray-900">$220.00</td>
+                                    <td class="px-6 py-4">
+                                        <span class="bg-red-50 text-red-500 py-1 px-3 rounded text-[11px] font-bold">Cancelled</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <button class="text-gray-400 hover:text-gray-600">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>
+                                        </button>
+                                    </td>
+                                </tr>
+                                 <!-- Row 5 -->
+                                 <tr class="hover:bg-gray-50/50 transition-colors">
+                                    <td class="px-6 py-4 font-semibold text-gray-600">#ORD-3287</td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <img src="https://ui-avatars.com/api/?name=Emily+Lewis&background=f3f4f6" alt="Emily Lewis" class="w-8 h-8 rounded-full object-cover">
+                                            <span class="font-bold text-gray-900">Emily Lewis</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 font-medium text-gray-600">Bookshelf</td>
+                                    <td class="px-6 py-4 font-bold text-gray-900">$180.00</td>
+                                    <td class="px-6 py-4">
+                                        <span class="bg-[#E8F8F0] text-[#21A366] py-1 px-3 rounded text-[11px] font-bold">Delivered</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <button class="text-gray-400 hover:text-gray-600">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Chart.js Initialization -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            
+            let gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(74, 222, 128, 0.2)'); 
+            gradient.addColorStop(1, 'rgba(74, 222, 128, 0)');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+                    datasets: [{
+                        label: 'Sales',
+                        data: [800, 700, 1100, 950, 1200, 1500, 1650],
+                        borderColor: '#4ADE80', 
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#4ADE80',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: true,
+                        tension: 0.4 
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: '#1F2937',
+                            padding: 12,
+                            titleFont: { size: 13, family: 'Inter' },
+                            bodyFont: { size: 13, family: 'Inter' },
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return '$' + context.parsed.y;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 2000,
+                            ticks: {
+                                stepSize: 500,
+                                color: '#9CA3AF',
+                                font: { family: 'Inter', size: 12, weight: '500' },
+                                padding: 10
+                            },
+                            border: { display: false },
+                            grid: {
+                                color: '#F3F4F6',
+                                drawBorder: false,
+                                drawTicks: false,
+                                borderDash: [5, 5]
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#9CA3AF',
+                                font: { family: 'Inter', size: 12, weight: '500' },
+                                padding: 10
+                            },
+                            border: { display: false },
+                            grid: {
+                                display: false,
+                                drawBorder: false,
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index',
+                    },
+                }
+            });
+        });
+    </script>
+</body>
+</html>

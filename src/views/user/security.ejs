@@ -1,0 +1,137 @@
+<%- include('../layout/header') %>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="text-sm text-gray-500 mb-8 flex items-center gap-2">
+        <a href="/" class="hover:text-[#B88E2F]">Home</a>
+        <i class="fas fa-chevron-right text-xs"></i>
+        <span class="text-gray-800">My Account</span>
+    </div>
+
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">My Account</h1>
+        <p class="text-gray-500">Manage your account settings and security preferences.</p>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-8">
+        <aside class="w-full lg:w-72 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden py-6 px-4 h-fit">
+            <nav class="flex flex-col text-sm font-bold space-y-1">
+                <a href="/profile" class="flex items-center gap-4 px-6 py-3.5 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                    <i class="far fa-user text-lg w-5 text-center text-gray-400"></i> Profile Information
+                </a>
+                <a href="/addresses" class="flex items-center gap-4 px-6 py-3.5 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                    <i class="fas fa-map-marker-alt text-lg w-5 text-center text-gray-400"></i> My Address
+                </a>
+               
+                    <a href="/orders" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                        <i class="fas fa-box text-lg w-5 text-center"></i>
+                        My Orders
+                    </a>
+                    <a href="/wishlist" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                        <i class="far fa-heart text-lg w-5 text-center"></i>
+                        My Wishlist
+                    </a>
+                    <a href="/wallet" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                        <i class="fas fa-wallet text-lg w-5 text-center"></i>
+                        My Wallet
+                    </a>
+                    <a href="/coupons" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                        <i class="fas fa-ticket-alt text-lg w-5 text-center"></i>
+                        Coupons
+                    </a>
+                    <a href="/notifications" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                        <i class="far fa-bell text-lg w-5 text-center"></i>
+                        Notifications
+                    </a>
+                    <a href="/security" class="flex items-center gap-4 px-4 py-3.5 bg-[#F1F1F1] rounded-lg text-gray-800">
+                    <i class="fas fa-shield-alt text-lg w-5 text-center text-gray-800"></i> Security Settings
+                </a>
+                    
+                 </nav>
+                 </aside>
+
+        <div class="flex-1">
+            <div class="max-w-md mx-auto bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+    
+    <% if (user.googleId) { %>
+        <div class="mb-6">
+            <h3 class="text-xl font-extrabold text-gray-900 mb-2">Set/Create Password</h3>
+            <p class="text-sm text-gray-500 mb-6">Since you logged in with Google, you can set a password for direct login.</p>
+            
+            <form id="createPasswordForm" action="/create-password" method="POST" class="space-y-4">
+                <input type="password" id="newPassword" name="newPassword" placeholder="New Password" 
+                       class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-[#B88E2F]/10 focus:border-[#B88E2F] outline-none transition-all" required minlength="6">
+                
+                <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm Password" 
+                       class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-[#B88E2F]/10 focus:border-[#B88E2F] outline-none transition-all" required>
+                
+                <button type="submit" class="w-full bg-[#B88E2F] hover:bg-[#A27B28] text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-orange-100">
+                    Set Password
+                </button>
+            </form>
+        </div>
+
+    <% } else { %>
+    <div class="mb-6">
+        <h3 class="text-xl font-extrabold text-gray-900 mb-2">Change Password</h3>
+        <p class="text-sm text-gray-500 mb-6">Keep your account secure by updating your password regularly.</p>
+        
+        <form id="changePasswordForm" action="/change-password" method="POST" class="space-y-4">
+            <input type="password" name="oldPassword" placeholder="Current Password" 
+                   class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-[#B88E2F]/10 focus:border-[#B88E2F] outline-none transition-all" required>
+            
+            <input type="password" id="newPasswordChange" name="newPassword" placeholder="New Password" 
+                   class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-[#B88E2F]/10 focus:border-[#B88E2F] outline-none transition-all" required minlength="6">
+            
+            <input type="password" id="confirmPasswordChange" name="confirmPassword" placeholder="Confirm New Password" 
+                   class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-[#B88E2F]/10 focus:border-[#B88E2F] outline-none transition-all" required>
+            
+            <button type="submit" class="w-full bg-[#B88E2F] hover:bg-[#A27B28] text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-orange-100">
+                Update Password
+            </button>
+        </form>
+    </div>
+<% } %>
+</div>
+        </div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    // Change Password ഫോം വാലിഡേഷൻ
+    const changeForm = document.getElementById('changePasswordForm');
+    if (changeForm) {
+        changeForm.addEventListener('submit', function(e) {
+            const newPass = document.getElementById('newPasswordChange').value;
+            const confirmPass = document.getElementById('confirmPasswordChange').value;
+            
+            if (newPass !== confirmPass) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Mismatch',
+                    text: 'New passwords do not match!',
+                    confirmButtonColor: '#B88E2F'
+                });
+            }
+        });
+    }
+
+        // Handle Success/Error Messages from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const successMsg = urlParams.get('success');
+        const errorMsg = urlParams.get('error');
+
+        if (successMsg) {
+            Swal.fire({ icon: 'success', title: 'Success!', text: successMsg, confirmButtonColor: '#B88E2F' });
+            window.history.replaceState({}, document.title, "/security");
+        }
+        if (errorMsg) {
+            Swal.fire({ icon: 'error', title: 'Oops...', text: errorMsg, confirmButtonColor: '#B88E2F' });
+            window.history.replaceState({}, document.title, "/security");
+        }
+    });
+</script>
+
+<%- include('../layout/footer') %>
