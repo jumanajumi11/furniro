@@ -27,7 +27,7 @@
 
         <h1 class="text-3xl font-bold text-gray-900 mb-2">Verify Your Email</h1>
         <p class="text-gray-500 text-sm mb-8 leading-relaxed">
-            Enter the 6-digit code sent to <span class="font-semibold text-gray-800">name@example.com</span>
+            Enter the 6-digit code sent to <span class="font-semibold text-gray-800"><%= locals.email || 'your email' %></span>
         </p>
 
         <% if (locals.error) { %>
@@ -38,15 +38,7 @@
 
         
       <form id="otpForm">
-            <!-- <div class="flex justify-between gap-2 md:gap-4" id="otpInputs">
-                <input type="number" maxlength="1" class="w-12 h-14 text-center text-xl font-bold bg-gray-200 border-2 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-yellow-600 outline-none transition-all" required>
-                <input type="number" maxlength="1" class="w-12 h-14 text-center text-xl font-bold bg-gray-200 border-2 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-yellow-600 outline-none transition-all" required>
-                <input type="number" maxlength="1" class="w-12 h-14 text-center text-xl font-bold bg-gray-200 border-2 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-yellow-600 outline-none transition-all" required>
-                <input type="number" maxlength="1" class="w-12 h-14 text-center text-xl font-bold bg-gray-200 border-2 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-yellow-600 outline-none transition-all" required>
-                <input type="number" maxlength="1" class="w-12 h-14 text-center text-xl font-bold bg-gray-200 border-2 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-yellow-600 outline-none transition-all" required>
-                <input type="number" maxlength="1" class="w-12 h-14 text-center text-xl font-bold bg-gray-200 border-2 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-yellow-600 outline-none transition-all" required>
-            </div> -->
-            <!-- നിങ്ങളുടെ HTML-ലെ ഈ ഭാഗം ഇങ്ങനെ മാറ്റുക -->
+           
 <div class="flex justify-between gap-2 md:gap-4" id="otpInputs">
     <input type="number" class="otp-input w-12 h-14 text-center text-xl font-bold bg-gray-200 border-2 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-yellow-600 outline-none transition-all" required>
     <input type="number" class="otp-input w-12 h-14 text-center text-xl font-bold bg-gray-200 border-2 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-yellow-600 outline-none transition-all" required>
@@ -63,18 +55,19 @@
            
         </form>
 
-        <div class="mt-8 text-sm">
-            <p class="text-gray-600">
-    Didn't receive the code? 
-    <a href="javascript:void(0)" onclick="resendOTP()" id="resend-link" class="text-[#B88E2F] font-bold">Resend OTP</a>
-</p>
-          <div class="mt-4 text-center">
-    <button id="resendBtn" onclick="resendOTP()" class="mt-2 font-bold text-gray-400 cursor-not-allowed" disabled>
+      <div class="mt-8 text-sm text-center">
+    
+    <p class="text-gray-600 mb-2">Didn't receive the code?</p>
+    
+    <button id="resendBtn" onclick="resendOTP()" 
+            class="font-bold text-gray-400 transition-colors duration-300" disabled >
         Resend OTP
     </button>
-    <div id="timer-display" class="text-sm text-gray-500 mt-1">01:00</div>
+    
+    <div id="timer-display" class="text-sm text-[#B88E2F] mt-2 font-medium">
+        Wait <span id="time">02:00</span>
+    </div>
 </div>
-        </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -87,12 +80,14 @@
     const timerDisplay = document.getElementById('timer-display');
 
     let timerInterval;
+    let isTimerExpired = false;
 
-    // 1. ടൈമർ ഫങ്ക്ഷൻ (ക്ലീൻ ചെയ്തത്)
+
     function startTimer() {
-        let timeLeft = 60;
+        let timeLeft = 120;
+        isTimerExpired = false;
         
-        // ബട്ടൺ ഡിസേബിൾ ചെയ്യുന്നു
+        
         if (resendBtn) {
             resendBtn.disabled = true;
             resendBtn.classList.remove('text-gray-900', 'hover:underline');
@@ -105,7 +100,7 @@
         timerInterval = setInterval(() => {
             timeLeft--;
             
-            // ടൈമർ ഡിസ്‌പ്ലേ അപ്‌ഡേറ്റ് ചെയ്യുന്നു
+            
             if (timerDisplay) {
                 let minutes = Math.floor(timeLeft / 60);
                 let seconds = timeLeft % 60;
@@ -114,24 +109,25 @@
 
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
+                isTimerExpired = true;
                 
-                // ബട്ടൺ എനേബിൾ ചെയ്യുന്നു
+                
                 if (resendBtn) {
                     resendBtn.disabled = false;
                     resendBtn.classList.remove('text-gray-400', 'cursor-not-allowed');
                     resendBtn.classList.add('text-gray-900', 'hover:underline');
                     resendBtn.style.pointerEvents = 'auto';
-                    resendBtn.style.color = '#B88E2F'; // നിങ്ങളുടെ ഗോൾഡൻ കളർ
+                    resendBtn.style.color = '#B88E2F'; 
                 }
                 if (timerDisplay) timerDisplay.innerHTML = "00:00";
             }
         }, 1000);
     }
 
-    // 2. പേജ് ലോഡ് ആകുമ്പോൾ ടൈമർ തുടങ്ങുന്നു
+    
     startTimer();
 
-    // 3. OTP ഇൻപുട്ട് ബോക്സുകളിലെ ഓട്ടോ-ഫോക്കസ് ലോജിക്
+    
     inputs.forEach((input, index) => {
         input.addEventListener('input', (e) => {
             if (e.target.value.length > 1) e.target.value = e.target.value.slice(0, 1);
@@ -146,7 +142,7 @@
         });
     });
 
-    // 4. Resend OTP ഫങ്ക്ഷൻ
+    // 
     async function resendOTP() {
         try {
             resendBtn.disabled = true;
@@ -161,7 +157,7 @@
                     timer: 1500,
                     showConfirmButton: false
                 });
-                startTimer(); // പുതിയ ടൈമർ തുടങ്ങുന്നു
+                startTimer(); // 
             } else {
                 Swal.fire('Error', data.message, 'error');
                 resendBtn.disabled = false;
@@ -172,10 +168,15 @@
         }
     }
 
-    // 5. Verify OTP ലോജിക്
+    
     if (verifyBtn) {
         verifyBtn.addEventListener('click', async function(e) { 
             e.preventDefault();
+            
+            if (isTimerExpired) {
+                Swal.fire('Expired', 'otp expired', 'error');
+                return;
+            }
             
             let otpValue = "";
             inputs.forEach(input => otpValue += input.value);

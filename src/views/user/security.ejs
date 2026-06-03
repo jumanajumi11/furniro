@@ -99,26 +99,44 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-    // Change Password ഫോം വാലിഡേഷൻ
+    
+   
     const changeForm = document.getElementById('changePasswordForm');
-    if (changeForm) {
-        changeForm.addEventListener('submit', function(e) {
-            const newPass = document.getElementById('newPasswordChange').value;
-            const confirmPass = document.getElementById('confirmPasswordChange').value;
-            
-            if (newPass !== confirmPass) {
-                e.preventDefault();
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Mismatch',
-                    text: 'New passwords do not match!',
-                    confirmButtonColor: '#B88E2F'
-                });
-            }
-        });
-    }
+if (changeForm) {
+    changeForm.addEventListener('submit', function(e) {
+        
+        const oldPass = changeForm.querySelector('input[name="oldPassword"]').value.trim();
+        const newPass = document.getElementById('newPasswordChange').value.trim();
+        const confirmPass = document.getElementById('confirmPasswordChange').value.trim();
 
-        // Handle Success/Error Messages from URL
+        let errorMessage = "";
+
+        
+        if (!oldPass || !newPass || !confirmPass) {
+            errorMessage = 'All fields are mandatory!';
+        } 
+        
+        else if (newPass !== confirmPass) {
+            errorMessage = 'New passwords do not match!';
+        }
+        
+        else if (newPass.length < 6) {
+            errorMessage = 'New password must be at least 6 characters!';
+        }
+
+        if (errorMessage) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'error',
+                title: 'Validation Error',
+                text: errorMessage,
+                confirmButtonColor: '#B88E2F'
+            });
+        }
+    });
+}
+
+        
         const urlParams = new URLSearchParams(window.location.search);
         const successMsg = urlParams.get('success');
         const errorMsg = urlParams.get('error');

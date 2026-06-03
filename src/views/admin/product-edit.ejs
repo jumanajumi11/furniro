@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Product – Furniro Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Cropper.js CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter','sans-serif'] } } } };</script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-scroll::-webkit-scrollbar { width:4px; }
+        .sidebar-scroll::-webkit-scrollbar-track { background:transparent; }
+        .sidebar-scroll::-webkit-scrollbar-thumb { background:#E5E7EB; border-radius:99px; }
+        .err-msg {
+            color: #EF4444;
+            font-size: .75rem;
+            font-weight: 600;
+            margin-top: .25rem;
+            display: block;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.2s ease-in-out;
+        }
+        .err-msg.visible {
+            opacity: 1;
+            max-height: 40px;
+        }
+        /* Image slot */
+        .img-slot { position:relative; width:80px; height:80px; border-radius:8px; overflow:hidden; border:1px solid #E5E7EB; }
+        .img-slot img { width:100%; height:100%; object-fit:cover; }
+        .img-slot .remove-btn { position:absolute; top:2px; right:2px; background:rgba(239,68,68,0.85); color:#fff; border:none; border-radius:50%; width:18px; height:18px; font-size:10px; cursor:pointer; display:flex;align-items: center; justify-content:center;font-weight:bold; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.15s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 antialiased min-h-screen flex">
+
+<%- include('adminPartials/adminSidebar') %>
+
+<!-- ── MAIN ──────────────────────────────────────────────────────── -->
+<main class="flex-1 min-h-screen overflow-x-hidden">
+
+    <!-- Top bar -->
+    <header class="bg-white border-b border-gray-100 sticky top-0 z-20 flex items-center justify-between px-8 h-16 shrink-0 shadow-sm">
+        <div class="flex items-center gap-2 text-sm text-gray-500 font-medium">
+            <a href="/admin/dashboard" class="hover:text-gray-800 transition-colors">Dashboard</a>
+            <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            <a href="/admin/products" class="hover:text-gray-800 transition-colors">Product Management</a>
+            <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            <span class="text-gray-900 font-bold">Edit Product</span>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="/admin/products"
+               class="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50 transition-all">Discard</a>
+            <button type="button" id="saveBtn"
+                    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#B88E2F] hover:bg-[#A07828] text-white font-bold text-sm transition-all shadow-md active:scale-95">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                Save Changes
+            </button>
+        </div>
+    </header>
+
+    <div class="max-w-5xl mx-auto p-8 space-y-6">
+        <div>
+            <h1 class="text-2xl font-black text-gray-900 tracking-tight">Edit Product</h1>
+            <p class="text-sm text-gray-500 mt-0.5">Update details for <strong><%= product.productName %></strong></p>
+        </div>
+
+        <!-- Global error banner -->
+        <div id="globalError" class="hidden bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm font-semibold"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- ── LEFT COLUMN (2/3) ──────────────────────────────── -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- Product Info card -->
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+                    <div>
+                        <h2 class="text-base font-black text-gray-900">Product Information</h2>
+                        <p class="text-xs text-gray-400 mt-0.5">Basic details about the furniture item</p>
+                    </div>
+
+                    <!-- Product Name -->
+                    <div>
+                        <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mb-1.5">Product Name <span class="text-red-500">*</span></label>
+                        <input type="text" id="productName" value="<%= product.productName %>" placeholder="e.g. Modern Wooden Sofa"
+                               class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/30 focus:border-[#B88E2F] transition-all" autocomplete="off">
+                        <span id="nameError" class="err-msg hidden"></span>
+                    </div>
+
+                    <!-- Category -->
+                    <div>
+                        <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mb-1.5">Category <span class="text-red-500">*</span></label>
+                        <select id="category"
+                                class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/30 focus:border-[#B88E2F] transition-all">
+                            <option value="">— Select Category —</option>
+                            <% categories.forEach(c => { %>
+                            <option value="<%= c._id %>" <%=(product.category && (product.category._id||product.category).toString()===c._id.toString())?'selected':''%>><%= c.name %></option>
+                            <% }) %>
+                        </select>
+                        <span id="categoryError" class="err-msg hidden"></span>
+                    </div>
+
+                    <!-- Description -->
+                    <div>
+                        <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mb-1.5">Description <span class="text-red-500">*</span></label>
+                        <textarea id="description" rows="4"
+                                  class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/30 focus:border-[#B88E2F] transition-all resize-none"><%= product.description %></textarea>
+                        <span id="descError" class="err-msg hidden"></span>
+                    </div>
+                </div>
+
+                <!-- Colors & Images card -->
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+                    <div>
+                        <h2 class="text-base font-black text-gray-900">Colors &amp; Images</h2>
+                        <p class="text-xs text-gray-400 mt-0.5">Manage color options and their images. Each color option requires a name, a hex color, and between 1 to 3 images.</p>
+                    </div>
+
+                    <span id="colorsError" class="err-msg hidden"></span>
+
+                    <!-- Initial Colors Data for React -->
+                    <script type="application/json" id="initial-colors-data">
+                      <%- JSON.stringify(product.colors || []) %>
+                    </script>
+
+                    <div id="react-colors-root"></div>
+                </div>
+
+                <!-- Variants card -->
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-base font-black text-gray-900">Product Variants</h2>
+                            <p class="text-xs text-gray-400 mt-0.5">Size, color, and stock specifications</p>
+                        </div>
+                        <button type="button" onclick="addVariant()"
+                                class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#B88E2F] hover:bg-[#A07828] text-white font-bold text-xs transition-all shadow-sm active:scale-95">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                            Add Variant
+                        </button>
+                    </div>
+
+                    <div id="variantRows" class="space-y-3">
+                        <!-- Seeded by JS -->
+                    </div>
+                </div>
+
+            </div><!-- /left -->
+
+            <!-- ── RIGHT COLUMN (1/3) ─────────────────────────────── -->
+            <div class="space-y-6">
+
+                <!-- Pricing & Stock card -->
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5 sticky top-20">
+                    <div>
+                        <h2 class="text-base font-black text-gray-900">Pricing &amp; Stock</h2>
+                        <p class="text-xs text-gray-400 mt-0.5">Base prices and default catalog stock level</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mb-1.5">Regular Price (Rp) <span class="text-red-500">*</span></label>
+                        <input type="number" id="regularPrice" name="regularPrice" min="0" value="<%= product.regularPrice %>" placeholder="0"
+                               class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/30 focus:border-[#B88E2F] transition-all">
+                        <span id="priceError" class="err-msg hidden"></span>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mb-1.5">Sale Price (Rp)</label>
+                        <input type="number" id="salePrice" name="salePrice" min="0" value="<%= product.salePrice || '' %>" placeholder="0"
+                               class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/30 focus:border-[#B88E2F] transition-all">
+                        <span id="salePriceError" class="err-msg hidden"></span>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mb-1.5">Total Base Stock <span class="text-red-500">*</span></label>
+                        <input type="number" id="stock" name="stock" min="0" value="<%= product.stock %>" placeholder="0"
+                               class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/30 focus:border-[#B88E2F] transition-all">
+                        <span id="stockError" class="err-msg hidden"></span>
+                    </div>
+
+                    <!-- Status -->
+                    <div>
+                        <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mb-1.5">Status</label>
+                        <select id="isListed" name="isListed"
+                                class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/30 focus:border-[#B88E2F] transition-all">
+                            <option value="true" <%= product.isListed ? 'selected' : '' %>>Active (visible on store)</option>
+                            <option value="false" <%= !product.isListed ? 'selected' : '' %>>Hidden</option>
+                        </select>
+                    </div>
+
+                </div><!-- /pricing card -->
+
+            </div><!-- /right column -->
+
+        </div><!-- /grid -->
+    </div><!-- /max-w-5xl -->
+</main>
+
+<script>
+  // Helper for generating UUIDs
+  const getUUID = () => {
+    if (self.crypto && self.crypto.randomUUID) {
+      return self.crypto.randomUUID();
+    }
+    return 'uid-' + Date.now() + '-' + Math.round(Math.random() * 1e6);
+  };
+
+  // State
+  let colorOptions = [];
+  let activeCropModal = null;
+
+  // Initialize function
+  function initColorManager(initialColors = []) {
+    if (initialColors.length > 0) {
+      colorOptions = initialColors.map((col, idx) => ({
+        id: col._id || getUUID(),
+        colorName: col.name || "",
+        hexCode: col.hex || "",
+        isPrimary: col.isDefault || false,
+        images: (col.images || []).map(imgUrl => ({
+          id: getUUID(),
+          file: null,
+          preview: imgUrl.startsWith('http') || imgUrl.startsWith('/') ? imgUrl : `/upload/products/${imgUrl}`,
+          isExisting: true,
+          filename: imgUrl
+        })),
+        error: ''
+      }));
+    } else {
+      colorOptions = [{
+        id: getUUID(),
+        colorName: '',
+        hexCode: '#B88E2F',
+        isPrimary: true,
+        images: [],
+        error: ''
+      }];
+    }
+    renderColors();
+  }
+
+  // Crop Modal using Cropper.js
+  function showCropModal(file, onComplete, onCancel) {
+    if (activeCropModal) {
+      activeCropModal.remove();
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const imageSrc = reader.result;
+
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in';
+      modal.innerHTML = `
+        <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full flex flex-col overflow-hidden max-h-[90vh]">
+          <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+            <div>
+              <h3 class="font-bold text-gray-900 text-lg">Crop & Position Image</h3>
+              <p class="text-xs text-gray-400">Drag to position, scroll/pinch to zoom</p>
+            </div>
+            <button type="button" id="cropCloseBtn" class="text-gray-400 hover:text-gray-600 transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="relative flex-1 bg-gray-900 overflow-hidden flex items-center justify-center" style="height: 380px;">
+            <img id="cropImageTarget" src="${imageSrc}" style="max-width: 100%; max-height: 100%; display: block;" />
+          </div>
+
+          <div class="p-6 bg-white space-y-4 border-t border-gray-100 flex gap-3 justify-end">
+            <button
+              type="button"
+              id="cropCancelBtn"
+              class="px-4 py-2 border border-gray-200 rounded-xl text-gray-600 font-bold text-sm hover:bg-gray-50 transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              id="cropSaveBtn"
+              class="px-5 py-2 bg-[#B88E2F] hover:bg-[#A07828] text-white font-bold text-sm rounded-xl transition-all shadow-md active:scale-95"
+            >
+              Crop &amp; Save
+            </button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+      activeCropModal = modal;
+
+      const img = modal.querySelector('#cropImageTarget');
+      let cropperInstance = null;
+
+      img.onload = () => {
+        cropperInstance = new Cropper(img, {
+          aspectRatio: 1,
+          viewMode: 1,
+          autoCropArea: 1,
+          responsive: true,
+          restore: false,
+          guides: true,
+          center: true,
+          highlight: false,
+          cropBoxMovable: true,
+          cropBoxResizable: true,
+          toggleDragModeOnDblclick: false,
+        });
+      };
+
+      const closeModal = () => {
+        if (cropperInstance) {
+          cropperInstance.destroy();
+        }
+        modal.remove();
+        activeCropModal = null;
+      };
+
+      modal.querySelector('#cropCloseBtn').onclick = () => {
+        closeModal();
+        if (onCancel) onCancel();
+      };
+      modal.querySelector('#cropCancelBtn').onclick = () => {
+        closeModal();
+        if (onCancel) onCancel();
+      };
+
+      modal.querySelector('#cropSaveBtn').onclick = () => {
+        if (!cropperInstance) return;
+        const canvas = cropperInstance.getCroppedCanvas({
+          width: 800,
+          height: 800,
+          imageSmoothingEnabled: true,
+          imageSmoothingQuality: 'high'
+        });
+        if (!canvas) {
+          alert('Failed to crop image. Please try again.');
+          closeModal();
+          if (onCancel) onCancel();
+          return;
+        }
+
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            alert('Failed to crop image.');
+            closeModal();
+            if (onCancel) onCancel();
+            return;
+          }
+          onComplete(blob);
+          closeModal();
+        }, 'image/webp', 0.85);
+      };
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Render method
+  function renderColors() {
+    const root = document.getElementById('react-colors-root');
+    if (!root) return;
+
+    root.innerHTML = '';
+    
+    const container = document.createElement('div');
+    container.className = 'space-y-6';
+
+    colorOptions.forEach((col, idx) => {
+      const card = document.createElement('div');
+      card.className = 'color-card bg-white rounded-xl p-5 shadow-sm border border-gray-200 mb-4 space-y-4 transition-all hover:shadow-md duration-200';
+      card.setAttribute('data-id', col.id);
+
+      card.innerHTML = `
+        <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+          <h3 class="text-sm font-black text-gray-800 uppercase tracking-wider">Color option #${idx + 1}</h3>
+          <button
+            type="button"
+            class="remove-color-btn text-red-500 hover:text-red-700 font-bold transition-colors text-xs flex items-center gap-1"
+            data-id="${col.id}"
+            title="Remove Color"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Remove
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Color Name <span class="text-red-500">*</span></label>
+            <input
+              type="text"
+              class="color-name-input w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#B88E2F]"
+              placeholder="e.g. Green"
+              value="${col.colorName}"
+              data-id="${col.id}"
+              required
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Hex Color Picker <span class="text-red-500">*</span></label>
+            <div class="flex gap-2">
+              <input
+                type="color"
+                class="color-hex-picker w-12 h-10 p-0 border border-gray-200 rounded-lg cursor-pointer"
+                value="${col.hexCode}"
+                data-id="${col.id}"
+                required
+              />
+              <input
+                type="text"
+                class="color-hex-text w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#B88E2F]"
+                value="${col.hexCode}"
+                data-id="${col.id}"
+                placeholder="#HEX"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+          <div class="md:col-span-2 space-y-3">
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+              Images <span class="text-red-500">*</span> (1-3)
+            </label>
+
+            <div
+              class="drop-zone border-2 border-dashed rounded-xl p-6 transition-all duration-200 cursor-pointer flex flex-col items-center justify-center text-center group border-gray-200 hover:border-[#B88E2F] hover:bg-gray-50"
+              data-id="${col.id}"
+            >
+              <svg class="w-10 h-10 text-gray-400 group-hover:text-[#B88E2F] transition-colors mb-2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+              </svg>
+              <span class="text-xs font-bold text-gray-600 block mb-1">
+                Click to upload or drag and drop
+              </span>
+              <span class="text-[10px] text-gray-400 block">
+                JPG, PNG, WEBP (max 2MB, 1-3 images)
+              </span>
+              <input
+                type="file"
+                class="file-input hidden"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                data-id="${col.id}"
+              />
+            </div>
+
+            <div class="images-preview-grid grid grid-cols-3 gap-3 pt-2 ${col.images.length === 0 ? 'hidden' : ''}">
+            </div>
+
+            <span class="error-msg-span err-msg text-red-500 text-xs font-semibold mt-2 ${col.error ? 'visible' : 'hidden'}">
+              ${col.error || ''}
+            </span>
+          </div>
+
+          <div class="flex items-center md:pl-4 md:border-l border-gray-100">
+            <label class="inline-flex items-center gap-2 cursor-pointer mt-3">
+              <input
+                type="radio"
+                name="defaultColor"
+                class="primary-color-radio form-radio w-4 h-4 text-[#B88E2F] border-gray-300 focus:ring-[#B88E2F]"
+                ${col.isPrimary ? 'checked' : ''}
+                data-id="${col.id}"
+              />
+              <span class="text-xs font-bold text-gray-700">Set as Primary / Default Color</span>
+            </label>
+          </div>
+        </div>
+      `;
+
+      const previewGrid = card.querySelector('.images-preview-grid');
+      col.images.forEach(img => {
+        const previewItem = document.createElement('div');
+        previewItem.className = 'relative group aspect-square rounded-xl overflow-hidden border border-gray-150 shadow-sm bg-gray-50';
+        previewItem.innerHTML = `
+          <img src="${img.preview}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/150x150?text=Missing'" />
+          <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+            <button
+              type="button"
+              class="recrop-img-btn w-7 h-7 bg-white hover:bg-[#B88E2F] hover:text-white text-gray-800 rounded-full flex items-center justify-center shadow transition-colors"
+              data-color-id="${col.id}"
+              data-img-id="${img.id}"
+              title="Recrop Image"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              class="remove-img-btn w-7 h-7 bg-white hover:bg-red-500 hover:text-white text-gray-800 rounded-full flex items-center justify-center shadow transition-colors"
+              data-color-id="${col.id}"
+              data-img-id="${img.id}"
+              title="Remove Image"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+        `;
+        previewGrid.appendChild(previewItem);
+      });
+
+      // Bind events for this card
+      const nameInput = card.querySelector('.color-name-input');
+      nameInput.oninput = (e) => {
+        col.colorName = e.target.value;
+        col.error = '';
+        card.querySelector('.error-msg-span').className = 'error-msg-span err-msg text-red-500 text-xs font-semibold mt-2 hidden';
+        refreshColorOptions();
+      };
+
+      const picker = card.querySelector('.color-hex-picker');
+      const hexText = card.querySelector('.color-hex-text');
+      
+      picker.oninput = (e) => {
+        col.hexCode = e.target.value;
+        hexText.value = col.hexCode;
+      };
+      hexText.oninput = (e) => {
+        let val = e.target.value;
+        if (val && !val.startsWith('#')) val = '#' + val;
+        col.hexCode = val;
+        picker.value = val;
+      };
+
+      const radio = card.querySelector('.primary-color-radio');
+      radio.onchange = () => {
+        colorOptions.forEach(c => c.isPrimary = (c.id === col.id));
+        renderColors();
+      };
+
+      const dropZone = card.querySelector('.drop-zone');
+      const fileInput = card.querySelector('.file-input');
+
+      dropZone.onclick = (e) => {
+        if (e.target !== fileInput) {
+          fileInput.click();
+        }
+      };
+
+      fileInput.onchange = (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+          processUploadedFiles(e.target.files, col.id);
+          e.target.value = '';
+        }
+      };
+
+      dropZone.ondragover = (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-[#B88E2F]', 'bg-[#B88E2F]/5');
+      };
+      dropZone.ondragleave = () => {
+        dropZone.classList.remove('border-[#B88E2F]', 'bg-[#B88E2F]/5');
+      };
+      dropZone.ondrop = (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-[#B88E2F]', 'bg-[#B88E2F]/5');
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          processUploadedFiles(e.dataTransfer.files, col.id);
+        }
+      };
+
+      card.querySelectorAll('.remove-img-btn').forEach(btn => {
+        btn.onclick = () => {
+          const imgId = btn.getAttribute('data-img-id');
+          col.images = col.images.filter(img => img.id !== imgId);
+          col.error = '';
+          renderColors();
+        };
+      });
+
+      card.querySelectorAll('.recrop-img-btn').forEach(btn => {
+        btn.onclick = async () => {
+          const imgId = btn.getAttribute('data-img-id');
+          const imgObj = col.images.find(img => img.id === imgId);
+          if (!imgObj) return;
+
+          let fileToCrop;
+          if (imgObj.isExisting) {
+            try {
+              const res = await fetch(imgObj.preview);
+              const blob = await res.blob();
+              fileToCrop = new File([blob], imgObj.filename || 'image.webp', { type: blob.type });
+            } catch (err) {
+              console.error("Failed to load image for cropping", err);
+              alert("Failed to load image for cropping.");
+              return;
+            }
+          } else {
+            fileToCrop = imgObj.file;
+          }
+
+          showCropModal(fileToCrop, (croppedBlob) => {
+            const rBaseName = fileToCrop.name.replace(/\.[^.]+$/, '');
+            const croppedFile = new File([croppedBlob], rBaseName + '.webp', { type: 'image/webp' });
+            const previewUrl = URL.createObjectURL(croppedFile);
+
+            if (imgObj.isExisting) {
+              col.images = col.images.map(img => img.id === imgObj.id ? {
+                id: getUUID(),
+                file: croppedFile,
+                preview: previewUrl,
+                cropped: true,
+                isExisting: false
+              } : img);
+            } else {
+              imgObj.file = croppedFile;
+              imgObj.preview = previewUrl;
+            }
+            col.error = '';
+            renderColors();
+          });
+        };
+      });
+
+      const removeCardBtn = card.querySelector('.remove-color-btn');
+      removeCardBtn.onclick = () => {
+        colorOptions = colorOptions.filter(c => c.id !== col.id);
+        if (colorOptions.length > 0 && !colorOptions.some(c => c.isPrimary)) {
+          colorOptions[0].isPrimary = true;
+        }
+        renderColors();
+        refreshColorOptions();
+      };
+
+      container.appendChild(card);
+    });
+
+    root.appendChild(container);
+
+    const addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.className = 'inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#B88E2F] hover:bg-[#A07828] text-white font-bold text-sm transition-all shadow-sm active:scale-95 mt-2';
+    addBtn.innerHTML = `
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+      </svg>
+      Add Color Option
+    `;
+    addBtn.onclick = () => {
+      colorOptions.push({
+        id: getUUID(),
+        colorName: '',
+        hexCode: '#B88E2F',
+        isPrimary: colorOptions.length === 0,
+        images: [],
+        error: ''
+      });
+      renderColors();
+    };
+
+    root.appendChild(addBtn);
+  }
+
+  function processUploadedFiles(selectedFiles, colorId) {
+    const col = colorOptions.find(c => c.id === colorId);
+    if (!col) return;
+
+    const totalCurrent = col.images.length;
+    if (totalCurrent >= 3) {
+      col.error = 'Maximum 3 images allowed per color.';
+      renderColors();
+      return;
+    }
+
+    const allowedCount = 3 - totalCurrent;
+    const validFiles = [];
+    const errors = [];
+
+    Array.from(selectedFiles).forEach(file => {
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+      if (!allowedTypes.includes(file.type)) {
+        errors.push(`"${file.name}" is not supported (JPG, PNG, WEBP only).`);
+      } else if (file.size > 2 * 1024 * 1024) {
+        errors.push(`"${file.name}" exceeds 2MB limit.`);
+      } else {
+        validFiles.push(file);
+      }
+    });
+
+    if (errors.length > 0) {
+      col.error = errors[0];
+      renderColors();
+      return;
+    }
+
+    const filesToQueue = validFiles.slice(0, allowedCount);
+    let tempQueue = [...filesToQueue];
+
+    const nextCrop = () => {
+      if (tempQueue.length === 0) return;
+      const file = tempQueue.shift();
+
+      showCropModal(file, (croppedBlob) => {
+        const baseName = file.name.replace(/\.[^.]+$/, '');
+        const croppedFile = new File([croppedBlob], baseName + '.webp', { type: 'image/webp' });
+        const previewUrl = URL.createObjectURL(croppedFile);
+
+        col.images.push({
+          id: getUUID(),
+          file: croppedFile,
+          preview: previewUrl,
+          isExisting: false
+        });
+        col.error = '';
+        renderColors();
+        
+        setTimeout(nextCrop, 50);
+      }, () => {
+        setTimeout(nextCrop, 50);
+      });
+    };
+
+    nextCrop();
+  }
+
+  window.ReactColorsComponent = {
+    getData: () => {
+      let isValid = true;
+      const errors = [];
+
+      if (colorOptions.length === 0) {
+        isValid = false;
+        errors.push('Please add at least one color option.');
+      }
+
+      colorOptions.forEach((col, idx) => {
+        const name = col.colorName.trim();
+        const totalImages = col.images.length;
+
+        col.error = '';
+
+        if (!name) {
+          col.error = 'Color name is required.';
+          isValid = false;
+          errors.push(`Color option #${idx + 1} is missing a name.`);
+        } else if (totalImages < 1) {
+          col.error = 'At least 1 image is required.';
+          isValid = false;
+          errors.push(`Color "${name || 'option ' + (idx + 1)}" requires at least 1 image.`);
+        } else if (totalImages > 3) {
+          col.error = 'At most 3 images allowed.';
+          isValid = false;
+          errors.push(`Color "${name || 'option ' + (idx + 1)}" exceeds the maximum of 3 images.`);
+        }
+      });
+
+      if (!isValid) {
+        renderColors();
+      }
+
+      const primaryCount = colorOptions.filter(c => c.isPrimary).length;
+      if (colorOptions.length > 0 && primaryCount !== 1) {
+        if (primaryCount === 0) {
+          colorOptions[0].isPrimary = true;
+          renderColors();
+        } else {
+          isValid = false;
+          errors.push('Only one default color option can be set.');
+        }
+      }
+
+      const formattedColors = colorOptions.map((col, idx) => {
+        const mappedImages = col.images.map(img => {
+          if (img.isExisting) {
+            return img.filename;
+          } else {
+            return { isNew: true };
+          }
+        });
+
+        return {
+          name: col.colorName.trim(),
+          hex: col.hexCode,
+          isDefault: col.isPrimary,
+          existingImages: col.images.filter(img => img.isExisting).map(img => img.filename),
+          tempIndex: idx
+        };
+      });
+
+      const filesToUpload = [];
+      colorOptions.forEach((col, idx) => {
+        col.images.forEach(img => {
+          if (img.file) {
+            filesToUpload.push({
+              fieldName: `colorImages_${idx}`,
+              file: img.file
+            });
+          }
+        });
+      });
+
+      return {
+        isValid,
+        errors,
+        colors: formattedColors,
+        files: filesToUpload
+      };
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const initialColorsJson = document.getElementById('initial-colors-data')?.textContent;
+    let initialColors = [];
+    if (initialColorsJson) {
+      try {
+        initialColors = JSON.parse(initialColorsJson);
+      } catch (e) {
+        console.error("Failed to parse initial colors data", e);
+      }
+    }
+    initColorManager(initialColors);
+
+    // Seed existing variants on load after colors are initialized
+    const existingVariants = JSON.parse(document.getElementById('initial-variants-data').textContent);
+    existingVariants.forEach(v => addVariant(v));
+  });
+</script>
+
+<script id="initial-variants-data" type="application/json">
+  <%- JSON.stringify(product.variants || []) %>
+</script>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────
+const PRODUCT_ID = '<%= product._id %>';
+let variantCount = 0;
+// Keep color count based on what was rendered
+let colorCount = document.querySelectorAll('.color-card').length;
+let variants = [];
+
+// ─── Helpers ──────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+
+const showErr = (elId, msg, inputId = null) => {
+    const el = $(elId);
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add('visible');
+    el.classList.remove('hidden');
+    if (inputId) {
+        const inp = $(inputId);
+        if (inp) {
+            inp.classList.add('border-red-500', 'focus:ring-red-500/30', 'focus:border-red-500');
+            inp.classList.remove('border-gray-200', 'focus:ring-[#B88E2F]/30', 'focus:border-[#B88E2F]');
+        }
+    }
+};
+
+const clearErr = (elId, inputId = null) => {
+    const el = $(elId);
+    if (!el) return;
+    el.classList.remove('visible');
+    setTimeout(() => {
+        if (!el.classList.contains('visible')) {
+            el.textContent = '';
+            el.classList.add('hidden');
+        }
+    }, 200);
+    if (inputId) {
+        const inp = $(inputId);
+        if (inp) {
+            inp.classList.remove('border-red-500', 'focus:ring-red-500/30', 'focus:border-red-500');
+            inp.classList.add('border-gray-200', 'focus:ring-[#B88E2F]/30', 'focus:border-[#B88E2F]');
+        }
+    }
+};
+
+// ─── Color Management ─────────────────────────────────────────────
+function refreshColorOptions() {
+    // Read from the colorOptions state array (single source of truth)
+    const colors = colorOptions.map(c => c.colorName.trim()).filter(v => v);
+    const colorSelects = document.querySelectorAll(".variant-color");
+    colorSelects.forEach(select => {
+        const current = select.value;
+        select.innerHTML = `<option value="">Select Color</option> ${colorOptions.filter(color => color.colorName.trim()).map(color => `
+<option value="${color.colorName}">
+${color.colorName}
+</option>
+`).join("")}`;
+        // Preserve selected value if still valid
+        if (colors.includes(current)) {
+            select.value = current;
+        } else {
+            select.value = '';
+        }
+    });
+}
+
+// ─── Variants Management ──────────────────────────────────────────
+function addVariant(v = {}) {
+    variantCount++;
+    const id = `variant-${variantCount}`;
+    const row = document.createElement('div');
+    row.id = id;
+    row.className = 'grid grid-cols-5 gap-3 items-center p-4 bg-gray-50 rounded-xl border border-gray-100';
+    if (v._id) {
+        row.setAttribute('data-variant-id', v._id);
+    }
+    
+    row.innerHTML = `
+        <div>
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">Size</label>
+            <input type="text" placeholder="e.g. M" value="${v.size || ''}" class="var-size w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#B88E2F]">
+        </div>
+        <div>
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">Color</label>
+            <select class="variant-color w-full px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:border-[#B88E2F]">
+                <option value="">Select Color</option>
+            </select>
+        </div>
+        <div>
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">Price (Rp)</label>
+            <input type="number" min="0" placeholder="0" value="${v.price || ''}" class="var-price w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#B88E2F]">
+        </div>
+        <div>
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">Stock</label>
+            <input type="number" min="0" placeholder="0" value="${v.stock || 0}" class="var-stock w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#B88E2F]">
+        </div>
+        <div class="flex items-end justify-center pb-1">
+            <button type="button" onclick="removeVariant('${id}')"
+                    class="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center font-bold transition-colors mt-5" title="Remove">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+        </div>`;
+    
+    $('variantRows').appendChild(row);
+    
+    // Populate colors and restore chosen color selection
+    refreshColorOptions();
+    if(v.color) {
+        row.querySelector('.variant-color').value = v.color;
+    }
+    updateStockFromVariants();
+}
+
+function removeVariant(id) {
+    const el = $(id);
+    if (el) el.remove();
+    updateStockFromVariants();
+}
+
+function updateStockFromVariants() {
+    collectVariants();
+    const stockInput = document.getElementById('stock');
+    if (variants.length > 0) {
+        const total = variants.reduce((sum, v) => sum + (parseInt(v.stock) || 0), 0);
+        stockInput.value = total;
+        stockInput.readOnly = true;
+        stockInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+    } else {
+        stockInput.readOnly = false;
+        stockInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
+    }
+}
+
+// Event delegation to capture dynamic variant stock updates in real time
+document.getElementById('variantRows').addEventListener('input', (e) => {
+    if (e.target.classList.contains('var-stock')) {
+        updateStockFromVariants();
+    }
+});
+
+function collectVariants() {
+    variants = [...document.querySelectorAll('#variantRows > div')].map(row => {
+        const sizeVal  = row.querySelector('.var-size')?.value?.trim() || '';
+        const colorVal = row.querySelector('.variant-color')?.value || '';
+        const priceVal = row.querySelector('.var-price')?.value?.trim() || '';
+        const stockVal = row.querySelector('.var-stock')?.value?.trim() || '';
+        const idVal    = row.getAttribute('data-variant-id') || '';
+        return {
+            id:    idVal,
+            size:  sizeVal,
+            color: colorVal,
+            price: priceVal,
+            stock: stockVal
+        };
+    });
+    return variants;
+}
+
+// ─── Real-time validations ───────────────────────────────────────
+let nameCheckTimer;
+let lastCheckedName = '<%= product.productName %>';
+let isNameDuplicate = false;
+
+async function checkNameDuplicate(name) {
+    if (name.toLowerCase() === lastCheckedName.toLowerCase()) return;
+    try {
+        const res  = await fetch(`/admin/products/check-product-name?name=${encodeURIComponent(name)}&excludeId=${PRODUCT_ID}`);
+        const data = await res.json();
+        if (data.exists) {
+            isNameDuplicate = true;
+            showErr('nameError', 'A product with this name already exists.', 'productName');
+        } else {
+            isNameDuplicate = false;
+            if ($('nameError').textContent === 'A product with this name already exists.') {
+                clearErr('nameError', 'productName');
+            }
+        }
+    } catch (_) {}
+}
+
+function validateName() {
+    const name = $('productName').value.trim();
+    if (!name) { showErr('nameError', 'Product name is required.', 'productName'); return false; }
+    if (name.length < 3) { showErr('nameError', 'Product name must be at least 3 characters.', 'productName'); return false; }
+    if (name.length > 100) { showErr('nameError', 'Product name must be less than 100 characters.', 'productName'); return false; }
+    if (isNameDuplicate) { showErr('nameError', 'A product with this name already exists.', 'productName'); return false; }
+    clearErr('nameError', 'productName');
+    return true;
+}
+
+$('productName').addEventListener('input', function() {
+    const name = this.value.trim();
+    if (!name) { showErr('nameError', 'Product name is required.', 'productName'); return; }
+    clearErr('nameError', 'productName');
+    clearTimeout(nameCheckTimer);
+    nameCheckTimer = setTimeout(() => checkNameDuplicate(name), 400);
+});
+
+function validateDescription() {
+    const desc = $('description').value.trim();
+    if (!desc) { showErr('descError', 'Description is required.', 'description'); return false; }
+    if (desc.length < 20) { showErr('descError', 'Description must be at least 20 characters.', 'description'); return false; }
+    if (desc.length > 1000) { showErr('descError', 'Description must not exceed 1000 characters.', 'description'); return false; }
+    clearErr('descError', 'description');
+    return true;
+}
+$('description').addEventListener('input', validateDescription);
+
+function validateCategory() {
+    const cat = $('category').value;
+    if (!cat) { showErr('categoryError', 'Please select a category.', 'category'); return false; }
+    clearErr('categoryError', 'category');
+    return true;
+}
+$('category').addEventListener('change', validateCategory);
+
+function validateRegularPrice() {
+    const priceVal = $('regularPrice').value;
+    const price = parseFloat(priceVal);
+    if (priceVal.trim() === '' || isNaN(price) || price < 0) { showErr('priceError', 'Regular price must be a positive number.', 'regularPrice'); return false; }
+    clearErr('priceError', 'regularPrice');
+    return true;
+}
+$('regularPrice').addEventListener('input', validateRegularPrice);
+
+function validateSalePrice() {
+    const price = parseFloat($('regularPrice').value);
+    const saleVal = $('salePrice').value;
+    if (saleVal.trim() === '') { clearErr('salePriceError', 'salePrice'); return true; }
+    const saleP = parseFloat(saleVal);
+    if (isNaN(saleP) || saleP < 0) { showErr('salePriceError', 'Sale price must be a positive number.', 'salePrice'); return false; }
+    if (!isNaN(price) && saleP > price) { showErr('salePriceError', 'Sale price cannot exceed regular price.', 'salePrice'); return false; }
+    clearErr('salePriceError', 'salePrice');
+    return true;
+}
+$('salePrice').addEventListener('input', validateSalePrice);
+
+function validateStock() {
+    const stockVal = $('stock').value;
+    const stock = parseInt(stockVal);
+    if (stockVal.trim() === '' || isNaN(stock) || stock < 0) { showErr('stockError', 'Stock quantity must be 0 or greater.', 'stock'); return false; }
+    clearErr('stockError', 'stock');
+    return true;
+}
+$('stock').addEventListener('input', validateStock);
+
+// ─── Submit handler ───────────────────────────────────────────────
+$('saveBtn').addEventListener('click', async () => {
+    // Clear errors
+    ['nameError','categoryError','descError','priceError','salePriceError','stockError','colorsError'].forEach(id => {
+        const inpMap = { nameError:'productName', categoryError:'category', descError:'description', priceError:'regularPrice', salePriceError:'salePrice', stockError:'stock', colorsError:'react-colors-root' };
+        clearErr(id, inpMap[id]);
+    });
+
+    const isNameOk = validateName();
+    const isDescOk = validateDescription();
+    const isCatOk  = validateCategory();
+    const isPriceOk = validateRegularPrice();
+    const isSaleOk = validateSalePrice();
+    const isStockOk = validateStock();
+
+    if (!isNameOk || !isDescOk || !isCatOk || !isPriceOk || !isSaleOk || !isStockOk) return;
+
+    // Colors Validation from React Component
+    const colorData = window.ReactColorsComponent ? window.ReactColorsComponent.getData() : { isValid: false, errors: ['Colors component not initialized.'] };
+    if (!colorData.isValid) {
+        if (colorData.errors && colorData.errors.length) {
+            showErr('colorsError', colorData.errors[0], 'react-colors-root');
+            const rootEl = document.getElementById('react-colors-root');
+            if (rootEl) rootEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+    }
+
+    // Variant Validation (on submit only)
+    collectVariants();
+    if (variants.length > 0) {
+        let badVariantIdx = -1;
+        let missingFields = [];
+        const seen = new Set();
+        let hasDuplicate = false;
+
+        for (let i = 0; i < variants.length; i++) {
+            const v = variants[i];
+            const missing = [];
+            if (!v.size) missing.push('Size');
+            if (!v.color) missing.push('Color');
+            if (!v.price) missing.push('Price');
+            if (v.stock === '' || v.stock === undefined) missing.push('Stock');
+            if (missing.length > 0) {
+                badVariantIdx = i + 1;
+                missingFields = missing;
+                break;
+            }
+
+            const key = `${(v.size || '').trim().toLowerCase()}|${(v.color || '').trim().toLowerCase()}`;
+            if (seen.has(key)) {
+                hasDuplicate = true;
+                break;
+            }
+            seen.add(key);
+        }
+
+        if (badVariantIdx !== -1) {
+            await Swal.fire({
+                icon: 'warning',
+                title: 'Incomplete Variant',
+                text: `Each variant must include size, color, price, and stock. (Variant #${badVariantIdx} is missing: ${missingFields.join(', ')})`,
+                confirmButtonColor: '#B88E2F',
+                customClass: { popup: 'rounded-2xl' }
+            });
+            document.getElementById('variantRows').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        if (hasDuplicate) {
+            await Swal.fire({
+                icon: 'error',
+                title: 'Duplicate Variant',
+                text: 'Variant with this size and color already exists.',
+                confirmButtonColor: '#B88E2F',
+                customClass: { popup: 'rounded-2xl' }
+            });
+            document.getElementById('variantRows').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+    }
+
+    // Check duplicate name again
+    const nameVal = $('productName').value.trim();
+    try {
+        const chkRes  = await fetch(`/admin/products/check-product-name?name=${encodeURIComponent(nameVal)}&excludeId=${PRODUCT_ID}`);
+        const chkData = await chkRes.json();
+        if (chkData.exists) {
+            showErr('nameError', 'A product with this name already exists.', 'productName');
+            return;
+        }
+    } catch (_) {}
+
+    const submittedVariants = variants.map(v => ({
+        id: v.id || undefined,
+        size: v.size,
+        color: v.color,
+        price: parseFloat(v.price),
+        stock: parseInt(v.stock)
+    }));
+
+    const formData = new FormData();
+    formData.append('productName',  nameVal);
+    formData.append('category',     $('category').value);
+    formData.append('description',  $('description').value.trim());
+    formData.append('regularPrice', $('regularPrice').value);
+    formData.append('salePrice',    $('salePrice').value || '');
+    formData.append('stock',        $('stock').value);
+    formData.append('isListed',     $('isListed').value);
+    formData.append('variants',     JSON.stringify(submittedVariants));
+
+    // Colors files & data from React Component
+    formData.append('colors', JSON.stringify(colorData.colors));
+    colorData.files.forEach(item => {
+        formData.append(item.fieldName, item.file);
+    });
+
+    // Debug: log FormData contents
+    console.log('[Submit] FormData entries:');
+    for (const [key, value] of formData.entries()) {
+        if (value instanceof File) {
+            console.log(`  ${key}: File(${value.name}, ${value.type}, ${value.size} bytes)`);
+        } else {
+            console.log(`  ${key}: ${typeof value === 'string' && value.length > 100 ? value.substring(0, 100) + '...' : value}`);
+        }
+    }
+
+    $('saveBtn').disabled    = true;
+    $('saveBtn').innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Saving…';
+
+    try {
+        const res  = await fetch(`/admin/products/${PRODUCT_ID}`, { method:'PUT', body: formData });
+        const data = await res.json();
+
+        if (data.success) {
+            await Swal.fire({
+                icon:'success', title:'Product Updated!',
+                text: data.message,
+                showConfirmButton:false, timer:1500, timerProgressBar:true,
+                customClass:{popup:'rounded-2xl'}
+            });
+            window.location.href = '/admin/products';
+        } else {
+            $('globalError').textContent = data.message || 'Failed to update product.';
+            $('globalError').classList.remove('hidden');
+            if (data.errors) {
+                Object.entries(data.errors).forEach(([field, msg]) => {
+                    const map = { productName:'nameError', category:'categoryError', description:'descError',
+                                  regularPrice:'priceError', salePrice:'salePriceError', stock:'stockError' };
+                    const inpMap = { productName:'productName', category:'category', description:'description',
+                                     regularPrice:'regularPrice', salePrice:'salePrice', stock:'stock' };
+                    if (map[field]) showErr(map[field], msg, inpMap[field]);
+                });
+            }
+        }
+    } catch (err) {
+        console.error('[Submit] Error:', err);
+        $('globalError').textContent = 'Network error. Please try again.';
+        $('globalError').classList.remove('hidden');
+    } finally {
+        $('saveBtn').disabled    = false;
+        $('saveBtn').innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Save Changes';
+    }
+});
+</script>
+</body>
+</html>

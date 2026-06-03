@@ -1,0 +1,1234 @@
+<%- include('../layout/header') %>
+
+<!-- SweetAlert2 CDN for modern toast alerts -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Structured SEO Schema Markup for Google -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org/",
+  "@type": "Product",
+  "name": "<%= product.productName %>",
+  "image": [
+    <% if (product.images && product.images.length > 0) { %>
+      "<%= product.images[0] %>"
+    <% } %>
+  ],
+  "description": "<%= product.description.replace(/"/g, '\\"') %>",
+  "sku": "<%= product.variants && product.variants.length > 0 ? product.variants[0].sku : 'SKU-NONE' %>",
+  "brand": {
+    "@type": "Brand",
+    "name": "Furniro"
+  },
+  "offers": {
+    "@type": "Offer",
+    "url": "https://furniro.com/shop/product/<%= product._id %>",
+    "priceCurrency": "IDR",
+    "price": "<%= product.salePrice || product.regularPrice %>",
+    "availability": "https://schema.org/<%= product.stock > 0 ? 'InStock' : 'OutOfStock' %>",
+    "itemCondition": "https://schema.org/NewCondition"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "<%= averageRating || 5 %>",
+    "reviewCount": "<%= totalReviews || 1 %>"
+  }
+}
+</script>
+
+<main class="bg-white min-h-screen text-[#3A3A3A]">
+
+  <!-- ── Breadcrumbs (SEO-Friendly & Clickable) ────────────────────────── -->
+  <nav class="bg-[#F9F1E7] py-4 px-6 md:px-16" aria-label="Breadcrumb">
+    <ol class="flex flex-wrap items-center space-x-3 text-sm font-medium text-gray-500">
+      <li>
+        <a href="/home" class="hover:text-[#B88E2F] transition-all">Home</a>
+      </li>
+      <li class="flex items-center space-x-3">
+        <i class="fas fa-chevron-right text-xs text-gray-400"></i>
+        <a href="/shop" class="hover:text-[#B88E2F] transition-all">Shop</a>
+      </li>
+      <% if (product.category) { %>
+        <li class="flex items-center space-x-3">
+          <i class="fas fa-chevron-right text-xs text-gray-400"></i>
+          <a href="/shop?category=<%= encodeURIComponent(product.category.name) %>" class="hover:text-[#B88E2F] transition-all uppercase text-xs tracking-wide">
+            <%= product.category.name %>
+          </a>
+        </li>
+      <% } %>
+      <li class="flex items-center space-x-3 text-[#3A3A3A] font-semibold" aria-current="page">
+        <i class="fas fa-chevron-right text-xs text-gray-400"></i>
+        <span class="truncate max-w-[150px] md:max-w-xs"><%= product.productName %></span>
+      </li>
+    </ol>
+  </nav>
+
+  <!-- ── Main Details Layout ────────────────────────────────────────── -->
+  <section class="max-w-7xl mx-auto px-6 md:px-12 py-12">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
+
+      <!-- ── Left Column: Product Gallery ────────────────────────────── -->
+      <div class="flex flex-col-reverse md:flex-row gap-6">
+        
+        <!-- Thumbnails column -->
+        <div id="thumbnails-container" class="flex md:flex-col overflow-x-auto md:overflow-y-auto gap-4 md:w-24 w-full h-auto md:h-[500px] shrink-0 scrollbar-none">
+          <!-- Populated by JS based on variants/color -->
+        </div>
+
+        <!-- Main Display Frame -->
+        <div class="flex-grow bg-[#F9F1E7] rounded-xl relative overflow-hidden flex items-center justify-center h-[350px] md:h-[500px] cursor-zoom-in group border border-gray-100" id="main-image-container">
+          <img id="main-image" src="" alt="<%= product.productName %>" class="max-w-full max-h-full object-contain transition-transform duration-300 pointer-events-none">
+          <div class="absolute bottom-4 right-4 bg-white/80 hover:bg-white text-gray-700 w-10 h-10 rounded-full flex items-center justify-center shadow-md transition-all cursor-pointer" onclick="openLightbox()">
+            <i class="fas fa-expand-alt"></i>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── Right Column: Product Information ────────────────────────── -->
+      <div class="space-y-6">
+        <div>
+          <!-- Title & Badges -->
+          <div class="flex items-center gap-3 mb-2">
+            <span class="bg-[#B88E2F]/10 text-[#B88E2F] text-xs font-bold uppercase tracking-wider px-3 py-1 rounded">
+              <%= product.category ? product.category.name : 'Furniture' %>
+            </span>
+            <span id="stock-badge" class="text-xs font-bold px-3 py-1 rounded">
+              <!-- Populated by JS -->
+            </span>
+          </div>
+          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight"><%= product.productName %></h1>
+        </div>
+
+        <!-- Star Rating Summary -->
+        <div class="flex items-center space-x-3 text-sm">
+          <div class="flex text-yellow-400 space-x-0.5">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <i class="<%= i <= Math.round(averageRating || 5) ? 'fas' : 'far' %> fa-star"></i>
+            <% } %>
+          </div>
+          <span class="text-gray-400">|</span>
+          <a href="#reviews-section" class="text-gray-500 hover:text-[#B88E2F] transition-colors font-medium"><%= totalReviews %> Customer Reviews</a>
+        </div>
+
+        <!-- Pricing Section -->
+        <div class="bg-gray-50 p-5 rounded-2xl border border-gray-100 space-y-2">
+          <div class="flex items-baseline space-x-4">
+            <span id="display-price" class="text-3xl font-extrabold text-[#B88E2F]">
+              <!-- Populated by JS -->
+            </span>
+            <span id="display-regular-price" class="text-lg text-gray-400 line-through font-semibold hidden">
+              <!-- Populated by JS -->
+            </span>
+            <span id="discount-badge" class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded hidden">
+              <!-- Populated by JS -->
+            </span>
+          </div>
+          <p id="savings-text" class="text-sm text-green-600 font-bold hidden">
+            <!-- Populated by JS -->
+          </p>
+        </div>
+
+        <!-- Short Description -->
+        <p class="text-gray-600 leading-relaxed text-sm"><%= product.description || 'No description available for this premium furniture piece.' %></p>
+
+        <!-- Product Highlights Badges -->
+        <div class="grid grid-cols-2 gap-3 py-3 border-t border-b border-gray-100">
+          <div class="flex items-center space-x-2 text-xs font-medium text-gray-600">
+            <i class="fas fa-shield-alt text-[#B88E2F]"></i>
+            <span>5 Year Warranty</span>
+          </div>
+          <div class="flex items-center space-x-2 text-xs font-medium text-gray-600">
+            <i class="fas fa-truck text-[#B88E2F]"></i>
+            <span>Free Express Delivery</span>
+          </div>
+          <div class="flex items-center space-x-2 text-xs font-medium text-gray-600">
+            <i class="fas fa-couch text-[#B88E2F]"></i>
+            <span>Premium Stain-resistant Fabric</span>
+          </div>
+          <div class="flex items-center space-x-2 text-xs font-medium text-gray-600">
+            <i class="fas fa-tree text-[#B88E2F]"></i>
+            <span>Solid Hardwood Frame</span>
+          </div>
+        </div>
+
+        <!-- Variant Selection -->
+        <div class="space-y-4">
+          <!-- Colors -->
+          <div id="color-selection-section" class="hidden">
+            <span class="text-sm font-semibold text-gray-500 block mb-2 uppercase tracking-wider text-xs">Color</span>
+            <div class="flex items-center space-x-3" id="color-options-container">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <!-- Sizes -->
+          <div id="size-selection-section" class="hidden">
+            <span class="text-sm font-semibold text-gray-500 block mb-2 uppercase tracking-wider text-xs">Size</span>
+            <div class="flex items-center space-x-2" id="size-options-container">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Quantity & Add to Cart Frame -->
+        <div class="flex flex-wrap items-center gap-4 pt-4">
+          
+          <!-- Quantity -->
+          <div class="flex items-center border border-gray-300 rounded-lg bg-white h-12">
+            <button onclick="changeQty(-1)" class="px-4 py-2 hover:bg-gray-100 text-gray-500 font-bold h-full border-r transition-colors focus:outline-none" type="button">-</button>
+            <input type="number" id="qty-input" value="1" min="1" class="w-12 text-center font-bold text-sm focus:outline-none h-full" readonly>
+            <button onclick="changeQty(1)" class="px-4 py-2 hover:bg-gray-100 text-gray-500 font-bold h-full border-l transition-colors focus:outline-none" type="button">+</button>
+          </div>
+
+          <!-- Add to Cart -->
+          <button onclick="submitCartAction('add')" id="btn-add-to-cart" class="flex-grow md:flex-grow-0 bg-white border border-[#B88E2F] text-[#B88E2F] hover:bg-[#B88E2F] hover:text-white px-8 py-3 rounded-lg font-bold text-sm shadow-sm transition-all h-12 flex items-center justify-center gap-2">
+            <i class="fas fa-shopping-cart"></i> Add To Cart
+          </button>
+
+          <!-- Buy Now -->
+          <button onclick="submitCartAction('buy')" id="btn-buy-now" class="flex-grow md:flex-grow-0 bg-[#B88E2F] text-white hover:bg-[#967325] px-8 py-3 rounded-lg font-bold text-sm shadow-md transition-all h-12 flex items-center justify-center gap-2">
+            <i class="fas fa-bolt"></i> Buy Now
+          </button>
+
+          <!-- Wishlist -->
+          <button onclick="toggleWishlist()" id="btn-wishlist" class="w-12 h-12 rounded-lg border border-gray-200 flex items-center justify-center text-lg hover:border-red-400 hover:text-red-500 transition-all focus:outline-none">
+            <i id="wishlist-icon" class="<%= isInWishlist ? 'fas text-red-500' : 'far text-gray-400' %> fa-heart animate-pulse-once"></i>
+          </button>
+
+        </div>
+
+        <!-- Coupons & Offers section -->
+        <% if (coupons && coupons.length > 0) { %>
+          <div class="mt-8 border border-dashed border-[#B88E2F]/40 bg-[#FCF8F3] p-5 rounded-2xl">
+            <div class="flex items-center space-x-2 text-[#B88E2F] mb-4">
+              <i class="fas fa-tags"></i>
+              <span class="font-bold text-sm uppercase tracking-wider">Available Offers & Coupons</span>
+            </div>
+            <div class="space-y-3">
+              <% coupons.forEach(coupon => { %>
+                <div class="bg-white p-3 rounded-xl border border-gray-100 flex items-center justify-between shadow-xs">
+                  <div>
+                    <span class="bg-[#B88E2F]/10 text-[#B88E2F] text-[10px] font-bold px-2 py-0.5 rounded mb-1 inline-block uppercase">COUPON</span>
+                    <h4 class="font-bold text-sm text-gray-800"><%= coupon.code %></h4>
+                    <p class="text-xs text-gray-500">
+                      <% if (coupon.discountType === 'percentage') { %>
+                        Get <%= coupon.discountValue %>% discount on orders
+                      <% } else { %>
+                        Save Rp <%= coupon.discountValue.toLocaleString('id-ID') %> flat discount
+                      <% } %>
+                      (Min order Rp <%= coupon.minPurchase.toLocaleString('id-ID') %>)
+                    </p>
+                  </div>
+                  <button onclick="copyCouponCode('<%= coupon.code %>')" class="border border-gray-200 text-gray-700 hover:border-[#B88E2F] hover:text-[#B88E2F] text-xs font-bold px-3 py-1.5 rounded-lg transition-all" id="btn-copy-<%= coupon.code %>">
+                    Copy Code
+                  </button>
+                </div>
+              <% }) %>
+            </div>
+          </div>
+        <% } %>
+
+        <!-- Product Meta Data -->
+        <div class="pt-6 border-t border-gray-100 text-xs text-gray-400 space-y-2">
+          <div><span class="font-semibold text-gray-500 w-24 inline-block">SKU</span>: <span id="meta-sku">-</span></div>
+          <div><span class="font-semibold text-gray-500 w-24 inline-block">Category</span>: <span class="uppercase"><%= product.category ? product.category.name : 'General' %></span></div>
+          <div><span class="font-semibold text-gray-500 w-24 inline-block">Tags</span>: Sofa, Living, Comfort, Furniture</div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Dynamic Tabs: Description, Additional Info, Reviews ────────── -->
+  <section class="border-t border-gray-100 mt-16 max-w-7xl mx-auto px-6 md:px-12 py-16">
+    
+    <!-- Tab buttons -->
+    <div class="flex justify-center border-b border-gray-100 mb-12">
+      <div class="flex space-x-8 md:space-x-16 text-lg font-semibold pb-4">
+        <button onclick="switchTab('tab-description')" id="btn-tab-description" class="tab-btn text-[#B88E2F] border-b-2 border-[#B88E2F] pb-4 -mb-[18px] transition-all focus:outline-none">Description</button>
+        <button onclick="switchTab('tab-additional')" id="btn-tab-additional" class="tab-btn text-gray-400 hover:text-gray-900 pb-4 transition-all focus:outline-none">Additional Information</button>
+        <button onclick="switchTab('tab-reviews')" id="btn-tab-reviews" class="tab-btn text-gray-400 hover:text-gray-900 pb-4 transition-all focus:outline-none">Reviews (<%= totalReviews %>)</button>
+      </div>
+    </div>
+
+    <!-- Tab Contents -->
+    <div class="space-y-6">
+
+      <!-- 1. Description Tab -->
+      <div id="tab-description" class="tab-content block space-y-6 max-w-4xl mx-auto">
+        <p class="text-gray-500 leading-relaxed text-center"><%= product.description %></p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
+          <img src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80" alt="Detail 1" class="rounded-xl object-cover h-[250px] w-full shadow-xs">
+          <img src="https://images.unsplash.com/photo-1484101403633-562f891dc89a?auto=format&fit=crop&w=600&q=80" alt="Detail 2" class="rounded-xl object-cover h-[250px] w-full shadow-xs">
+        </div>
+      </div>
+
+      <!-- 2. Additional Info Tab -->
+      <div id="tab-additional" class="tab-content hidden max-w-2xl mx-auto bg-gray-50 p-6 rounded-2xl border border-gray-100">
+        <table class="w-full text-sm">
+          <tbody>
+            <tr class="border-b border-gray-200/60 pb-3">
+              <td class="font-bold text-gray-600 py-3 w-1/3">Frame Upholstery</td>
+              <td class="text-gray-500 py-3">Premium velvet/cotton stain-resistant fabric</td>
+            </tr>
+            <tr class="border-b border-gray-200/60 pb-3">
+              <td class="font-bold text-gray-600 py-3">Internal Cushioning</td>
+              <td class="text-gray-500 py-3">High-density pocket spring with memory foam wrap</td>
+            </tr>
+            <tr class="border-b border-gray-200/60 pb-3">
+              <td class="font-bold text-gray-600 py-3">Leg Frame</td>
+              <td class="text-gray-500 py-3">Solid ash wood legs or gold-plated structural iron</td>
+            </tr>
+            <tr class="border-b border-gray-200/60 pb-3">
+              <td class="font-bold text-gray-600 py-3">Manufacturer warranty</td>
+              <td class="text-gray-500 py-3">5 Year Comprehensive Structural Warranty</td>
+            </tr>
+            <tr>
+              <td class="font-bold text-gray-600 py-3">Origin</td>
+              <td class="text-gray-500 py-3">Crafted in Italy, assembled locally</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 3. Reviews Tab -->
+      <div id="tab-reviews" class="tab-content hidden space-y-12 max-w-4xl mx-auto" id="reviews-section">
+        
+        <!-- Summary & Score Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-center bg-gray-50 p-8 rounded-2xl border border-gray-100">
+          
+          <!-- Avg Score -->
+          <div class="text-center md:border-r border-gray-200/60">
+            <h2 class="text-5xl font-extrabold text-gray-900"><%= averageRating || '5.0' %></h2>
+            <div class="flex justify-center text-yellow-400 space-x-1 my-2 text-sm">
+              <% for (let i = 1; i <= 5; i++) { %>
+                <i class="<%= i <= Math.round(averageRating || 5) ? 'fas' : 'far' %> fa-star"></i>
+              <% } %>
+            </div>
+            <p class="text-xs text-gray-400">Based on <%= totalReviews %> customer reviews</p>
+          </div>
+
+          <!-- Progress distribution bars -->
+          <div class="md:col-span-2 space-y-2">
+            <% for (let stars = 5; stars >= 1; stars--) { %>
+              <div class="flex items-center text-xs text-gray-500">
+                <span class="w-12 font-semibold"><%= stars %> Stars</span>
+                <div class="flex-grow bg-gray-200 h-2.5 mx-3 rounded-full overflow-hidden">
+                  <div class="bg-[#B88E2F] h-full rounded-full transition-all duration-500" <%= `style="width: ${ratingPercentages[stars] || 0}%"` %> ></div>
+                </div>
+                <span class="w-8 text-right font-medium"><%= ratingPercentages[stars] %>%</span>
+              </div>
+            <% } %>
+          </div>
+
+        </div>
+
+        <!-- Write Review Section (Verified Purchasers only) -->
+        <div class="border-t border-gray-100 pt-8">
+          <% if (isVerifiedPurchaser) { %>
+            <div class="bg-white p-6 md:p-8 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+              <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <i class="fas fa-pen-nib text-[#B88E2F]"></i> Write a Verified Customer Review
+              </h3>
+              <form action="/shop/product/<%= product._id %>/review" method="POST" enctype="multipart/form-data" class="space-y-4" id="review-form" onsubmit="return validateReviewForm()">
+                
+                <!-- Stars select -->
+                <div>
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Rating</label>
+                  <div class="flex items-center space-x-2 text-2xl text-gray-300" id="star-selector">
+                    <% for (let i = 1; i <= 5; i++) { %>
+                      <i class="far fa-star cursor-pointer transition-colors hover:text-yellow-400" data-value="<%= i %>" onclick="setFormStars('<%= i %>')"></i>
+                    <% } %>
+                  </div>
+                  <input type="hidden" name="rating" id="review-rating-value" value="" required>
+                  <p id="review-rating-error" class="text-red-500 text-xs mt-1 hidden">Please select a rating star</p>
+                </div>
+
+                <!-- Review Title -->
+                <div>
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Review Title</label>
+                  <input type="text" name="title" id="review-title" placeholder="Summarize your experience..." class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#B88E2F] bg-gray-50">
+                  <p id="review-title-error" class="text-red-500 text-xs mt-1 hidden">Review title is required</p>
+                </div>
+
+                <!-- Review Comment -->
+                <div>
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Comments</label>
+                  <textarea name="comment" id="review-comment" rows="4" placeholder="What did you like or dislike? How does it look in your home?" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#B88E2F] bg-gray-50"></textarea>
+                  <p id="review-comment-error" class="text-red-500 text-xs mt-1 hidden">Comments cannot be blank</p>
+                </div>
+
+                <!-- Images upload -->
+                <div>
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Attach Review Photos (Max 5)</label>
+                  <input type="file" name="reviewImages" id="review-images" multiple accept="image/*" class="w-full text-sm text-gray-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#B88E2F]/10 file:text-[#B88E2F] hover:file:bg-[#B88E2F]/20 cursor-pointer">
+                  <p class="text-gray-400 text-[10px] mt-1">Supported file types: PNG, JPEG, JPG</p>
+                </div>
+
+                <button type="submit" class="bg-[#B88E2F] text-white px-8 py-3 rounded-lg text-sm font-bold shadow hover:bg-[#967325] transition-all">
+                  Submit Review
+                </button>
+              </form>
+            </div>
+          <% } else { %>
+            <div class="bg-gray-50 p-6 rounded-2xl border border-dashed border-gray-300 text-center">
+              <i class="fas fa-lock text-gray-400 text-3xl mb-2"></i>
+              <h4 class="font-bold text-gray-700 text-sm">Write Review Locked</h4>
+              <p class="text-xs text-gray-400 mt-1 max-w-md mx-auto">
+                Only authenticated customers who purchased this specific product and received delivery can write a product review.
+              </p>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- Reviews List -->
+        <div class="space-y-6">
+          <% if (reviews && reviews.length > 0) { %>
+            <% reviews.forEach(review => { %>
+              <div class="border-b border-gray-100 pb-6">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-3">
+                    <!-- User avatar default -->
+                    <div class="w-10 h-10 rounded-full bg-[#B88E2F]/10 flex items-center justify-center font-bold text-[#B88E2F]">
+                      <%= review.userName.charAt(0).toUpperCase() %>
+                    </div>
+                    <div>
+                      <h4 class="font-bold text-sm text-gray-800 flex items-center gap-1.5">
+                        <%= review.userName %>
+                        <span class="bg-green-100 text-green-700 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                          <i class="fas fa-check-circle text-[8px]"></i> Verified Buyer
+                        </span>
+                      </h4>
+                      <div class="flex text-yellow-400 space-x-0.5 text-xs my-0.5">
+                        <% for (let i = 1; i <= 5; i++) { %>
+                          <i class="<%= i <= review.rating ? 'fas' : 'far' %> fa-star"></i>
+                        <% } %>
+                      </div>
+                    </div>
+                  </div>
+                  <span class="text-xs text-gray-400 font-medium"><%= new Date(review.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></span>
+                </div>
+                <div class="mt-3 pl-13">
+                  <h5 class="font-bold text-sm text-gray-900 mb-1"><%= review.title %></h5>
+                  <p class="text-gray-500 text-sm leading-relaxed"><%= review.comment %></p>
+                  
+                  <!-- Review Images -->
+                  <% if (review.images && review.images.length > 0) { %>
+                    <div class="flex flex-wrap gap-2 mt-3">
+                      <% review.images.forEach(img => { %>
+                        <img src="<%= img %>" alt="Review Photo" class="w-16 h-16 object-cover rounded-lg border border-gray-200 cursor-zoom-in" onclick="openLightboxImage('<%= img %>')">
+                      <% }) %>
+                    </div>
+                  <% } %>
+                </div>
+              </div>
+            <% }) %>
+          <% } else { %>
+            <div class="text-center py-8 text-gray-400 text-sm">
+              <i class="far fa-comments text-2xl mb-2 block"></i>
+              No reviews yet for this product. Be the first to buy and share your experience!
+            </div>
+          <% } %>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Related Products Section ───────────────────────────────────── -->
+  <section class="border-t border-gray-100 py-16 max-w-7xl mx-auto px-6 md:px-12">
+    <h2 class="text-3xl font-bold text-center text-gray-900 mb-12">Related Products</h2>
+    <% if (relatedProducts && relatedProducts.length > 0) { %>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <% relatedProducts.forEach(product => { %>
+          <%- include('./userPartials/product-card', { product }) %>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <p class="text-center text-gray-400 text-sm">No related products found in this category.</p>
+    <% } %>
+  </section>
+
+  <!-- ── Recently Viewed Products Section ────────────────────────────── -->
+  <% if (recentlyViewedProducts && recentlyViewedProducts.length > 0) { %>
+    <section class="border-t border-gray-100 py-16 max-w-7xl mx-auto px-6 md:px-12">
+      <h2 class="text-3xl font-bold text-center text-gray-900 mb-12">Recently Viewed</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <% recentlyViewedProducts.forEach(product => { %>
+          <%- include('./userPartials/product-card', { product }) %>
+        <% }) %>
+      </div>
+    </section>
+  <% } %>
+
+</main>
+
+<!-- Lightbox Modal Container -->
+<div id="lightbox-modal" class="fixed inset-0 bg-black/90 z-[100] hidden items-center justify-center p-4">
+  <button onclick="closeLightbox()" class="absolute top-6 right-6 text-white text-3xl hover:text-gray-300 focus:outline-none">&times;</button>
+  <img id="lightbox-image" src="" alt="Lightbox View" class="max-w-full max-h-full object-contain rounded-lg">
+</div>
+
+<script id="product-data" type="application/json">
+  <%- JSON.stringify(product) %>
+</script>
+<script id="all-system-sizes-data" type="application/json">
+  <%- JSON.stringify(allSystemSizes) %>
+</script>
+
+<!-- Dynamic Client-Side Product Variant Handling script -->
+<script>
+  // Product details transferred from EJS context (decoded safely via DOM to avoid JS parsing warnings)
+  const product = JSON.parse(document.getElementById('product-data').textContent);
+  const allSystemSizes = JSON.parse(document.getElementById('all-system-sizes-data').textContent);
+
+  // Selected state tracking variables
+  let selectedColor = "";
+  let selectedSize = "";
+  let selectedQty = 1;
+  let currentVariant = null;
+
+  // Initial setup on Page Load
+  document.addEventListener('DOMContentLoaded', () => {
+      initializeVariants();
+      setupGalleryZoom();
+      setupAlertParameters();
+  });
+
+  // Read URL query parameters to show success/error alerts
+  function setupAlertParameters() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const successMsg = urlParams.get('success');
+      const errorMsg = urlParams.get('error');
+
+      if (successMsg) {
+          Swal.fire({
+              icon: 'success',
+              title: 'Success',
+              text: successMsg,
+              confirmButtonColor: '#B88E2F'
+          });
+      }
+      if (errorMsg) {
+          Swal.fire({
+              icon: 'error',
+              title: 'Alert',
+              text: errorMsg,
+              confirmButtonColor: '#B88E2F'
+          });
+      }
+  }
+
+  // Gallery zoom effect definition
+  function setupGalleryZoom() {
+      const container = document.getElementById('main-image-container');
+      const img = document.getElementById('main-image');
+
+      if (container && img) {
+          container.addEventListener('mousemove', (e) => {
+              const rect = container.getBoundingClientRect();
+              const x = e.clientX - rect.left;
+              const y = e.clientY - rect.top;
+              
+              img.style.transformOrigin = `${(x / rect.width) * 100}% ${(y / rect.height) * 100}%`;
+              img.style.transform = 'scale(1.8)';
+          });
+
+          container.addEventListener('mouseleave', () => {
+              img.style.transformOrigin = 'center';
+              img.style.transform = 'scale(1)';
+          });
+      }
+  }
+
+  // Variant manager initialisation
+  function initializeVariants() {
+      const hasVariants = product.variants && product.variants.length > 0;
+
+      if (!hasVariants) {
+          // If no variants, just set details based on main product model properties
+          updateProductDetailsDisplay(product.regularPrice, product.salePrice, product.stock, product.variants && product.variants.length > 0 ? product.variants[0].sku : 'SKU-NONE');
+          updateGalleryImages(product.images);
+          return;
+      }
+
+      // Collect available unique colors from this product's variants
+      const availableColors = [...new Set(product.variants.map(v => v.color).filter(Boolean))];
+
+      // Use ALL system sizes (from backend) to display every size in the system
+      // This ensures sizes like XL, XXL are shown even if the current product has no variant for them
+      const sizesToDisplay = allSystemSizes && allSystemSizes.length > 0
+          ? allSystemSizes
+          : [...new Set(product.variants.map(v => v.size).filter(Boolean))];
+
+      // Show sections if they have values
+      if (availableColors.length > 0) {
+          document.getElementById('color-selection-section').classList.remove('hidden');
+          renderColorOptions(availableColors);
+      }
+      if (sizesToDisplay.length > 0) {
+          document.getElementById('size-selection-section').classList.remove('hidden');
+          renderSizeOptions(sizesToDisplay);
+      }
+
+      // Pre-select first color/size that is available (has stock > 0 if possible)
+      let seedVariant = product.variants.find(v => v.stock > 0) || product.variants[0];
+      if (seedVariant) {
+          selectColor(seedVariant.color);
+          selectSize(seedVariant.size);
+      }
+  }
+
+  // Render Color interactive buttons
+  function renderColorOptions(colors) {
+      const container = document.getElementById('color-options-container');
+      container.innerHTML = "";
+
+      colors.forEach(colName => {
+          // Find color hex code from colors array
+          const colorObj = product.colors.find(c => c.name.toLowerCase() === colName.toLowerCase());
+          const hex = colorObj ? colorObj.hex : "#CCCCCC";
+
+          const btn = document.createElement('button');
+          btn.type = "button";
+          btn.title = colName;
+          btn.className = `w-8 h-8 rounded-full border-2 border-transparent transition-all focus:outline-none hover:scale-110 shadow-xs color-btn-selector`;
+          btn.style.backgroundColor = hex;
+          btn.setAttribute('data-color', colName);
+          btn.onclick = () => selectColor(colName);
+          
+          container.appendChild(btn);
+      });
+  }
+
+  // Render Size interactive buttons (ALL system sizes)
+  function renderSizeOptions(sizes) {
+      const container = document.getElementById('size-options-container');
+      container.innerHTML = "";
+
+      sizes.forEach(sz => {
+          const btn = document.createElement('button');
+          btn.type = "button";
+          btn.className = `px-4 py-2 border border-gray-200 text-gray-700 font-semibold text-xs rounded-lg transition-all focus:outline-none size-btn-selector flex flex-col items-center justify-center min-w-[70px]`;
+          btn.textContent = sz;
+          btn.setAttribute('data-size', sz);
+          // onclick will be set dynamically by updateSizesAvailability based on state
+
+          container.appendChild(btn);
+      });
+  }
+
+  // Manage selection of color
+  function selectColor(colorName) {
+      selectedColor = colorName;
+
+      // Update color button selected UI border
+      const buttons = document.querySelectorAll('.color-btn-selector');
+      buttons.forEach(btn => {
+          if (btn.getAttribute('data-color') === colorName) {
+              btn.classList.add('ring-2', 'ring-[#B88E2F]', 'ring-offset-2');
+          } else {
+              btn.classList.remove('ring-2', 'ring-[#B88E2F]', 'ring-offset-2');
+          }
+      });
+
+      // Update thumbnails and main image based on selected color images
+      const colorObj = product.colors.find(c => c.name.toLowerCase() === colorName.toLowerCase());
+      if (colorObj && colorObj.images && colorObj.images.length > 0) {
+          updateGalleryImages(colorObj.images);
+      } else {
+          updateGalleryImages(product.images);
+      }
+
+      // Check sizes availability for this color
+      updateSizesAvailability();
+
+      // Prevent invalid combinations: if current size doesn't have an available variant
+      // for the new color, auto-select the first available size
+      const currentSizeMatch = product.variants.find(v => v.color === selectedColor && v.size === selectedSize && v.stock > 0);
+      if (!currentSizeMatch) {
+          const activeVariantsForColor = product.variants.filter(v => v.color === selectedColor && v.stock > 0);
+          if (activeVariantsForColor.length > 0) {
+              selectedSize = activeVariantsForColor[0].size;
+          } else {
+              // All variants for this color are out of stock — try any variant for this color
+              const anyVariantForColor = product.variants.find(v => v.color === selectedColor);
+              if (anyVariantForColor) {
+                  selectedSize = anyVariantForColor.size;
+              } else {
+                  selectedSize = "";
+              }
+          }
+      }
+
+      updateSizesAvailability();
+      calculateCurrentVariant();
+  }
+
+  // Manage selection of size — only called for available (in-stock) sizes
+  function selectSize(sizeName) {
+      // Double-check: only allow selecting sizes that have an available variant
+      const matchVar = product.variants.find(v => v.color === selectedColor && v.size === sizeName);
+      if (!matchVar || matchVar.stock === 0) {
+          // Don't allow selecting out-of-stock or unavailable sizes
+          return;
+      }
+
+      selectedSize = sizeName;
+      updateSizesAvailability();
+      calculateCurrentVariant();
+  }
+
+  /**
+   * Update all size buttons based on the currently selected color.
+   * Three states:
+   *   1. AVAILABLE  — variant exists for this color, stock > 0 → clickable, normal style
+   *   2. OUT OF STOCK — variant exists for this color, stock === 0 → line-through, disabled
+   *   3. UNAVAILABLE — no variant exists for this color → greyed out, disabled
+   */
+  function updateSizesAvailability() {
+      const sizeButtons = document.querySelectorAll('.size-btn-selector');
+      sizeButtons.forEach(btn => {
+          const sizeVal = btn.getAttribute('data-size');
+          const matchVar = product.variants.find(v => v.color === selectedColor && v.size === sizeVal);
+
+          if (!matchVar) {
+              // ─── UNAVAILABLE: No variant exists for this color ───
+              // Grey background, disabled, not clickable
+              btn.className = "px-4 py-2 bg-gray-100 border border-gray-200 text-gray-300 font-semibold text-xs rounded-lg cursor-not-allowed size-btn-selector flex flex-col items-center justify-center min-w-[70px]";
+              btn.setAttribute('disabled', 'true');
+              btn.onclick = null;
+              btn.innerHTML = `<span class="text-gray-300">${sizeVal}</span><span class="text-[9px] text-gray-300 font-normal mt-0.5">Unavailable</span>`;
+              btn.style.opacity = '0.5';
+          } else if (matchVar.stock === 0) {
+              // ─── OUT OF STOCK: Variant exists but stock is 0 ───
+              // Line-through, reduced opacity, disabled, not clickable
+              btn.className = "px-4 py-2 border border-gray-200 text-gray-400 font-semibold text-xs rounded-lg cursor-not-allowed size-btn-selector flex flex-col items-center justify-center min-w-[70px] line-through";
+              btn.setAttribute('disabled', 'true');
+              btn.onclick = null;
+              btn.innerHTML = `<span class="line-through">${sizeVal}</span><span class="text-[8px] text-red-500 font-bold block leading-none mt-0.5 no-underline" style="text-decoration: none;">Out of Stock</span>`;
+              btn.style.opacity = '0.6';
+          } else {
+              // ─── AVAILABLE: Variant exists and has stock > 0 ───
+              // Clickable, normal or selected style
+              btn.removeAttribute('disabled');
+              btn.onclick = () => selectSize(sizeVal);
+              btn.style.opacity = '1';
+
+              if (selectedSize === sizeVal) {
+                  // SELECTED state — highlighted with gold border
+                  btn.className = "px-4 py-2 bg-white border-2 border-[#B88E2F] text-[#B88E2F] font-bold text-xs rounded-lg transition-all focus:outline-none size-btn-selector shadow-sm flex flex-col items-center justify-center min-w-[70px]";
+              } else {
+                  // AVAILABLE but not selected
+                  btn.className = "px-4 py-2 border border-gray-200 text-gray-700 font-semibold text-xs rounded-lg hover:border-[#B88E2F] hover:text-[#B88E2F] transition-all focus:outline-none size-btn-selector bg-white flex flex-col items-center justify-center min-w-[70px] cursor-pointer";
+              }
+              btn.innerHTML = `<span>${sizeVal}</span>`;
+          }
+      });
+  }
+
+  // Match color & size selection to variant object
+  function calculateCurrentVariant() {
+      if (!product.variants || product.variants.length === 0) return;
+
+      currentVariant = product.variants.find(v => v.color === selectedColor && v.size === selectedSize);
+
+      if (currentVariant) {
+          updateProductDetailsDisplay(currentVariant.price, null, currentVariant.stock, currentVariant.sku, false);
+      } else {
+          // No valid matching variant for the selected color & size combination
+          updateProductDetailsDisplay(product.regularPrice, product.salePrice, 0, 'SKU-NONE', true);
+      }
+  }
+
+  // Update prices, stock indicators, and SKU
+  function updateProductDetailsDisplay(price, salePrice, stock, sku, isUnavailable = false) {
+      const displayPriceEl = document.getElementById('display-price');
+      const regularPriceEl = document.getElementById('display-regular-price');
+      const discountEl = document.getElementById('discount-badge');
+      const savingsEl = document.getElementById('savings-text');
+      const badgeEl = document.getElementById('stock-badge');
+      const skuEl = document.getElementById('meta-sku');
+
+      // SKU metadata
+      skuEl.textContent = sku || "SKU-NONE";
+
+      // Formatted prices
+      const displayAmt = salePrice || price || 0;
+      displayPriceEl.textContent = `Rp ${displayAmt.toLocaleString('id-ID')}`;
+
+      if (salePrice && price && price > salePrice) {
+          regularPriceEl.textContent = `Rp ${price.toLocaleString('id-ID')}`;
+          regularPriceEl.classList.remove('hidden');
+
+          const pct = Math.round((1 - salePrice / price) * 100);
+          discountEl.textContent = `${pct}% OFF`;
+          discountEl.classList.remove('hidden');
+
+          const diff = price - salePrice;
+          savingsEl.textContent = `You Save Rp ${diff.toLocaleString('id-ID')}`;
+          savingsEl.classList.remove('hidden');
+      } else {
+          regularPriceEl.classList.add('hidden');
+          discountEl.classList.add('hidden');
+          savingsEl.classList.add('hidden');
+      }
+
+      // Stock badge & Add/Buy buttons
+      if (isUnavailable) {
+          badgeEl.className = "text-xs font-bold px-3 py-1 rounded bg-gray-100 text-gray-500";
+          badgeEl.textContent = "Unavailable";
+          document.getElementById('btn-add-to-cart').setAttribute('disabled', 'true');
+          document.getElementById('btn-buy-now').setAttribute('disabled', 'true');
+          document.getElementById('btn-add-to-cart').classList.add('opacity-50', 'cursor-not-allowed');
+          document.getElementById('btn-buy-now').classList.add('opacity-50', 'cursor-not-allowed');
+      } else if (stock === 0) {
+          badgeEl.className = "text-xs font-bold px-3 py-1 rounded bg-red-100 text-red-700";
+          badgeEl.textContent = "Out of Stock";
+          document.getElementById('btn-add-to-cart').setAttribute('disabled', 'true');
+          document.getElementById('btn-buy-now').setAttribute('disabled', 'true');
+          document.getElementById('btn-add-to-cart').classList.add('opacity-50', 'cursor-not-allowed');
+          document.getElementById('btn-buy-now').classList.add('opacity-50', 'cursor-not-allowed');
+      } else if (stock >= 1 && stock <= 10) {
+          badgeEl.className = "text-xs font-bold px-3 py-1 rounded bg-orange-100 text-orange-700";
+          badgeEl.textContent = `Low Stock (${stock})`;
+          document.getElementById('btn-add-to-cart').removeAttribute('disabled');
+          document.getElementById('btn-buy-now').removeAttribute('disabled');
+          document.getElementById('btn-add-to-cart').classList.remove('opacity-50', 'cursor-not-allowed');
+          document.getElementById('btn-buy-now').classList.remove('opacity-50', 'cursor-not-allowed');
+      } else {
+          badgeEl.className = "text-xs font-bold px-3 py-1 rounded bg-green-100 text-green-700";
+          badgeEl.textContent = "In Stock";
+          document.getElementById('btn-add-to-cart').removeAttribute('disabled');
+          document.getElementById('btn-buy-now').removeAttribute('disabled');
+          document.getElementById('btn-add-to-cart').classList.remove('opacity-50', 'cursor-not-allowed');
+          document.getElementById('btn-buy-now').classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+
+      // Reset qty selector bounds
+      selectedQty = 1;
+      document.getElementById('qty-input').value = 1;
+  }
+
+  // Update gallery images array
+  function updateGalleryImages(images) {
+      const container = document.getElementById('thumbnails-container');
+      const mainImg = document.getElementById('main-image');
+      container.innerHTML = "";
+
+      const activeImages = images && images.length > 0 
+          ? images 
+          : ['https://placehold.co/800x800?text=No+Image+Available'];
+
+      // Set main image source
+      const imgPath = activeImages[0].startsWith('http') ? activeImages[0] : '/upload/products/' + activeImages[0];
+      mainImg.src = imgPath;
+
+      activeImages.forEach((img, index) => {
+          const path = img.startsWith('http') ? img : '/upload/products/' + img;
+          const thumb = document.createElement('div');
+          thumb.className = `w-20 h-20 md:w-24 md:h-24 bg-[#F9F1E7] border ${index === 0 ? 'border-[#B88E2F]' : 'border-gray-200'} rounded-lg overflow-hidden cursor-pointer flex items-center justify-center shrink-0 p-1 hover:border-[#B88E2F] transition-all thumb-frame`;
+          thumb.innerHTML = `<img src="${path}" class="max-w-full max-h-full object-contain" loading="lazy">`;
+          thumb.onclick = () => {
+              // Swap main source
+              mainImg.src = path;
+              // Reset thumbnails active outline
+              document.querySelectorAll('.thumb-frame').forEach(el => el.classList.remove('border-[#B88E2F]'));
+              thumb.classList.add('border-[#B88E2F]');
+          };
+
+          container.appendChild(thumb);
+      });
+  }
+
+  // Handle Qty selectors
+  function changeQty(amt) {
+      const maxVal = currentVariant ? currentVariant.stock : product.stock;
+      if (maxVal === 0) return;
+
+      const input = document.getElementById('qty-input');
+      let val = parseInt(input.value) + amt;
+
+      if (val < 1) val = 1;
+      if (val > maxVal) {
+          val = maxVal;
+          Swal.fire({
+              icon: 'warning',
+              title: 'Stock Limit Reached',
+              text: `Only ${maxVal} items are available in stock.`,
+              confirmButtonColor: '#B88E2F'
+          });
+      }
+
+      selectedQty = val;
+      input.value = val;
+  }
+
+  // Submit Cart Action (AJAX)
+  async function submitCartAction(type) {
+      // 1. Blocked/Deleted / Unlisted verification
+      if (product.isDeleted || !product.isListed) {
+          Swal.fire({
+              icon: 'error',
+              title: 'Product Unavailable',
+              text: 'This product is currently unavailable.',
+              confirmButtonColor: '#B88E2F'
+          });
+          return;
+      }
+
+      // 2. Color must be selected
+      const hasVariants = product.variants && product.variants.length > 0;
+      if (hasVariants && !selectedColor) {
+          Swal.fire({
+              icon: 'warning',
+              title: 'Selection Required',
+              text: 'Please select a color.',
+              confirmButtonColor: '#B88E2F'
+          });
+          return;
+      }
+
+      // 3. Size must be selected
+      if (hasVariants && !selectedSize) {
+          Swal.fire({
+              icon: 'warning',
+              title: 'Selection Required',
+              text: 'Please select a size.',
+              confirmButtonColor: '#B88E2F'
+          });
+          return;
+      }
+
+      // 4. Variant must exist
+      if (hasVariants && !currentVariant) {
+          Swal.fire({
+              icon: 'error',
+              title: 'Variant Unavailable',
+              text: 'The selected size/color combination is not available.',
+              confirmButtonColor: '#B88E2F'
+          });
+          return;
+      }
+
+      // 5. Variant must have stock
+      const stock = currentVariant ? currentVariant.stock : product.stock;
+      if (stock <= 0) {
+          Swal.fire({
+              icon: 'warning',
+              title: 'Out of Stock',
+              text: 'The selected item is out of stock.',
+              confirmButtonColor: '#B88E2F'
+          });
+          return;
+      }
+
+      const btn = type === 'add' ? document.getElementById('btn-add-to-cart') : document.getElementById('btn-buy-now');
+      const originalText = btn.innerHTML;
+
+      // Loading state
+      btn.innerHTML = `<i class="fas fa-spinner animate-spin"></i> Processing...`;
+      btn.setAttribute('disabled', 'true');
+
+      try {
+          const endpoint = type === 'add' ? '/cart/add' : '/cart/buy-now';
+          const response = await fetch(endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  productId: product._id,
+                  variantId: currentVariant ? currentVariant._id : null,
+                  quantity: selectedQty
+              })
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+              throw new Error(data.message || 'Something went wrong');
+          }
+
+          if (type === 'add') {
+              if (window.updateCartBadgeCount && typeof data.cartCount === 'number') {
+                  window.updateCartBadgeCount(data.cartCount);
+              }
+              Swal.fire({
+                  icon: 'success',
+                  title: 'Added to Cart!',
+                  text: data.message,
+                  confirmButtonColor: '#B88E2F',
+                  showCancelButton: true,
+                  cancelButtonText: 'Continue Shopping',
+                  confirmButtonText: 'Go to Cart'
+              }).then((result) => {
+                  if (result.isConfirmed) {
+                      window.location.href = '/cart';
+                  }
+              });
+          } else {
+              window.location.href = data.redirectUrl || '/cart';
+          }
+
+      } catch (err) {
+          Swal.fire({
+              icon: 'error',
+              title: 'Action Failed',
+              text: err.message,
+              confirmButtonColor: '#B88E2F'
+          });
+      } finally {
+          btn.innerHTML = originalText;
+          btn.removeAttribute('disabled');
+      }
+  }
+
+  // Toggle Wishlist (AJAX)
+  async function toggleWishlist() {
+      const icon = document.getElementById('wishlist-icon');
+
+      try {
+          const response = await fetch('/wishlist/toggle', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ productId: product._id })
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+              if (response.status === 401) {
+                  window.location.href = '/login?error=Please login to manage wishlist';
+                  return;
+              }
+              throw new Error(data.message);
+          }
+
+          // Update wishlist count badge
+          if (window.updateWishlistBadgeCount && typeof data.wishlistCount === 'number') {
+              window.updateWishlistBadgeCount(data.wishlistCount);
+          }
+
+          if (data.added) {
+              icon.className = "fas text-red-500 fa-heart";
+              Swal.fire({
+                  toast: true,
+                  position: 'top-end',
+                  icon: 'success',
+                  title: 'Added to wishlist',
+                  showConfirmButton: false,
+                  timer: 2000
+              });
+          } else {
+              icon.className = "far text-gray-400 fa-heart";
+              Swal.fire({
+                  toast: true,
+                  position: 'top-end',
+                  icon: 'info',
+                  title: 'Removed from wishlist',
+                  showConfirmButton: false,
+                  timer: 2000
+              });
+          }
+
+      } catch (err) {
+          Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: err.message,
+              confirmButtonColor: '#B88E2F'
+          });
+      }
+  }
+
+  // Copy coupon codes
+  function copyCouponCode(code) {
+      navigator.clipboard.writeText(code).then(() => {
+          const btn = document.getElementById(`btn-copy-${code}`);
+          const origText = btn.textContent;
+          btn.textContent = "Copied!";
+          btn.classList.add('bg-[#B88E2F]', 'text-white', 'border-[#B88E2F]');
+          
+          setTimeout(() => {
+              btn.textContent = origText;
+              btn.classList.remove('bg-[#B88E2F]', 'text-white', 'border-[#B88E2F]');
+          }, 2000);
+      });
+  }
+
+  // Switch Details tabs
+  function switchTab(tabId) {
+      // Hide all content tabs
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('block'));
+
+      // Deactivate all buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+          btn.classList.remove('text-[#B88E2F]', 'border-b-2', 'border-[#B88E2F]', '-mb-[18px]');
+          btn.classList.add('text-gray-400');
+      });
+
+      // Show active tab
+      document.getElementById(tabId).classList.remove('hidden');
+      document.getElementById(tabId).classList.add('block');
+
+      // Set active button
+      const activeBtn = document.getElementById(`btn-${tabId}`);
+      activeBtn.classList.remove('text-gray-400');
+      activeBtn.classList.add('text-[#B88E2F]', 'border-b-2', 'border-[#B88E2F]', '-mb-[18px]');
+  }
+
+  // Lightbox Modal trigger
+  function openLightbox() {
+      const modal = document.getElementById('lightbox-modal');
+      const lightboxImg = document.getElementById('lightbox-image');
+      const mainImg = document.getElementById('main-image');
+
+      lightboxImg.src = mainImg.src;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+  }
+
+  function openLightboxImage(src) {
+      const modal = document.getElementById('lightbox-modal');
+      const lightboxImg = document.getElementById('lightbox-image');
+
+      lightboxImg.src = src;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+  }
+
+  function closeLightbox() {
+      const modal = document.getElementById('lightbox-modal');
+      modal.classList.remove('flex');
+      modal.classList.add('hidden');
+  }
+
+  // Reviews stars selection
+  function setFormStars(rating) {
+      document.getElementById('review-rating-value').value = rating;
+      
+      const stars = document.querySelectorAll('#star-selector i');
+      stars.forEach((star, index) => {
+          if (index < rating) {
+              star.className = "fas fa-star cursor-pointer text-yellow-400";
+          } else {
+              star.className = "far fa-star cursor-pointer text-gray-300";
+          }
+      });
+  }
+
+  // Review Form Frontend Validation
+  function validateReviewForm() {
+      let isValid = true;
+
+      const ratingVal = document.getElementById('review-rating-value').value;
+      const title = document.getElementById('review-title').value;
+      const comment = document.getElementById('review-comment').value;
+
+      if (!ratingVal) {
+          document.getElementById('review-rating-error').classList.remove('hidden');
+          isValid = false;
+      } else {
+          document.getElementById('review-rating-error').classList.add('hidden');
+      }
+
+      if (!title.trim()) {
+          document.getElementById('review-title-error').classList.remove('hidden');
+          isValid = false;
+      } else {
+          document.getElementById('review-title-error').classList.add('hidden');
+      }
+
+      if (!comment.trim()) {
+          document.getElementById('review-comment-error').classList.remove('hidden');
+          isValid = false;
+      } else {
+          document.getElementById('review-comment-error').classList.add('hidden');
+      }
+
+      return isValid;
+  }
+</script>
+
+<script>
+  /* ─────────────────────────────────────────────────────────────────
+   * Add to Cart – card quick-add (Related Products / Recently Viewed)
+   * Uses the same window guard as shop.ejs so only one listener exists
+   * even if both scripts somehow appear on the same page.
+   * ───────────────────────────────────────────────────────────────── */
+  (function () {
+    if (window.__shopCartListenerRegistered) return;
+    window.__shopCartListenerRegistered = true;
+
+    document.addEventListener('click', async function handleCardAddToCart(e) {
+      const btn = e.target.closest('.card-add-to-cart');
+      if (!btn) return;
+
+      if (btn.dataset.processing === 'true') return;
+
+      const productId = btn.dataset.productId;
+      if (!productId) return;
+
+      btn.dataset.processing = 'true';
+      btn.disabled = true;
+      const originalHTML = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Adding...';
+
+      try {
+        const res = await fetch('/cart/add', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ productId, variantId: null, quantity: 1 })
+        });
+
+        if (res.status === 401) {
+          window.location.href = '/login?error=Please login to add items to cart';
+          return;
+        }
+
+        const data = await res.json();
+
+        if (data.success) {
+          if (window.updateCartBadgeCount && typeof data.cartCount === 'number') {
+            window.updateCartBadgeCount(data.cartCount);
+          }
+          await Swal.fire({
+            toast:             true,
+            position:          'top-end',
+            icon:              'success',
+            title:             'Added to Cart!',
+            text:              data.message || 'Product added successfully.',
+            showConfirmButton: false,
+            timer:             2000,
+            timerProgressBar:  true
+          });
+        } else {
+          await Swal.fire({
+            icon:               'error',
+            title:              'Could Not Add',
+            text:               data.message || 'Something went wrong.',
+            confirmButtonColor: '#B88E2F'
+          });
+        }
+
+      } catch (err) {
+        console.error('[AddToCart] Error:', err);
+        await Swal.fire({
+          icon:               'error',
+          title:              'Network Error',
+          text:               'Could not reach the server. Please try again.',
+          confirmButtonColor: '#B88E2F'
+        });
+      } finally {
+        btn.innerHTML          = originalHTML;
+        btn.disabled           = false;
+        btn.dataset.processing = 'false';
+      }
+    });
+  })();
+</script>
+
+<%- include('../layout/footer') %>

@@ -92,11 +92,13 @@
                                 data-is-default="<%= address.isDefault %>">
                                 <i class="far fa-edit"></i> Edit
                             </button>
-                            <form action="/delete-address/<%= address._id %>" method="POST" class="flex-1" onsubmit="return confirm('Are you sure?');">
-                                <button type="submit" class="w-full py-2.5 bg-[#EAEAEA] rounded-lg text-gray-700 text-sm font-bold hover:bg-gray-200 transition-colors">
-                                    <i class="far fa-trash-alt"></i> Delete
-                                </button>
-                            </form>
+                          
+                           <button type="button"
+                           class="btn btn-danger"
+                             style="background-color: #ff4d4d; border: none; border-radius: 10px; padding: 10px 25px; font-weight: 500;"
+                          onclick="showDeletePopup('<%= address._id %>')">
+                               Delete
+                            </button>
                         </div>
                     </div>
                 <% }) %>
@@ -131,10 +133,12 @@
                 <div class="px-8 py-6 max-h-[70vh] overflow-y-auto">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
                         
+                      
                         <div class="sm:col-span-2 space-y-2">
-                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">Full Name</label>
-                            <input type="text" name="name" class="block w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none transition-all focus:ring-4 focus:ring-[#B88E2F]/10 focus:border-[#B88E2F]" required>
-                        </div>
+    <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">Full Name</label>
+    <input type="text" name="name" class="block w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none transition-all focus:ring-4 focus:ring-[#B88E2F]/10 focus:border-[#B88E2F]" required>
+    <p class="error-text text-[10px] text-red-500 font-bold hidden" id="name-error"></p>
+</div>
 
                         <div class="sm:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                             
@@ -171,13 +175,16 @@
                         </div>
 
                         <div class="sm:col-span-1 space-y-2">
-                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">Locality</label>
-                            <input type="text" name="locality" class="block w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none focus:border-[#B88E2F]" required>
-                        </div>
-                        <div class="sm:col-span-1 space-y-2">
-                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">House / Building</label>
-                            <input type="text" name="house" class="block w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none focus:border-[#B88E2F]" required>
-                        </div>
+    <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">Locality</label>
+    <input type="text" name="locality" maxlength="30" class="block w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none focus:border-[#B88E2F]" required>
+    <p class="error-text text-[10px] text-red-500 font-bold hidden" id="locality-error"></p>
+</div>
+                        
+                          <div class="sm:col-span-1 space-y-2">
+    <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">House / Building</label>
+    <input type="text" name="house" maxlength="30"class="block w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none focus:border-[#B88E2F]"required>
+    <p class="error-text text-[10px] text-red-500 font-bold hidden" id="house-error"></p>
+</div>
 
                         <div class="sm:col-span-2 space-y-2">
                             <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">Area / Street</label>
@@ -200,10 +207,9 @@
     </div>
 </div>
 
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // Elements
     const modal = document.getElementById('address-modal');
     const form = document.getElementById('address-form');
     const modalTitle = document.getElementById('modal-title');
@@ -218,36 +224,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let cityData = {};
 
-    // 1. Reset Form
     function resetForm() {
         form.reset();
         form.action = "/add-address";
         modalTitle.textContent = "Add New Address";
         citySelect.innerHTML = '<option value="" disabled selected>Select City</option>';
         citySelect.disabled = true;
-        document.getElementById('phone-warning').classList.add('hidden');
-        document.getElementById('pincode-warning').classList.add('hidden');
+        document.querySelectorAll('.error-text, #phone-warning, #pincode-warning').forEach(el => el.classList.add('hidden'));
     }
 
-    // 2. Real-time Number Validation
+    // Real-time Number Validation
     function checkNumeric(input, warningId) {
         const warning = document.getElementById(warningId);
         if (!input || !warning) return;
-
         input.addEventListener('input', function() {
-            
-            if (/[^0-9]/.test(this.value)) {
-                warning.classList.remove('hidden');
-            } else {
-                warning.classList.add('hidden');
-            }
+            if (/[^0-9]/.test(this.value)) warning.classList.remove('hidden');
+            else warning.classList.add('hidden');
         });
     }
-
     checkNumeric(phoneInput, 'phone-warning');
     checkNumeric(pincodeInput, 'pincode-warning');
 
-    // 3. Populate Cities
     function populateCities(selectedState, targetCity = null) {
         const cities = cityData[selectedState] || [];
         citySelect.innerHTML = '<option value="" disabled selected>Select City</option>';
@@ -263,7 +260,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 4. Fetch State/City Data
     fetch('https://raw.githubusercontent.com/sab99r/Indian-States-And-Districts/master/states-and-districts.json')
         .then(res => res.json())
         .then(data => {
@@ -275,18 +271,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 option.textContent = stateObj.state;
                 stateSelect.appendChild(option);
             });
-            if (stateSelect.dataset.targetState) {
-                stateSelect.value = stateSelect.dataset.targetState;
-                populateCities(stateSelect.dataset.targetState, citySelect.dataset.targetCity);
-            }
         })
         .catch(err => console.error("Error fetching states:", err));
 
-    stateSelect.addEventListener('change', function() {
-        populateCities(this.value);
-    });
+    stateSelect.addEventListener('change', function() { populateCities(this.value); });
 
-    // 5. Modal Open/Close
     if (addBtn) {
         addBtn.addEventListener('click', () => {
             resetForm();
@@ -299,18 +288,18 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.classList.add('hidden');
         document.body.style.overflow = '';
     };
-
     closeBtns.forEach(btn => btn.addEventListener('click', closeModal));
     if (overlay) overlay.addEventListener('click', closeModal);
 
-    // 6. Edit Logic
+    let currentEditAddressId = null;
+
     editBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             const d = this.dataset;
             resetForm();
-            form.action = "/edit-address/" + d.addressId;
+            currentEditAddressId = d.addressId;
+            form.dataset.mode = 'edit';
             modalTitle.textContent = "Edit Address";
-            
             form.querySelector('input[name="name"]').value = d.name;
             form.querySelector('input[name="phone"]').value = d.phone;
             form.querySelector('input[name="pincode"]').value = d.pincode;
@@ -318,37 +307,155 @@ document.addEventListener('DOMContentLoaded', () => {
             form.querySelector('input[name="house"]').value = d.house;
             form.querySelector('input[name="area"]').value = d.area;
             form.querySelector('input[name="isDefault"]').checked = (d.isDefault === 'true');
-
-            if (stateSelect.querySelector(`option[value="${d.state}"]`)) {
-                stateSelect.value = d.state;
-                populateCities(d.state, d.city);
-            } else {
-                stateSelect.dataset.targetState = d.state;
-                citySelect.dataset.targetCity = d.city;
-            }
-
+            stateSelect.value = d.state;
+            populateCities(d.state, d.city);
             modal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         });
     });
 
-    // 7. Form Submit Validation (Fixed Regex)
-    form.addEventListener('submit', (e) => {
-        
-        const phoneVal = phoneInput.value;
-        const pinVal = pincodeInput.value;
+const inputs = form.querySelectorAll('input');
 
-        if (/[^0-9]/.test(phoneVal) || /[^0-9]/.test(pinVal)) {
-            e.preventDefault();
-            Swal.fire({
-                icon: 'error',
-                title: 'Invalid Input',
-                text: 'Please enter numbers only in Phone and Pincode fields!',
-                confirmButtonColor: '#B88E2F'
-            });
+inputs.forEach(input => {
+    input.addEventListener('input', function() {
+        const fieldName = this.getAttribute('name');
+        const val = this.value.trim();
+        let errorId = '';
+        let message = '';
+
+        
+        if (fieldName === 'name') {
+            errorId = 'name-error';
+            if (val.length > 0 && val.length < 3) message = "Minimum 3 characters required!";
+        } else if (fieldName === 'locality') {
+            errorId = 'locality-error';
+            if (val.length > 0 && val.length < 3) message = "Min 3 characters required!";
+        } else if (fieldName === 'house') {
+            errorId = 'house-error';
+            if (val.length > 0 && val.length < 2) message = "House info required!";
+        } else if (fieldName === 'area') {
+            errorId = 'area-error';
+            if (val.length > 0 && val.length < 3) message = "Area info required!";
+        }
+
+        
+        if (errorId) {
+            const errorElement = document.getElementById(errorId);
+            if (errorElement) {
+                if (message) {
+                    errorElement.textContent = message;
+                    errorElement.classList.remove('hidden');
+                } else {
+                    errorElement.classList.add('hidden');
+                }
+            }
         }
     });
 });
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        document.querySelectorAll('.error-text, #phone-warning, #pincode-warning').forEach(el => el.classList.add('hidden'));
+        let isValid = true;
+
+        function showError(id, message) {
+            const el = document.getElementById(id);
+            if (el) { el.textContent = message; el.classList.remove('hidden'); }
+            isValid = false;
+        }
+
+        const nameVal = form.querySelector('input[name="name"]').value.trim();
+        const phoneVal = phoneInput.value.trim();
+        const pinVal = pincodeInput.value.trim();
+        const stateVal = stateSelect.value;
+        const cityVal = citySelect.value;
+        const localityVal = form.querySelector('input[name="locality"]').value.trim();
+        const houseVal = form.querySelector('input[name="house"]').value.trim();
+        const areaVal = form.querySelector('input[name="area"]').value.trim();
+
+        if (nameVal.length < 3) showError('name-error', "Minimum 3 characters required!");
+        if (!/^\d{10}$/.test(phoneVal)) showError('phone-warning', "Enter 10 digit number!");
+        if (!/^\d{6}$/.test(pinVal)) showError('pincode-warning', "Enter 6 digit pincode!");
+
+        // Locality Validation
+        if (!localityVal) {
+            showError('locality-error', "Locality is required!");
+        } else if (localityVal.length < 3) {
+            showError('locality-error', "Too short! Min 3 characters.");
+        } else if (localityVal.length > 30) {
+            showError('locality-error', "Too long! Max 30 characters.");
+        }
+
+        // House / Building Validation
+        if (!houseVal) {
+            showError('house-error', "House info is required!");
+        } else if (houseVal.length < 2) {
+            showError('house-error', "Too short! Min 2 characters.");
+        }
+
+        if (areaVal.length < 3) showError('area-error', "Minimum 3 characters required!");
+        if (!stateVal || !cityVal) { isValid = false; alert("Please select State and City!"); }
+
+        if (!isValid) return;
+
+        // Determine method and URL based on mode (add vs edit)
+        const isEdit = form.dataset.mode === 'edit';
+        const url = isEdit ? '/edit-address/' + currentEditAddressId : '/add-address';
+        const method = isEdit ? 'PUT' : 'POST';
+
+        const bodyData = {
+            name: nameVal, phone: phoneVal, pincode: pinVal,
+            state: stateVal, city: cityVal, locality: localityVal,
+            house: houseVal, area: areaVal,
+            isDefault: form.querySelector('input[name="isDefault"]').checked
+        };
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bodyData)
+            });
+            const data = await response.json();
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message || 'Something went wrong. Please try again.');
+            }
+        } catch (err) {
+            console.error('Address submit error:', err);
+            alert('Network error. Please try again.');
+        }
+    });
+});
+
+
+function showDeletePopup(addressId) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You want to delete this address?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ff4d4d',
+        cancelButtonColor: '#6e7881',
+        confirmButtonText: 'Yes, delete it!',
+        borderRadius: '15px'
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            try {
+                const response = await fetch('/delete-address/' + addressId, { method: 'DELETE' });
+                const data = await response.json();
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    Swal.fire('Error', data.message || 'Could not delete address.', 'error');
+                }
+            } catch (err) {
+                Swal.fire('Error', 'Network error. Please try again.', 'error');
+            }
+        }
+    });
+}
 </script>
-<%- include('../layout/footer') %>
+ <%- include('../layout/footer') %>
 

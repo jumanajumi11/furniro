@@ -15,70 +15,8 @@
 </head>
 <body class="flex min-h-screen">
 
-    <aside class="w-72 bg-white border-r border-gray-100 flex flex-col sticky top-0 h-screen">
-        <div class="p-8 mb-4">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-[#B88E2F] rounded-xl flex items-center justify-center shadow-lg shadow-orange-50">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z" />
-                    </svg>
-                </div>
-                <span class="text-2xl font-extrabold text-gray-900 tracking-tight">Furniro</span>
-            </div>
-        </div>
-
-        <div class="flex-1 px-4">
-            <p class="px-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Management</p>
-            <nav class="space-y-1 mb-6">
-                <a href="/admin/products" class="flex items-center gap-3 px-4 py-2.5 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg font-medium transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
-                    Products
-                </a>
-                <a href="/admin/categories" class="flex items-center gap-3 px-4 py-2.5 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg font-medium transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
-                    Categories
-                </a>
-                <a href="/admin/orders" class="flex items-center justify-between px-4 py-2.5 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg font-medium transition-colors">
-                    <div class="flex items-center gap-3">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-                        Orders
-                    </div>
-                    <span class="bg-green-50 text-green-600 py-0.5 px-2 rounded-full text-xs font-semibold">12</span>
-                </a>
-                <a href="/admin/customers" class="flex items-center gap-3 px-4 py-3.5 sidebar-item-active rounded-xl font-bold text-sm transition-all shadow-sm">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    Customers
-                </a>
-                <a href="/admin/coupons" class="flex items-center gap-3 px-4 py-2.5 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg font-medium transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg>
-                    Coupons
-                </a>
-                <a href="/admin/banners" class="flex items-center gap-3 px-4 py-2.5 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg font-medium transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                    Banners
-                </a>
-                <a href="/admin/discount" class="flex items-center gap-3 px-4 py-2.5 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg font-medium transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    Discount
-                </a>
-            </nav>
-
-            <p class="px-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Settings</p>
-            <nav class="space-y-1">
-                <a href="/admin/settings" class="flex items-center gap-3 px-4 py-2.5 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg font-medium transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                    General
-                </a>
-            </nav>
-        </div>
-
-        <div class="p-6 border-t border-gray-50">
-            <a href="/admin/logout" class="flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-xl font-bold text-sm transition-all">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                Log Out
-            </a>
-        </div>
-    </aside>
+ 
+<%- include('./adminPartials/adminSidebar.ejs', { activePage: 'customers' }) %>
 
     <main class="flex-1 p-8 lg:p-12 overflow-y-auto">
         
@@ -157,7 +95,7 @@
                         <td class="px-8 py-6">
                             <div class="flex items-center gap-4">
                                 <div class="w-11 h-11 rounded-full overflow-hidden border-2 border-white shadow-sm bg-gray-100">
-                                    <img src="<%= user.image || 'https://ui-avatars.com/api/?name='+user.name+'&background=F3F4F6&color=6B7280&bold=true' %>" class="w-full h-full object-cover">
+                                    <img src="<%= user.image ? '/upload/' + user.image : 'https://ui-avatars.com/api/?name=' + user.name + '&background=F3F4F6&color=6B7280&bold=true' %>" class="w-full h-full object-cover">
                                 </div>
                                 <p class="font-bold text-gray-900 text-sm tracking-tight"><%= user.name %></p>
                             </div>
@@ -202,34 +140,113 @@
     </main>
 
     <script>
-        function confirmToggleBlock(userId, isBlocked) {
-            const status = isBlocked === 'true';
-            Swal.fire({
-                title: status ? 'Unblock Customer?' : 'Block Customer?',
-                text: status ? "Allow this customer to shop again?" : "This customer will not be able to log in.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: status ? '#10B981' : '#EF4444',
-                cancelButtonColor: '#9CA3AF',
-                confirmButtonText: status ? 'YES, UNBLOCK' : 'YES, BLOCK',
-                customClass: { 
-                    popup: 'rounded-[2rem]', 
-                    confirmButton: 'rounded-xl px-6 py-3 font-black text-[11px] tracking-widest', 
-                    cancelButton: 'rounded-xl px-6 py-3 font-black text-[11px] tracking-widest' 
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    fetch(`/admin/customers/toggle-block/${userId}`, { method: 'POST' })
-                    .then(res => res.json())
-                    .then(data => {
-                        if(data.success) {
-                            Swal.fire({ title: 'Success!', icon: 'success', showConfirmButton: false, timer: 1000, customClass: { popup: 'rounded-[2rem]' } })
-                            .then(() => window.location.reload());
+        
+function confirmToggleBlock(userId, isBlocked) {
+    
+    let currentStatus = (isBlocked === 'true' || isBlocked === true);
+
+    Swal.fire({
+        title: currentStatus ? 'Unblock Customer?' : 'Block Customer?',
+        text: currentStatus ? "Allow this customer to shop again?" : "This customer will not be able to log in.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: currentStatus ? '#10B981' : '#EF4444',
+        cancelButtonColor: '#9CA3AF',
+        confirmButtonText: currentStatus ? 'YES, UNBLOCK' : 'YES, BLOCK',
+        customClass: { 
+            popup: 'rounded-[2rem]', 
+            confirmButton: 'rounded-xl px-6 py-3 font-black text-[11px] tracking-widest', 
+            cancelButton: 'rounded-xl px-6 py-3 font-black text-[11px] tracking-widest' 
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/admin/customers/toggle-block/${userId}`, { 
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    Swal.fire({ 
+                        title: 'Success!', 
+                        text: data.isBlocked ? 'User has been blocked' : 'User has been unblocked', 
+                        icon: 'success', 
+                        showConfirmButton: false, 
+                        timer: 1000, 
+                        customClass: { popup: 'rounded-[2rem]' } 
+                    });
+
+                    
+                    const allBtns = document.querySelectorAll('button[onclick]');
+                    let btn;
+                    allBtns.forEach(b => {
+                        if(b.getAttribute('onclick').includes(userId)) {
+                            btn = b;
                         }
                     });
+                    
+                    if (btn) {
+                        
+                        btn.innerText = data.isBlocked ? 'Unblock' : 'Block';
+                        
+                        
+                        if (data.isBlocked) {
+                            
+                            btn.className = "inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all bg-green-500 text-white shadow-green-100 px-5 py-2.5 rounded-lg shadow-lg hover:opacity-90";
+                        } else {
+                            
+                            btn.className = "inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all bg-[#F43F5E] text-white shadow-red-100 px-5 py-2.5 rounded-lg shadow-lg hover:opacity-90";
+                        }
+
+                        
+                        btn.setAttribute('onclick', `confirmToggleBlock('${userId}', ${data.isBlocked})`);
+
+                        
+                        const badge = btn.closest('tr').querySelector('td span');
+                        if (badge) {
+                            badge.innerText = data.isBlocked ? 'Blocked' : 'Active';
+                            badge.className = `inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest ${data.isBlocked ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-600'}`;
+                        }
+                    }
+                } else {
+                    Swal.fire('Error!', data.message || 'Action failed', 'error');
                 }
+            })
+            .catch(err => {
+                console.error("Fetch Error:", err);
+                Swal.fire('Error!', 'Server connection lost. Please try again.', 'error');
             });
         }
-    </script>
+    });
+}
+
+        
+
+// Admin side script
+async function handleBlockStatus(userId) {
+    const response = await fetch(`/admin/customers/toggle-block/${userId}`, { method: 'PATCH' });
+    const data = await response.json();
+
+    if (data.success) {
+        
+
+        Swal.fire({
+            title: 'Updated!',
+            text: data.isBlocked ? 'User Blocked' : 'User Unblocked',
+            icon: 'success',
+            timer: 1000,
+            showConfirmButton: false
+        });
+
+        
+        const btn = document.querySelector(`button[onclick*="${userId}"]`);
+        if (btn) {
+            btn.innerText = data.isBlocked ? 'Unblock' : 'Block';
+            btn.style.backgroundColor = data.isBlocked ? '#10B981' : '#EF4444';
+        }
+    }
+}
+</script>
 </body>
 </html>
+

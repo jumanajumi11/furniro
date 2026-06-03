@@ -1,0 +1,505 @@
+<%- include('../layout/header') %>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<main class="bg-white min-h-screen">
+
+  <%/* ── Top Hero Banner ─────────────────────────────────────────── */%>
+  <section class="relative w-full h-[250px] flex items-center justify-center overflow-hidden bg-cover bg-center"
+           style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.7)), url('https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=1920&q=80');">
+    <div class="text-center relative z-10">
+      <div class="flex justify-center mb-3">
+        <img src="https://res.cloudinary.com/dp9odkfmd/image/upload/v1777118568/Meubel_House_Logos-05_uklcwh.png" alt="Logo" class="h-10 w-10 object-contain">
+      </div>
+      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-2">Cart</h1>
+      <p class="text-sm font-semibold tracking-wider text-gray-600 uppercase">
+        <a href="/" class="hover:text-[#B88E2F] transition-colors">Home</a>
+        <span class="mx-2 text-gray-400">&gt;</span>
+        <span class="text-[#B88E2F]">Cart</span>
+      </p>
+    </div>
+  </section>
+
+  <%/* ── Warnings/Alert Banners ───────────────────────────────────── */%>
+  <% if (warnings && warnings.length > 0) { %>
+    <section class="max-w-7xl mx-auto px-6 md:px-12 mt-8">
+      <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-lg shadow-sm flex items-start gap-3">
+        <div class="text-amber-500 mt-0.5">
+          <i class="fas fa-exclamation-triangle text-lg"></i>
+        </div>
+        <div class="flex-grow">
+          <h4 class="font-bold text-amber-800 text-sm mb-1">Cart Status Update</h4>
+          <ul class="list-disc list-inside text-amber-700 text-xs space-y-1">
+            <% warnings.forEach(msg => { %>
+              <li><%= msg %></li>
+            <% }) %>
+          </ul>
+        </div>
+        <button onclick="this.parentElement.remove()" class="text-amber-500 hover:text-amber-800 focus:outline-none text-sm">&times;</button>
+      </div>
+    </section>
+  <% } %>
+
+  <% if (error) { %>
+    <section class="max-w-7xl mx-auto px-6 md:px-12 mt-8">
+      <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-xs flex items-start gap-3">
+        <div class="text-red-500 mt-0.5">
+          <i class="fas fa-times-circle text-lg"></i>
+        </div>
+        <div class="flex-grow text-red-700 text-sm"><%= error %></div>
+        <button onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-700 focus:outline-none">&times;</button>
+      </div>
+    </section>
+  <% } %>
+
+  <% if (success) { %>
+    <section class="max-w-7xl mx-auto px-6 md:px-12 mt-8">
+      <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg shadow-xs flex items-start gap-3">
+        <div class="text-green-500 mt-0.5">
+          <i class="fas fa-check-circle text-lg"></i>
+        </div>
+        <div class="flex-grow text-green-700 text-sm"><%= success %></div>
+        <button onclick="this.parentElement.remove()" class="text-green-400 hover:text-green-700 focus:outline-none">&times;</button>
+      </div>
+    </section>
+  <% } %>
+
+  <%/* ── Cart Workspace ───────────────────────────────────────────── */%>
+  <section class="max-w-7xl mx-auto px-6 md:px-12 py-16" id="cart-main-container">
+    <% if (!items || items.length === 0) { %>
+      <%- include('./userPartials/empty-cart') %>
+    <% } else { %>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
+        
+        <%/* ── Left Side: Cart Items Table ────────────────────────── */%>
+        <div class="lg:col-span-2 overflow-x-auto">
+          <table class="w-full text-left border-collapse min-w-[600px]">
+            <thead>
+              <tr class="bg-[#F9F1E7] text-gray-900 font-bold text-sm">
+                <th class="py-4 px-6 rounded-l-lg">Product</th>
+                <th class="py-4 px-4">Price</th>
+                <th class="py-4 px-4 text-center">Quantity</th>
+                <th class="py-4 px-4">Subtotal</th>
+                <th class="py-4 px-6 rounded-r-lg"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <% items.forEach(item => { %>
+                <%
+                  const product = item.productId;
+                  if (!product) return;
+
+                  let size = '';
+                  let color = '';
+                  let variantPrice = null;
+                  let stock = product.stock || 0;
+                  
+                  if (product.variants && product.variants.length > 0 && item.variantId) {
+                      const variant = product.variants.id(item.variantId);
+                      if (variant) {
+                          size = variant.size;
+                          color = variant.color;
+                          variantPrice = variant.price;
+                          stock = variant.stock;
+                      }
+                  }
+
+                  const price = variantPrice || product.salePrice || product.regularPrice || 0;
+                  const itemSubtotal = price * item.quantity;
+                  
+                  let image = 'https://placehold.co/150x150?text=No+Image';
+                  if (product.images && product.images.length > 0) {
+                      image = '/upload/products/' + product.images[0];
+                  } else if (product.colors && product.colors.length > 0) {
+                      const defaultColor = product.colors.find(c => c.isDefault) || product.colors[0];
+                      if (defaultColor && defaultColor.images && defaultColor.images.length > 0) {
+                          image = '/upload/products/' + defaultColor.images[0];
+                      }
+                  }
+                %>
+                <tr class="hover:bg-gray-50/50 transition-colors cart-row" 
+                    data-product-id="<%= product._id %>"
+                    data-variant-id="<%= item.variantId || '' %>">
+                  
+                  <!-- Product Image and Details -->
+                  <td class="py-6 px-6 flex items-center space-x-4">
+                    <div class="w-20 h-20 bg-[#F9F1E7] rounded-xl overflow-hidden shrink-0 flex items-center justify-center p-1.5 border border-gray-100 relative">
+                      <img src="<%= image %>" alt="<%= product.productName %>" class="max-w-full max-h-full object-contain">
+                      <% if (stock <= 0) { %>
+                        <div class="absolute inset-0 bg-red-600/80 flex items-center justify-center text-[9px] font-bold text-white uppercase tracking-wider">Out of Stock</div>
+                      <% } %>
+                    </div>
+                    <div>
+                      <a href="/shop/product/<%= product._id %>" class="font-bold text-gray-800 hover:text-[#B88E2F] transition-colors line-clamp-1">
+                        <%= product.productName %>
+                      </a>
+                      <div class="flex flex-wrap gap-2 mt-1.5">
+                        <% if (size) { %>
+                          <span class="bg-gray-100 text-gray-600 text-[10px] px-2 py-0.5 rounded font-medium">Size: <%= size %></span>
+                        <% } %>
+                        <% if (color) { %>
+                          <span class="bg-gray-100 text-gray-600 text-[10px] px-2 py-0.5 rounded font-medium">Color: <%= color %></span>
+                        <% } %>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded <%= stock > 0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700' %>">
+                          <%= stock > 0 ? `In Stock (${stock})` : 'Out of Stock' %>
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Unit Price -->
+                  <td class="py-6 px-4 font-semibold text-gray-600 text-sm">
+                    Rp <%= price.toLocaleString('id-ID') %>
+                  </td>
+
+                  <!-- Quantity Controls -->
+                  <td class="py-6 px-4">
+                    <div class="flex items-center justify-center border border-gray-300 rounded-lg bg-white h-10 w-28 mx-auto overflow-hidden">
+                      <button onclick="updateQty(this, -1)" 
+                              class="qty-btn px-2.5 py-1 text-gray-500 hover:bg-gray-100 font-bold h-full border-r transition-colors focus:outline-none"
+                              <%= stock <= 0 ? 'disabled' : '' %>>-</button>
+                      <input type="text" 
+                             class="qty-input w-8 text-center font-bold text-xs focus:outline-none h-full bg-white text-gray-800"
+                             value="<%= item.quantity %>" 
+                             readonly>
+                      <button onclick="updateQty(this, 1)" 
+                              class="qty-btn px-2.5 py-1 text-gray-500 hover:bg-gray-100 font-bold h-full border-l transition-colors focus:outline-none"
+                              data-max-stock="<%= stock %>"
+                              <%= (stock <= 0 || item.quantity >= stock || item.quantity >= 10) ? 'disabled' : '' %>>+</button>
+                    </div>
+                  </td>
+
+                  <!-- Subtotal -->
+                  <td class="py-6 px-4 font-bold text-gray-800 text-sm item-subtotal">
+                    Rp <%= itemSubtotal.toLocaleString('id-ID') %>
+                  </td>
+
+                  <!-- Remove Button -->
+                  <td class="py-6 px-6 text-right">
+                    <button onclick="removeCartItem(this)" class="text-gray-400 hover:text-red-500 transition-colors focus:outline-none text-base">
+                      <i class="far fa-trash-alt"></i>
+                    </button>
+                  </td>
+
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+
+        <%/* ── Right Side: Cart Totals Sidebar ────────────────────── */%>
+        <div class="bg-[#F9F1E7] rounded-2xl p-8 border border-amber-100 shadow-sm flex flex-col space-y-8">
+          <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight text-center pb-4 border-b border-gray-200/50">Cart Totals</h2>
+          
+          <div class="space-y-4">
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-gray-600 font-medium">Subtotal</span>
+              <span class="text-gray-900 font-semibold" id="cart-subtotal">
+                Rp <%= totals.subtotal.toLocaleString('id-ID') %>
+              </span>
+            </div>
+            
+            <% if (totals.discount > 0) { %>
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-green-600 font-medium">Product Discount</span>
+                <span class="text-green-600 font-semibold" id="cart-discount">
+                  -Rp <%= totals.discount.toLocaleString('id-ID') %>
+                </span>
+              </div>
+            <% } %>
+
+            <div class="flex justify-between items-center text-sm">
+              <div class="flex items-center gap-1">
+                <span class="text-gray-600 font-medium">VAT (10%)</span>
+                <i class="far fa-question-circle text-[10px] text-gray-400 cursor-help" title="Standard value-added tax of 10%"></i>
+              </div>
+              <span class="text-gray-900 font-semibold" id="cart-tax">
+                Rp <%= totals.tax.toLocaleString('id-ID') %>
+              </span>
+            </div>
+
+            <div class="flex justify-between items-center text-sm">
+              <div class="flex flex-col">
+                <span class="text-gray-600 font-medium">Shipping Charge</span>
+                <span class="text-[10px] text-gray-400 font-medium">Free over Rp 500.000</span>
+              </div>
+              <span class="text-gray-900 font-semibold" id="cart-shipping">
+                <%= totals.shippingCharge === 0 ? 'Free' : `Rp ${totals.shippingCharge.toLocaleString('id-ID')}` %>
+              </span>
+            </div>
+
+            <hr class="border-gray-200/50 my-4">
+
+            <div class="flex justify-between items-end">
+              <span class="text-gray-900 font-bold text-base mb-1">Total</span>
+              <span class="text-2xl font-extrabold text-[#B88E2F]" id="cart-total">
+                Rp <%= totals.grandTotal.toLocaleString('id-ID') %>
+              </span>
+            </div>
+          </div>
+
+          <a href="/checkout" 
+             id="checkout-btn"
+             class="w-full bg-transparent border-2 border-gray-900 text-gray-900 font-bold rounded-xl py-3.5 text-center block transition-all hover:bg-gray-900 hover:text-white focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2">
+            Check Out
+          </a>
+        </div>
+
+      </div>
+    <% } %>
+  </section>
+
+  <%/* ── Bottom Benefits Bar ───────────────────────────────────────── */%>
+  <section class="bg-[#FAF3EA] py-16 border-t border-gray-100 mt-20">
+    <div class="max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+      
+      <div class="flex items-center space-x-4">
+        <div class="text-gray-900 text-4xl">
+          <i class="fas fa-trophy text-[#333333]"></i>
+        </div>
+        <div>
+          <h4 class="font-bold text-gray-800 text-lg">High Quality</h4>
+          <p class="text-gray-500 text-sm">crafted from top materials</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-4">
+        <div class="text-gray-900 text-4xl">
+          <i class="fas fa-shield-alt text-[#333333]"></i>
+        </div>
+        <div>
+          <h4 class="font-bold text-gray-800 text-lg">Warranty Protection</h4>
+          <p class="text-gray-500 text-sm">Over 2 years</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-4">
+        <div class="text-gray-900 text-4xl">
+          <i class="fas fa-shipping-fast text-[#333333]"></i>
+        </div>
+        <div>
+          <h4 class="font-bold text-gray-800 text-lg">Free Shipping</h4>
+          <p class="text-gray-500 text-sm">Order over 150 $</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-4">
+        <div class="text-gray-900 text-4xl">
+          <i class="fas fa-headset text-[#333333]"></i>
+        </div>
+        <div>
+          <h4 class="font-bold text-gray-800 text-lg">24 / 7 Support</h4>
+          <p class="text-gray-500 text-sm">Dedicated support</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<script>
+  // Toast notifications configuration
+  const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true
+  });
+
+  // Enable/Disable interactive controls
+  function setControlsState(disabled) {
+      document.querySelectorAll('.qty-btn').forEach(btn => {
+          if (disabled) btn.setAttribute('disabled', 'true');
+          else {
+              // Only re-enable if variant stock permits
+              const input = btn.parentElement.querySelector('.qty-input');
+              const val = parseInt(input.value);
+              const maxStock = parseInt(btn.getAttribute('data-max-stock'));
+              if (btn.textContent === '+' && (val >= maxStock || val >= 10)) {
+                  btn.setAttribute('disabled', 'true');
+              } else {
+                  btn.removeAttribute('disabled');
+              }
+          }
+      });
+      const checkoutBtn = document.getElementById('checkout-btn');
+      if (checkoutBtn) {
+          if (disabled) {
+              checkoutBtn.classList.add('opacity-50', 'pointer-events-none');
+          } else {
+              checkoutBtn.classList.remove('opacity-50', 'pointer-events-none');
+          }
+      }
+  }
+
+  // Recalculate totals in the sidebar based on JSON response
+  function updateSidebarTotals(totals) {
+      document.getElementById('cart-subtotal').textContent = `Rp ${totals.subtotal.toLocaleString('id-ID')}`;
+      
+      const discountEl = document.getElementById('cart-discount');
+      if (discountEl) {
+          if (totals.discount > 0) {
+              discountEl.textContent = `-Rp ${totals.discount.toLocaleString('id-ID')}`;
+              discountEl.parentElement.classList.remove('hidden');
+          } else {
+              discountEl.parentElement.classList.add('hidden');
+          }
+      }
+
+      document.getElementById('cart-tax').textContent = `Rp ${totals.tax.toLocaleString('id-ID')}`;
+      document.getElementById('cart-shipping').textContent = totals.shippingCharge === 0 ? 'Free' : `Rp ${totals.shippingCharge.toLocaleString('id-ID')}`;
+      document.getElementById('cart-total').textContent = `Rp ${totals.grandTotal.toLocaleString('id-ID')}`;
+  }
+
+  // Update item quantity (AJAX)
+  async function updateQty(button, change) {
+      const row = button.closest('.cart-row');
+      const productId = row.getAttribute('data-product-id');
+      const variantId = row.getAttribute('data-variant-id') || null;
+      
+      const input = row.querySelector('.qty-input');
+      const currentVal = parseInt(input.value);
+      const newVal = currentVal + change;
+
+      if (newVal < 1 || newVal > 10) return;
+
+      // Lock buttons
+      setControlsState(true);
+      input.classList.add('opacity-50');
+
+      try {
+          const res = await fetch('/cart/update', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ productId, variantId, quantity: newVal })
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+              throw new Error(data.message || 'Failed to update quantity');
+          }
+
+          // Update input value
+          input.value = newVal;
+
+          // Update item subtotal
+          row.querySelector('.item-subtotal').textContent = `Rp ${data.itemSubtotal.toLocaleString('id-ID')}`;
+
+          // Update sidebar totals
+          updateSidebarTotals(data.totals);
+
+          if (window.updateCartBadgeCount && typeof data.cartCount === 'number') {
+              window.updateCartBadgeCount(data.cartCount);
+          }
+
+          Toast.fire({
+              icon: 'success',
+              title: data.message || 'Cart updated successfully!'
+          });
+
+      } catch (err) {
+          Swal.fire({
+              icon: 'error',
+              title: 'Update Failed',
+              text: err.message,
+              confirmButtonColor: '#B88E2F'
+          });
+      } finally {
+          // Unlock buttons
+          setControlsState(false);
+          input.classList.remove('opacity-50');
+      }
+  }
+
+  // Remove item (AJAX)
+  async function removeCartItem(button) {
+      const row = button.closest('.cart-row');
+      const productId = row.getAttribute('data-product-id');
+      const variantId = row.getAttribute('data-variant-id') || null;
+
+      const confirm = await Swal.fire({
+          title: 'Are you sure?',
+          text: "Do you want to remove this product from your cart?",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#d33',
+          cancelButtonColor: '#3085d6',
+          confirmButtonText: 'Yes, remove it!',
+          cancelButtonText: 'Cancel'
+      });
+
+      if (!confirm.isConfirmed) return;
+
+      setControlsState(true);
+
+      try {
+          const res = await fetch('/cart/remove', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ productId, variantId })
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+              throw new Error(data.message || 'Failed to remove item');
+          }
+
+          // Transition removal
+          row.style.transition = 'all 0.3s ease-out';
+          row.style.opacity = '0';
+          row.style.transform = 'translateX(-20px)';
+
+          setTimeout(() => {
+              row.remove();
+
+              // Update global cart badge
+              if (window.updateCartBadgeCount && typeof data.cartCount === 'number') {
+                  window.updateCartBadgeCount(data.cartCount);
+              }
+
+              // Check if cart is now empty
+              const rows = document.querySelectorAll('.cart-row');
+              if (rows.length === 0) {
+                  // Render empty cart illustration dynamically
+                  const container = document.getElementById('cart-main-container');
+                  container.innerHTML = `
+                      <div class="text-center py-20">
+                          <div class="text-gray-300 text-7xl mb-6">
+                              <i class="fas fa-shopping-bag"></i>
+                          </div>
+                          <h2 class="text-2xl font-bold text-gray-800 mb-2">Your Cart is Empty</h2>
+                          <p class="text-gray-500 text-sm mb-8 max-w-sm mx-auto">Looks like you haven't added anything to your cart yet. Explore our shop and find something special!</p>
+                          <a href="/shop" class="bg-[#B88E2F] hover:bg-[#967325] text-white px-8 py-3.5 rounded-xl font-bold text-sm shadow-md transition-all inline-block">
+                              Explore Shop
+                          </a>
+                      </div>
+                  `;
+              } else {
+                  updateSidebarTotals(data.totals);
+              }
+
+              Toast.fire({
+                  icon: 'success',
+                  title: 'Product removed from cart!'
+              });
+          }, 300);
+
+      } catch (err) {
+          Swal.fire({
+              icon: 'error',
+              title: 'Removal Failed',
+              text: err.message,
+              confirmButtonColor: '#B88E2F'
+          });
+      } finally {
+          setControlsState(false);
+      }
+  }
+</script>
+
+<%- include('../layout/footer') %>

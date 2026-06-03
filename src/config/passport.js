@@ -1,13 +1,15 @@
- require('dotenv').config();
- console.log("PASSPORT CLIENT:", process.env.GOOGLE_CLIENT_ID);
+import dotenv from 'dotenv';
+dotenv.config();
 
-const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const User = require('../models/user');
+import passport from 'passport';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import User from '../models/user.js';
+
+console.log("PASSPORT CLIENT:", process.env.GOOGLE_CLIENT_ID);
 
 passport.use(new GoogleStrategy({
-  clientID:process.env.GOOGLE_CLIENT_ID,
-  clientSecret:process.env.GOOGLE_CLIENT_SECRET,
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
   callbackURL: "/auth/google/callback"
 },
 async (accessToken, refreshToken, profile, done) => {
@@ -42,8 +44,12 @@ passport.serializeUser((user, done) => {
 });
 
 passport.deserializeUser(async (id, done) => {
-  const user = await User.findById(id);
-  done(null, user);
+  try {
+    const user = await User.findById(id);
+    done(null, user);
+  } catch (err) {
+    done(err, null);
+  }
 });
 
-module.exports = passport;
+export default passport;

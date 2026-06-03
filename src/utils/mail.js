@@ -1,26 +1,28 @@
+import dotenv from 'dotenv';
+dotenv.config();
 
-const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env') }); 
-// നിങ്ങളുടെ ഫോൾഡർ സ്ട്രക്ചർ അനുസരിച്ച് ../../ എന്നത് മാറ്റം വരാം.
-const nodemailer = require('nodemailer');
-
+import nodemailer from 'nodemailer';
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     host: 'smtp.gmail.com',
     port: 465,
     secure: true,
-    
-auth: {
-    user: "furniro75@gmail.com",
-    pass: "kcokeejbghngqnre" 
-},
+    auth: {
+        user: "furniro75@gmail.com",
+        pass: "kcokeejbghngqnre" 
+    },
     tls: {
         rejectUnauthorized: false 
     }
 });
 
-const sendOTPEmail = async (email, otp) => {
+/**
+ * Send OTP code via email.
+ * @param {string} email 
+ * @param {string} otp 
+ */
+export const sendOTPEmail = async (email, otp) => {
     try {
         const mailOptions = {
             from: "furniro75@gmail.com", 
@@ -36,4 +38,4 @@ const sendOTPEmail = async (email, otp) => {
     }
 };
 
-module.exports = { sendOTPEmail }
+export default { sendOTPEmail };

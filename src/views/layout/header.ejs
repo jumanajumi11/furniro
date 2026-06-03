@@ -43,14 +43,23 @@
             <a href="/shop" class="text-gray-900 hover:text-[#B88E2F] transition-colors">Shop</a>
             
             <div class="relative group">
-                <button class="flex items-center text-gray-900 group-hover:text-[#B88E2F] transition-colors focus:outline-none">
-                    category <i class="fas fa-chevron-down ml-1 text-xs transition-transform group-hover:rotate-180"></i>
+                <button class="flex items-center text-gray-900 group-hover:text-[#B88E2F] transition-colors focus:outline-none uppercase tracking-wide text-xs">
+                    category <i class="fas fa-chevron-down ml-1 text-[10px] transition-transform group-hover:rotate-180"></i>
                 </button>
-                <div class="absolute left-0 mt-2 w-48 bg-white border border-gray-100 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
-                    <div class="py-2">
-                        <a href="/shop?category=L shaped sofa" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#B88E2F]">Dining</a>
-                        <a href="/shop?category=3 seater sofa" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#B88E2F]">Living Room</a>
-                        <a href="/shop?category=Recliner sofa" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#B88E2F]">Bedroom</a>
+                <div class="absolute left-0 mt-2 w-48 bg-white border border-gray-150 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 overflow-hidden">
+                    <div class="py-1">
+                        <% if (locals.navbarCategories && locals.navbarCategories.length > 0) { %>
+                            <% locals.navbarCategories.forEach(cat => { %>
+                                <a href="/shop?category=<%= encodeURIComponent(cat.name) %>" 
+                                   class="block px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 hover:text-[#B88E2F] transition-colors uppercase tracking-wider <%= locals.selectedCategory === cat.name ? 'text-[#B88E2F] bg-gray-50 font-bold' : '' %>">
+                                    <%= cat.name %>
+                                </a>
+                            <% }) %>
+                        <% } else { %>
+                            <a href="/shop?category=3%20Seater%20Sofa" class="block px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 hover:text-[#B88E2F] uppercase tracking-wider">3 Seater Sofa</a>
+                            <a href="/shop?category=L%20Shaped%20Sofa" class="block px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 hover:text-[#B88E2F] uppercase tracking-wider">L Shaped Sofa</a>
+                            <a href="/shop?category=Recliner%20Sofa" class="block px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 hover:text-[#B88E2F] uppercase tracking-wider">Recliner Sofa</a>
+                        <% } %>
                     </div>
                 </div>
             </div>
@@ -63,11 +72,13 @@
                 <a href="/wallet" title="Wallet" class="hover:text-[#B88E2F]">
                     <i class="fas fa-wallet text-xl"></i>
                 </a>
-                <a href="/wishlist" title="Wishlist" class="hover:text-[#B88E2F]">
+                <a href="/wishlist" title="Wishlist" class="hover:text-[#B88E2F] relative">
                     <i class="far fa-heart text-xl"></i>
+                    <span id="wishlist-count-badge" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full text-[10px] font-bold px-1.5 py-0.5 min-w-[18px] text-center <%= (locals.wishlistCount && locals.wishlistCount > 0) ? '' : 'hidden' %>"><%= locals.wishlistCount || 0 %></span>
                 </a>
-                <a href="/cart" title="Cart" class="hover:text-[#B88E2F]">
+                <a href="/cart" title="Cart" class="hover:text-[#B88E2F] relative">
                     <i class="fas fa-shopping-cart text-xl"></i>
+                    <span id="cart-count-badge" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full text-[10px] font-bold px-1.5 py-0.5 min-w-[18px] text-center <%= (locals.cartCount && locals.cartCount > 0) ? '' : 'hidden' %>"><%= locals.cartCount || 0 %></span>
                 </a>
             </div>
 
@@ -95,14 +106,40 @@
             <a href="/shop" class="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-md">
                 <i class="fas fa-store w-6"></i> <span>Shop</span>
             </a>
+            
+            <!-- Mobile Category Dropdown -->
+            <div class="relative">
+                <button id="mobileCategoryToggle" class="w-full flex items-center justify-between p-2 hover:bg-gray-50 rounded-md focus:outline-none text-left">
+                    <span class="flex items-center space-x-3">
+                        <i class="fas fa-list w-6"></i> <span>Categories</span>
+                    </span>
+                    <i id="mobileCategoryArrow" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                </button>
+                <div id="mobileCategoryMenu" class="hidden pl-9 mt-2 space-y-2 text-base">
+                    <% if (locals.navbarCategories && locals.navbarCategories.length > 0) { %>
+                        <% locals.navbarCategories.forEach(cat => { %>
+                            <a href="/shop?category=<%= encodeURIComponent(cat.name) %>" 
+                               class="block py-1.5 text-gray-600 hover:text-[#B88E2F] transition-colors <%= locals.selectedCategory === cat.name ? 'text-[#B88E2F] font-bold' : '' %>">
+                                <%= cat.name %>
+                            </a>
+                        <% }) %>
+                    <% } else { %>
+                        <a href="/shop?category=3%20Seater%20Sofa" class="block py-1.5 text-gray-600 hover:text-[#B88E2F]">3 Seater Sofa</a>
+                        <a href="/shop?category=L%20Shaped%20Sofa" class="block py-1.5 text-gray-600 hover:text-[#B88E2F]">L Shaped Sofa</a>
+                        <a href="/shop?category=Recliner%20Sofa" class="block py-1.5 text-gray-600 hover:text-[#B88E2F]">Recliner Sofa</a>
+                    <% } %>
+                </div>
+            </div>
             <a href="/orders" class="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-md">
                 <i class="fas fa-box w-6"></i> <span>My Orders</span>
             </a>
-            <a href="/wishlist" class="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-md">
+            <a href="/wishlist" class="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-md relative">
                 <i class="fas fa-heart w-6"></i> <span>Wishlist</span>
+                <span id="wishlist-count-badge-mobile" class="absolute right-4 bg-red-500 text-white rounded-full text-[10px] font-bold px-1.5 py-0.5 min-w-[18px] text-center <%= (locals.wishlistCount && locals.wishlistCount > 0) ? '' : 'hidden' %>"><%= locals.wishlistCount || 0 %></span>
             </a>
-            <a href="/cart" class="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-md">
+            <a href="/cart" class="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-md relative">
                 <i class="fas fa-shopping-cart w-6"></i> <span>Cart</span>
+                <span id="cart-count-badge-mobile" class="absolute right-4 bg-red-500 text-white rounded-full text-[10px] font-bold px-1.5 py-0.5 min-w-[18px] text-center <%= (locals.cartCount && locals.cartCount > 0) ? '' : 'hidden' %>"><%= locals.cartCount || 0 %></span>
             </a>
             <a href="/profile" class="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-md">
                 <i class="fas fa-user-circle w-6"></i> <span>My Account</span>
@@ -135,4 +172,135 @@
 
     if(closeBtn) closeBtn.addEventListener('click', closeMenu);
     if(overlay) overlay.addEventListener('click', closeMenu);
+
+    // Mobile Category Menu toggle logic
+    const mobileCategoryToggle = document.getElementById('mobileCategoryToggle');
+    const mobileCategoryMenu = document.getElementById('mobileCategoryMenu');
+    const mobileCategoryArrow = document.getElementById('mobileCategoryArrow');
+
+    if (mobileCategoryToggle && mobileCategoryMenu) {
+        mobileCategoryToggle.addEventListener('click', () => {
+            mobileCategoryMenu.classList.toggle('hidden');
+            if (mobileCategoryArrow) {
+                mobileCategoryArrow.classList.toggle('rotate-180');
+            }
+        });
+    }
+
+    window.updateCartBadgeCount = function(count) {
+        const badge = document.getElementById('cart-count-badge');
+        const badgeMobile = document.getElementById('cart-count-badge-mobile');
+        
+        if (typeof count === 'number' && count > 0) {
+            if (badge) {
+                badge.textContent = count;
+                badge.classList.remove('hidden');
+            }
+            if (badgeMobile) {
+                badgeMobile.textContent = count;
+                badgeMobile.classList.remove('hidden');
+            }
+        } else {
+            if (badge) {
+                badge.classList.add('hidden');
+            }
+            if (badgeMobile) {
+                badgeMobile.classList.add('hidden');
+            }
+        }
+    };
+
+    window.updateWishlistBadgeCount = function(count) {
+        const badge = document.getElementById('wishlist-count-badge');
+        const badgeMobile = document.getElementById('wishlist-count-badge-mobile');
+        
+        if (typeof count === 'number' && count > 0) {
+            if (badge) {
+                badge.textContent = count;
+                badge.classList.remove('hidden');
+            }
+            if (badgeMobile) {
+                badgeMobile.textContent = count;
+                badgeMobile.classList.remove('hidden');
+            }
+        } else {
+            if (badge) {
+                badge.classList.add('hidden');
+            }
+            if (badgeMobile) {
+                badgeMobile.classList.add('hidden');
+            }
+        }
+    };
+
+    window.handleWishlistToggle = async function(productId) {
+        try {
+            const response = await fetch('/wishlist/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId })
+            });
+
+            if (response.status === 401) {
+                window.location.href = '/login?error=Please login to manage your wishlist';
+                return;
+            }
+
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to toggle wishlist');
+            }
+
+            // Sync the badges
+            window.updateWishlistBadgeCount(data.wishlistCount);
+
+            // Update product card icon if present
+            const icon = document.getElementById(`like-icon-${productId}`);
+            const textSpan = document.getElementById(`like-text-${productId}`);
+            
+            if (data.added) {
+                if (icon) {
+                    icon.className = 'fas text-red-500 fa-heart';
+                }
+                if (textSpan) {
+                    textSpan.textContent = 'Liked';
+                }
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Added to Wishlist',
+                    text: data.message || 'Product has been added to your wishlist.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    timerProgressBar: true
+                });
+            } else {
+                if (icon) {
+                    icon.className = 'far text-white fa-heart';
+                }
+                if (textSpan) {
+                    textSpan.textContent = 'Like';
+                }
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Removed from Wishlist',
+                    text: data.message || 'Product has been removed from your wishlist.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    timerProgressBar: true
+                });
+            }
+        } catch (error) {
+            console.error('Wishlist toggle error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Wishlist Error',
+                text: error.message || 'Could not complete wishlist action.',
+                confirmButtonColor: '#B88E2F'
+            });
+        }
+    };
 </script>

@@ -1,7 +1,9 @@
-
-const generateOTP = () => {
-    
+/**
+ * Generate a 6-digit OTP string.
+ * @returns {string}
+ */
+export const generateOTP = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-module.exports = generateOTP;
+export default generateOTP;

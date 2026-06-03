@@ -100,84 +100,109 @@
         </div>
     </div>
 
-    <script>
-        // Password Visibility Toggle
-        function togglePassword(inputId, iconId) {
-            const input = document.getElementById(inputId);
-            const icon = document.getElementById(iconId);
-            
-            if (input.type === 'password') {
-                input.type = 'text';
-                // Show Eye Closed (Hide) Icon
-                icon.innerHTML = `
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
-                `;
+   <script>
+    // 1. Password Visibility Toggle
+    function togglePassword(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            // Show Eye Closed (Hide) Icon
+            icon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+            `;
+        } else {
+            input.type = 'password';
+            // Show Eye Open (Show) Icon
+            icon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268-2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            `;
+        }
+    }
+
+    // 2. Real-time Validation (ടൈപ്പ് ചെയ്യുമ്പോൾ എറർ മെസ്സേജ് കളയാൻ)
+    document.querySelectorAll('#signupForm input').forEach(input => {
+        input.addEventListener('input', function() {
+            // ഓരോ ഇൻപുട്ടിന്റെയും എറർ ഐഡി കണ്ടെത്തുന്നു
+            let errorId;
+            if (this.id === 'confirmPassword') {
+                errorId = 'confirmError';
             } else {
-                input.type = 'password';
-                // Show Eye Open (Show) Icon
-                icon.innerHTML = `
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                `;
+                errorId = this.id + 'Error';
             }
+
+            const errorP = document.getElementById(errorId);
+            
+            // ടൈപ്പ് ചെയ്യുമ്പോൾ മെസ്സേജും ചുവന്ന ബോർഡറും മാറ്റുന്നു
+            if (errorP) {
+                errorP.classList.add('hidden');
+            }
+            this.classList.remove('input-error');
+        });
+    });
+
+    // 3. Signup Form Submission Validation
+    const form = document.getElementById('signupForm');
+    
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        const name = document.getElementById('name');
+        const email = document.getElementById('email');
+        const password = document.getElementById('password');
+        const confirmPassword = document.getElementById('confirmPassword');
+
+        // Clear all previous errors first
+        document.querySelectorAll('p[id$="Error"], p[id="confirmError"]').forEach(p => p.classList.add('hidden'));
+        document.querySelectorAll('input').forEach(i => i.classList.remove('input-error'));
+
+        // Name validation
+        if (name.value.trim() === "") {
+            showError('name', 'nameError');
+            isValid = false;
         }
 
-        // Frontend Validation
-        const form = document.getElementById('signupForm');
-        
-        form.addEventListener('submit', function(e) {
-            let isValid = true;
-            
-            const name = document.getElementById('name');
-            const email = document.getElementById('email');
-            const password = document.getElementById('password');
-            const confirmPassword = document.getElementById('confirmPassword');
+        // Email validation
+        const emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailReg.test(email.value.trim())) {
+            showError('email', 'emailError');
+            isValid = false;
+        }
 
-            // Clear previous errors
-            document.querySelectorAll('p[id$="Error"]').forEach(p => p.classList.add('hidden'));
-            document.querySelectorAll('input').forEach(i => i.classList.remove('input-error'));
+        // Password validation (min 8 chars, letter + number)
+        const passVal = password.value;
+        const hasLetter = /[a-zA-Z]/.test(passVal);
+        const hasNumber = /[0-9]/.test(passVal);
 
-            // Name validation
-            if (name.value.trim() === "") {
-                showError('name', 'nameError');
-                isValid = false;
-            }
+        if (passVal.length < 8 || !hasLetter || !hasNumber) {
+            showError('password', 'passwordError', "Min 8 characters with letters & numbers.");
+            isValid = false;
+        }
 
-            // Email validation
-            const emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailReg.test(email.value)) {
-                showError('email', 'emailError');
-                isValid = false;
-            }
+        // Confirm Password validation
+        if (confirmPassword.value !== passVal || confirmPassword.value === "") {
+            showError('confirmPassword', 'confirmError', "Passwords do not match!");
+            isValid = false;
+        }
 
-            // Password validation (min 8 chars, letter + number)
-            const passVal = password.value;
-            const hasLetter = /[a-zA-Z]/.test(passVal);
-            const hasNumber = /[0-9]/.test(passVal);
+        // എറർ ഉണ്ടെങ്കിൽ ഫോം സബ്മിറ്റ് ചെയ്യുന്നത് തടയുന്നു
+        if (!isValid) {
+            e.preventDefault();
+        }
+    });
 
-            if (passVal.length < 8 || !hasLetter || !hasNumber) {
-                showError('password', 'passwordError', "Min 8 characters with letters & numbers.");
-                isValid = false;
-            }
-
-            // Confirm Password validation
-            if (confirmPassword.value !== passVal || confirmPassword.value === "") {
-                showError('confirmPassword', 'confirmError');
-                isValid = false;
-            }
-
-            if (!isValid) {
-                e.preventDefault();
-            }
-        });
-
-        function showError(inputId, errorId, message = null) {
-            const input = document.getElementById(inputId);
-            const errorP = document.getElementById(errorId);
-            input.classList.add('input-error');
+    // 4. Helper Function to Show Errors
+    function showError(inputId, errorId, message = null) {
+        const input = document.getElementById(inputId);
+        const errorP = document.getElementById(errorId);
+        if (input) input.classList.add('input-error');
+        if (errorP) {
             errorP.classList.remove('hidden');
             if (message) errorP.innerText = message;
         }
-    </script>
+    }
+</script>
 </body>
 </html>

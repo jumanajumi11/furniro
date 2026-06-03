@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Management – Furniro Admin</title>
+    <meta name="description" content="Manage your Furniro furniture product catalogue, pricing, and inventory.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter','sans-serif'] } } } };</script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .badge-active { background: #DCFCE7; color: #16A34A; }
+        .badge-hidden { background: #FEE2E2; color: #DC2626; }
+        .badge-in-stock   { background:#D1FAE5; color:#065F46; }
+        .badge-low-stock  { background:#FEF3C7; color:#92400E; }
+        .badge-out-stock  { background:#FEE2E2; color:#991B1B; }
+        .sidebar-scroll::-webkit-scrollbar { width:4px; }
+        .sidebar-scroll::-webkit-scrollbar-track { background:transparent; }
+        .sidebar-scroll::-webkit-scrollbar-thumb { background:#E5E7EB; border-radius:99px; }
+        .table-row:hover { background:#FAFAFA; }
+        .btn-primary { background:#B88E2F; color:#fff; transition:all .2s; }
+        .btn-primary:hover { background:#A07828; transform:translateY(-1px); box-shadow:0 4px 12px rgba(184,142,47,.35); }
+        .btn-primary:active { transform:scale(.98); }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 antialiased min-h-screen flex">
+
+<%- include('adminPartials/adminSidebar') %>
+
+<!-- ── MAIN ──────────────────────────────────────────────────────── -->
+<main class="flex-1 flex flex-col min-h-screen overflow-x-hidden">
+
+    <!-- Top bar -->
+    <header class="bg-white border-b border-gray-100 sticky top-0 z-20 flex items-center justify-between px-8 h-16 shrink-0 shadow-sm">
+        <div class="flex items-center gap-2 text-sm text-gray-500 font-medium">
+            <a href="/admin/dashboard" class="hover:text-gray-800 transition-colors">Dashboard</a>
+            <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            <span class="text-gray-900 font-bold">Products</span>
+        </div>
+        <a href="/admin/products/add" id="addProductBtn"
+           class="btn-primary inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm shadow-md">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+            </svg>
+            Add Product
+        </a>
+    </header>
+
+    <div class="flex-1 p-8 space-y-6">
+
+        <!-- Page heading -->
+        <div>
+            <h1 class="text-2xl font-black text-gray-900 tracking-tight">Product Management</h1>
+            <p class="text-sm text-gray-500 mt-0.5">Manage your furniture product catalog, inventory, and pricing.</p>
+        </div>
+
+        <!-- ── Stats Cards ──────────────────────────────────────────── -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Total Products</p>
+                    <p class="text-3xl font-black text-gray-900"><%= stats.total %></p>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-[#B88E2F]/10 flex items-center justify-center text-[#B88E2F]">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Low Stock</p>
+                    <p class="text-3xl font-black text-amber-500"><%= stats.lowStock %></p>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Out of Stock</p>
+                    <p class="text-3xl font-black text-red-500"><%= stats.outOfStock %></p>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center text-red-400">
+                    <div class="w-5 h-5 rounded-full bg-gray-800"></div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Categories</p>
+                    <p class="text-3xl font-black text-gray-900"><%= stats.categoryCount %></p>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center text-purple-400">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ── Filters bar ──────────────────────────────────────────── -->
+        <form method="GET" action="/admin/products" id="filterForm"
+              class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-wrap gap-3 items-center">
+
+            <!-- Search -->
+            <div class="relative flex-1 min-w-[220px]">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
+                <input type="text" name="search" value="<%= search %>" placeholder="Search furniture products by name…"
+                       class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/30 focus:border-[#B88E2F] transition-all">
+            </div>
+
+            <!-- Category filter -->
+            <select name="category" onchange="this.form.submit()"
+                    class="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/30 focus:border-[#B88E2F] transition-all">
+                <option value="all" <%= filterCategory === 'all' || !filterCategory ? 'selected':'' %>>All Categories</option>
+                <% categories.forEach(c => { %>
+                <option value="<%= c._id %>" <%= filterCategory == c._id ? 'selected':'' %>><%= c.name %></option>
+                <% }) %>
+            </select>
+
+            <!-- Status filter -->
+            <select name="status" onchange="this.form.submit()"
+                    class="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/30 focus:border-[#B88E2F] transition-all">
+                <option value="all"    <%= filterStatus === 'all'    ? 'selected':'' %>>Any Status</option>
+                <option value="active" <%= filterStatus === 'active' ? 'selected':'' %>>Active</option>
+                <option value="hidden" <%= filterStatus === 'hidden' ? 'selected':'' %>>Hidden</option>
+            </select>
+
+            <!-- Sort -->
+            <select name="sort" onchange="this.form.submit()"
+                    class="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/30 focus:border-[#B88E2F] transition-all">
+                <option value="newest"     <%= sort==='newest'     ? 'selected':'' %>>Newest First</option>
+                <option value="oldest"     <%= sort==='oldest'     ? 'selected':'' %>>Oldest First</option>
+                <option value="az"         <%= sort==='az'         ? 'selected':'' %>>A → Z</option>
+                <option value="za"         <%= sort==='za'         ? 'selected':'' %>>Z → A</option>
+                <option value="price_asc"  <%= sort==='price_asc'  ? 'selected':'' %>>Price: Low to High</option>
+                <option value="price_desc" <%= sort==='price_desc' ? 'selected':'' %>>Price: High to Low</option>
+            </select>
+
+            <!-- Search + Clear buttons -->
+            <button type="submit"
+                    class="bg-gray-900 hover:bg-gray-800 active:scale-95 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all">Search</button>
+            <% if (search || (filterCategory && filterCategory !== 'all') || (filterStatus && filterStatus !== 'all')) { %>
+            <a href="/admin/products"
+               class="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-500 hover:text-gray-800 hover:border-gray-300 font-bold text-sm transition-all">Clear</a>
+            <% } %>
+        </form>
+
+        <!-- ── Product Table ────────────────────────────────────────── -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+
+            <!-- Result meta -->
+            <div class="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                    <% if (search) { %>
+                        Results for "<span class="text-gray-700"><%= search %></span>" &nbsp;·&nbsp; <%= total %> found
+                    <% } else { %>
+                        All Products &nbsp;·&nbsp; <%= total %> total
+                    <% } %>
+                </p>
+                <p class="text-xs text-gray-400 font-semibold">Page <%= currentPage %> / <%= totalPages %></p>
+            </div>
+
+            <table class="w-full text-left">
+                <thead class="bg-gray-50/60 border-b border-gray-100">
+                    <tr>
+                        <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest w-24">Product Image</th>
+                        <th class="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Product Name</th>
+                        <th class="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Category</th>
+                        <th class="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Price</th>
+                        <th class="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Stock</th>
+                        <th class="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                        <th class="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Created Date</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                <% if (products.length === 0) { %>
+                    <tr>
+                        <td colspan="8" class="px-6 py-16 text-center">
+                            <div class="flex flex-col items-center gap-3">
+                                <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center text-gray-300">
+                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                </div>
+                                <p class="text-gray-400 font-semibold text-sm">No products found</p>
+                                <a href="/admin/products/add" class="text-[#B88E2F] font-bold text-sm hover:underline">Add your first product →</a>
+                            </div>
+                        </td>
+                    </tr>
+                <% } else { %>
+                <% products.forEach((p, idx) => {
+                    const rowNum = (currentPage - 1) * limit + idx + 1;
+                    const stock  = p.stock || 0;
+                    let stockBadge, stockLabel;
+                    if (stock === 0)       { stockBadge = 'badge-out-stock';  stockLabel = `Out of Stock`; }
+                    else if (stock <= 5)   { stockBadge = 'badge-low-stock';  stockLabel = `Low Stock (${stock})`; }
+                    else                   { stockBadge = 'badge-in-stock';   stockLabel = `In Stock (${stock})`; }
+                    const imgSrc = (p.images && p.images[0])
+                        ? '/upload/products/' + p.images[0]
+                        : 'https://placehold.co/48x48/F9F5F0/B88E2F?text=IMG';
+                    const catName = p.category ? p.category.name : '—';
+                    const price   = typeof p.regularPrice === 'number' ? `$${p.regularPrice.toFixed(2)}` : '—';
+                    const date    = new Date(p.createdAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+                %> 
+                    <tr class="table-row transition-colors">
+                        <td class="px-6 py-4">
+                            <img src="<%= imgSrc %>" alt="<%= p.productName %>"
+                                 class="w-12 h-12 rounded-xl object-cover border border-gray-100 flex-shrink-0"
+                                 onerror="this.src='https://placehold.co/48x48/F9F5F0/B88E2F?text=IMG'">
+                        </td>
+                        <td class="px-4 py-4">
+                            <div class="min-w-0">
+                                <p class="text-sm font-bold text-gray-900 truncate max-w-[180px]"><%= p.productName %></p>
+                                <% if (p.brand) { %><p class="text-[10px] text-gray-400 font-medium mt-0.5 truncate"><%= p.brand %></p><% } %>
+                            </div>
+                        </td>
+                        <td class="px-4 py-4 text-sm text-gray-600 font-medium"><%= catName %></td>
+                        <td class="px-4 py-4 text-sm font-bold text-gray-900"><%= price %></td>
+                        <td class="px-4 py-4">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wide <%= stockBadge %>">
+                                <span class="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>
+                                <%= stockLabel %>
+                            </span>
+                        </td>
+                        <td class="px-4 py-4">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wide <%= p.isListed ? 'badge-active' : 'badge-hidden' %>">
+                                <span class="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>
+                                <%= p.isListed ? 'ACTIVE' : 'HIDDEN' %>
+                            </span>
+                        </td>
+                        <td class="px-4 py-4 text-xs text-gray-400 font-semibold"><%= date %></td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center justify-end gap-2">
+                                <!-- Edit -->
+                                <a href="/admin/products/<%= p._id %>/edit"
+                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[11px] transition-colors">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                    EDIT
+                                </a>
+                                <!-- Toggle Hide/Show -->
+                                <% if (p.isListed) { %>
+                                <button onclick="toggleProduct('<%= p._id %>', true)"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[11px] transition-colors">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+                                    HIDE
+                                </button>
+                                <% } else { %>
+                                <button onclick="toggleProduct('<%= p._id %>', false)"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 hover:bg-green-100 text-green-700 font-bold text-[11px] transition-colors">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    SHOW
+                                </button>
+                                <% } %>
+                                <!-- Delete -->
+                                <button onclick="deleteProduct('<%= p._id %>')"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 font-bold text-[11px] transition-colors">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    DELETE
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                <% }) %>
+                <% } %>
+                </tbody>
+            </table>
+
+            <!-- ── Pagination ─────────────────────────────── -->
+            <div class="px-6 py-4 border-t border-gray-50 flex items-center justify-between">
+                <p class="text-xs text-gray-400 font-semibold">
+                    Showing <%= Math.min((currentPage-1)*limit+1, total) %>–<%= Math.min(currentPage*limit, total) %> of <%= total %> products
+                </p>
+                <div class="flex items-center gap-2">
+                    <% const buildUrl = (p) => {
+                        const params = new URLSearchParams();
+                        if (search)         params.set('search',   search);
+                        if (sort)           params.set('sort',     sort);
+                        if (filterCategory && filterCategory !== 'all') params.set('category', filterCategory);
+                        if (filterStatus && filterStatus !== 'all')     params.set('status',   filterStatus);
+                        params.set('page', p);
+                        params.set('limit', limit);
+                        return '/admin/products?' + params.toString();
+                    } %>
+                    <% if (currentPage > 1) { %>
+                    <a href="<%= buildUrl(currentPage - 1) %>"
+                       class="px-4 py-2 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">← Previous</a>
+                    <% } else { %>
+                    <button disabled class="px-4 py-2 rounded-xl border border-gray-100 text-sm font-bold text-gray-300 cursor-not-allowed">← Previous</button>
+                    <% } %>
+
+                    <div class="flex items-center gap-1">
+                    <% for (let i = Math.max(1, currentPage-2); i <= Math.min(totalPages, currentPage+2); i++) { %>
+                        <a href="<%= buildUrl(i) %>"
+                           class="w-9 h-9 flex items-center justify-center rounded-xl text-sm font-bold transition-colors
+                                  <%= i === currentPage ? 'bg-[#B88E2F] text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100' %>">
+                            <%= i %>
+                        </a>
+                    <% } %>
+                    </div>
+
+                    <% if (currentPage < totalPages) { %>
+                    <a href="<%= buildUrl(currentPage + 1) %>"
+                       class="px-4 py-2 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">Next →</a>
+                    <% } else { %>
+                    <button disabled class="px-4 py-2 rounded-xl border border-gray-100 text-sm font-bold text-gray-300 cursor-not-allowed">Next →</button>
+                    <% } %>
+                </div>
+            </div>
+
+        </div><!-- /table card -->
+
+    </div><!-- /p-8 -->
+</main>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!--  CLIENT JS                                                      -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<script>
+// ── Toggle product listing (Hide / Show) ─────────────────────────
+async function toggleProduct(id, currentlyListed) {
+    const { isConfirmed } = await Swal.fire({
+        title:              currentlyListed ? 'Hide this product?' : 'Show this product?',
+        html:               currentlyListed
+                                ? '<p class="text-sm text-gray-500">This product will be <strong>hidden from the storefront</strong>.</p>'
+                                : '<p class="text-sm text-gray-500">This product will be <strong>visible on the storefront</strong>.</p>',
+        icon:               'question',
+        showCancelButton:   true,
+        confirmButtonColor: currentlyListed ? '#EF4444' : '#10B981',
+        cancelButtonColor:  '#9CA3AF',
+        confirmButtonText:  currentlyListed ? 'Yes, Hide it' : 'Yes, Show it',
+        cancelButtonText:   'Cancel',
+        reverseButtons:     true,
+        customClass: { popup:'rounded-2xl', confirmButton:'rounded-xl', cancelButton:'rounded-xl' }
+    });
+
+    if (!isConfirmed) return;
+
+    try {
+        const res  = await fetch(`/admin/products/${id}/toggle`, {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            await Swal.fire({
+                icon: 'success',
+                title: data.isListed ? 'Product Active!' : 'Product Hidden!',
+                text:  data.message,
+                showConfirmButton: false, timer: 1400, timerProgressBar: true,
+                customClass: { popup: 'rounded-2xl' }
+            });
+            location.reload();
+        } else {
+            Swal.fire({ icon:'error', title:'Error', text: data.message, customClass:{popup:'rounded-2xl'} });
+        }
+    } catch (_) {
+        Swal.fire({ icon:'error', title:'Network Error', text:'Could not complete the request.', customClass:{popup:'rounded-2xl'} });
+    }
+}
+
+// ── Delete product (Soft Delete) ─────────────────────────────────
+async function deleteProduct(id) {
+    const { isConfirmed } = await Swal.fire({
+        title:              'Delete this product?',
+        html:               '<p class="text-sm text-gray-500">This action will <strong>soft delete</strong> the product.</p>',
+        icon:               'warning',
+        showCancelButton:   true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor:  '#9CA3AF',
+        confirmButtonText:  'Yes, Delete it',
+        cancelButtonText:   'Cancel',
+        reverseButtons:     true,
+        customClass: { popup:'rounded-2xl', confirmButton:'rounded-xl', cancelButton:'rounded-xl' }
+    });
+
+    if (!isConfirmed) return;
+
+    try {
+        const res  = await fetch(`/admin/products/${id}`, {
+            method: 'DELETE', headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            await Swal.fire({
+                icon: 'success',
+                title: 'Deleted!',
+                text:  data.message,
+                showConfirmButton: false, timer: 1400, timerProgressBar: true,
+                customClass: { popup: 'rounded-2xl' }
+            });
+            location.reload();
+        } else {
+            Swal.fire({ icon:'error', title:'Error', text: data.message, customClass:{popup:'rounded-2xl'} });
+        }
+    } catch (_) {
+        Swal.fire({ icon:'error', title:'Network Error', text:'Could not complete the request.', customClass:{popup:'rounded-2xl'} });
+    }
+}
+</script>
+</body>
+</html>

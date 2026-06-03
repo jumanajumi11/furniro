@@ -1,46 +1,52 @@
-const express = require('express');
+import express from 'express';
+
+import * as adminController from '../controllers/admin.controller.js';
+import categoryRoutes from './admin/category.routes.js';
+import productRoutes  from './admin/product.routes.js';
+import * as auth from '../middlewares/auth.js';
+
 const router = express.Router();
-const adminController = require('../controllers/admin.controller');
 
-// ലോഗിൻ റൂട്ടുകൾ
-router.get('/login', adminController.loadLogin);
-router.post('/login', adminController.login);
-router.get('/logout', adminController.logout);
+// ================= AUTH =================
 
-// പ്രൊട്ടക്റ്റഡ് റൂട്ട് (ഉദാഹരണത്തിന് ഡാഷ്‌ബോർഡ്)
-router.get('/dashboard', (req, res) => {
-    if (req.session.admin) {
-        res.render('admin/dashboard');
-    } else {
-        res.redirect('/admin/login');
-    }
-});
-router.get('/forgot-password', adminController.loadForgotPassword);
-router.post('/forgot-password', adminController.sendResetOTP);
+router.get('/login',auth.isAdminLogout,adminController.loadLogin);
 
-router.get('/verify-otp', (req, res) => {
-    res.render('admin/verify-otp', { error: null });
-});
+router.post('/login',adminController.login);
 
-router.post('/verify-otp', adminController.verifyOTP);
+router.get('/logout',adminController.logout);
 
-router.post('/reset-password', adminController.resetPassword);
+// ================= DASHBOARD =================
 
-// User Management Routes
-router.get('/customers', (req, res) => {
-    if (req.session.admin) {
-        adminController.getUsers(req, res);
-    } else {
-        res.redirect('/admin/login');
-    }
-});
+router.get('/dashboard',auth.isAdmin,adminController.loadDashboard);
 
-router.post('/customers/toggle-block/:id', (req, res) => {
-    if (req.session.admin) {
-        adminController.toggleBlock(req, res);
-    } else {
-        res.status(401).json({ success: false, message: 'Unauthorized' });
-    }
-});
+// ================= FORGOT PASSWORD =================
 
-module.exports = router;
+router.get('/forgot-password',adminController.loadForgotPassword);
+
+router.post('/forgot-password',adminController.sendResetOTP);
+
+router.get('/verify-otp',adminController.loadVerifyOTP);
+
+router.post('/verify-otp',adminController.verifyOTP);
+
+router.post('/resend-otp',adminController.resendAdminOTP);
+
+router.post('/reset-password',adminController.resetPassword);
+
+// ================= CUSTOMERS =================
+
+router.get('/customers',auth.isAdmin,adminController.getUsers);
+
+router.patch('/block-user/:id',auth.isAdmin,adminController.blockUser);
+
+router.patch( '/customers/toggle-block/:id',auth.isAdmin,adminController.toggleBlock);
+
+// ================= CATEGORIES =================
+
+router.use('/', categoryRoutes);
+
+// ================= PRODUCTS =================
+
+router.use('/', productRoutes);
+
+export default router;
