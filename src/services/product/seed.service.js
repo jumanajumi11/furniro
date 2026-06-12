@@ -193,7 +193,7 @@ export const seedProductsIfEmpty = async () => {
 
         // 5. Seed a mock Delivered Order for the first user to allow verified purchaser review testing
         if (firstUser && firstProduct) {
-            const orderExists = await Order.findOne({ userId: firstUser._id, 'items.productId': firstProduct._id });
+            const orderExists = await Order.findOne({ userId: firstUser._id, status: 'Delivered' });
             if (!orderExists) {
                 console.log(`Seeding delivered order for user ${firstUser.email} to enable review testing...`);
                 // Let's grab the default variant
@@ -201,14 +201,38 @@ export const seedProductsIfEmpty = async () => {
                     ? firstProduct.variants[0]._id
                     : new mongoose.Types.ObjectId();
 
+                const price = firstProduct.salePrice || firstProduct.regularPrice || 1000;
+                const subtotal = price * 1;
+                const tax = Math.round(subtotal * 0.18);
+                const shippingCharge = 150;
+                const grandTotal = subtotal + tax + shippingCharge;
+
                 await Order.create({
                     userId: firstUser._id,
+                    orderNumber: 'ORD-' + Math.floor(100000 + Math.random() * 900000),
                     items: [{
                         productId: firstProduct._id,
                         variantId: variantId,
                         quantity: 1,
-                        price: firstProduct.salePrice || firstProduct.regularPrice
+                        price: price,
+                        status: 'Delivered'
                     }],
+                    shippingAddress: {
+                        name: 'John Doe',
+                        phone: '9876543210',
+                        house: 'Flat 101, Elite Residency',
+                        locality: 'Silicon Valley',
+                        area: 'Whitefield',
+                        city: 'Bangalore',
+                        state: 'Karnataka',
+                        pincode: '560066'
+                    },
+                    paymentMethod: 'COD',
+                    paymentStatus: 'Paid',
+                    subtotal: subtotal,
+                    tax: tax,
+                    shippingCharge: shippingCharge,
+                    grandTotal: grandTotal,
                     status: 'Delivered'
                 });
             }

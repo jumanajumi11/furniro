@@ -1,5 +1,6 @@
 import express from 'express';
 import * as otpController from '../../controllers/user/otp.controller.js';
+import * as securityController from '../../controllers/user/security.controller.js';
 import * as auth from '../../middlewares/auth.js';
 
 const router = express.Router();
@@ -28,11 +29,11 @@ router.post('/resend-otp',
 
 router.get('/reset-password',
     auth.isLogout,
-    otpController.resetPassword
+    securityController.loadResetPassword
 );
 
 router.post('/reset-password', 
-    otpController.resetPassword
+    securityController.resetPassword
 );
 
 router.post('/send-email-otp',

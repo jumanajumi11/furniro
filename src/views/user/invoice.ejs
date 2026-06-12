@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice - <%= order.orderNumber %></title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background: white;
+                color: black;
+                padding: 0;
+                margin: 0;
+            }
+            .print-border {
+                border: none !important;
+                box-shadow: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen py-10">
+    <div class="max-w-4xl mx-auto bg-white p-8 md:p-12 rounded-3xl border border-gray-100 shadow-sm print-border relative">
+        
+        <!-- Printable Close & Print Controls -->
+        <div class="no-print flex justify-between items-center mb-8 border-b pb-4">
+            <a href="/orders/<%= order._id %>" class="text-sm font-bold text-[#B88E2F] hover:underline flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Order
+            </a>
+            <button onclick="window.print()" class="px-5 py-2.5 bg-[#B88E2F] hover:bg-[#967325] text-white text-xs font-bold rounded-xl shadow transition-all flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-3a2 2 0 00-2-2H9a2 2 0 00-2 2v3a2 2 0 002 2zm5-14V4a1 1 0 011-1h2a1 1 0 011 1v3" />
+                </svg>
+                Print Invoice
+            </button>
+        </div>
+
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-100 pb-8 gap-6">
+            <div>
+                <div class="flex items-center gap-2 mb-2">
+                    <img src="https://res.cloudinary.com/dp9odkfmd/image/upload/v1777118568/Meubel_House_Logos-05_uklcwh.png" alt="Logo" class="h-8 w-8 object-contain">
+                    <span class="text-2xl font-bold text-gray-900 tracking-tight">Furniro</span>
+                </div>
+                <p class="text-xs text-gray-400 font-medium">The Premium Furniture Store</p>
+                <p class="text-xs text-gray-400 font-medium mt-1">Bangalore, Karnataka, India</p>
+            </div>
+            <div class="text-left md:text-right">
+                <h1 class="text-3xl font-extrabold text-gray-900 mb-2">INVOICE</h1>
+                <p class="text-xs text-gray-400 font-semibold">Order ID: <span class="text-gray-700 font-bold"><%= order.orderNumber %></span></p>
+                <p class="text-xs text-gray-400 font-semibold mt-1">Date: <span class="text-gray-700 font-bold"><%= new Date(order.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) %></span></p>
+            </div>
+        </div>
+
+        <!-- Info Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 my-8 border-b border-gray-100 pb-8">
+            <div>
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Billed & Shipped To</h3>
+                <p class="font-bold text-gray-900 text-base"><%= order.shippingAddress.name %></p>
+                <p class="text-xs text-gray-500 font-medium mt-1">+91 <%= order.shippingAddress.phone %></p>
+                <p class="text-xs leading-relaxed text-gray-500 mt-2">
+                    <%= order.shippingAddress.house %>, <%= order.shippingAddress.locality %><br>
+                    <%= order.shippingAddress.area %>, <%= order.shippingAddress.city %><br>
+                    <%= order.shippingAddress.state %> - <span class="font-bold text-gray-800"><%= order.shippingAddress.pincode %></span>
+                </p>
+            </div>
+            <div class="md:text-right">
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Payment Summary</h3>
+                <p class="text-xs text-gray-500 mt-1">Method: <span class="font-bold text-gray-900"><%= order.paymentMethod %></span></p>
+                <p class="text-xs text-gray-500 mt-1">Payment Status: 
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide inline-block <%= order.paymentStatus === 'Paid' ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700' %>">
+                        <%= order.paymentStatus %>
+                    </span>
+                </p>
+                <p class="text-xs text-gray-500 mt-2">Status: 
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide inline-block bg-blue-50 text-blue-700">
+                        <%= order.status %>
+                    </span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Items Table -->
+        <table class="w-full text-left border-collapse mb-8">
+            <thead>
+                <tr class="border-b border-gray-200 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <th class="py-3 pr-4">Description</th>
+                    <th class="py-3 px-4 text-center">Qty</th>
+                    <th class="py-3 px-4 text-right">Unit Price</th>
+                    <th class="py-3 pl-4 text-right">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% order.items.forEach(item => { %>
+                    <tr class="border-b border-gray-100 text-sm">
+                        <td class="py-4 pr-4">
+                            <p class="font-bold text-gray-900"><%= item.productId.productName %></p>
+                            <p class="text-xs text-gray-400 mt-0.5">Category: <%= item.productId.category || 'Furniture' %></p>
+                        </td>
+                        <td class="py-4 px-4 text-center text-gray-500 font-semibold"><%= item.quantity %></td>
+                        <td class="py-4 px-4 text-right text-gray-500 font-semibold">₹<%= item.price.toLocaleString('en-IN') %></td>
+                        <td class="py-4 pl-4 text-right font-bold text-gray-950">₹<%= (item.price * item.quantity).toLocaleString('en-IN') %></td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+
+        <!-- Totals breakdown -->
+        <div class="flex justify-end">
+            <div class="w-full md:w-80 space-y-3 text-sm">
+                <div class="flex justify-between text-gray-500">
+                    <span>Subtotal</span>
+                    <span class="font-bold text-gray-800">₹<%= order.subtotal.toLocaleString('en-IN') %></span>
+                </div>
+                <% if (order.discount > 0) { %>
+                    <div class="flex justify-between text-green-600">
+                        <span>Product Discount</span>
+                        <span class="font-bold">-₹<%= order.discount.toLocaleString('en-IN') %></span>
+                    </div>
+                <% } %>
+                <% if (order.couponDiscount > 0) { %>
+                    <div class="flex justify-between text-green-600">
+                        <span>Coupon Savings</span>
+                        <span class="font-bold">-₹<%= order.couponDiscount.toLocaleString('en-IN') %></span>
+                    </div>
+                <% } %>
+                <div class="flex justify-between text-gray-500">
+                    <span>GST (18%)</span>
+                    <span class="font-bold text-gray-800">₹<%= order.tax.toLocaleString('en-IN') %></span>
+                </div>
+                <div class="flex justify-between text-gray-500">
+                    <span>Shipping Charge</span>
+                    <span class="font-bold text-gray-800">
+                        <%= order.shippingCharge === 0 ? 'Free' : `₹${order.shippingCharge.toLocaleString('en-IN')}` %>
+                    </span>
+                </div>
+                <div class="border-t border-gray-200 pt-3 flex justify-between text-base">
+                    <span class="font-extrabold text-gray-900">Total Paid</span>
+                    <span class="font-extrabold text-[#B88E2F]">₹<%= order.grandTotal.toLocaleString('en-IN') %></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer signature/stamps -->
+        <div class="mt-16 pt-8 border-t border-gray-100 text-center text-xs text-gray-400 font-semibold space-y-2">
+            <p>This is a computer generated invoice and does not require a physical signature.</p>
+            <p>&copy; <%= new Date().getFullYear() %> Furniro Ltd. All Rights Reserved.</p>
+        </div>
+
+    </div>
+</body>
+</html>

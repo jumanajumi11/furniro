@@ -1,16 +1,13 @@
 import Product  from '../../models/product.js';
 import Category from '../../models/category.js';
 
-// ── helpers ─────────────────────────────────────────────────────────
 const escapeRegex = (s) => s.replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&');
 
-// ── Validation constants ─────────────────────────────────────────────
 export const RULES = {
     productName: { min: 3,  max: 100 },
     description: { min: 20, max: 1000 }
 };
 
-// ── Shared field validator (used by service & controller) ────────────
 export const validateProductFields = ({ productName, description, category, regularPrice, salePrice, stock }) => {
     const errors = {};
 
@@ -24,7 +21,6 @@ export const validateProductFields = ({ productName, description, category, regu
         errors.productName = `Product name must be less than ${RULES.productName.max} characters.`;
     }
 
-    // ── Description ──
     const cleanDesc = (description || '').trim();
     if (!cleanDesc) {
         errors.description = 'Description is required.';
@@ -34,35 +30,30 @@ export const validateProductFields = ({ productName, description, category, regu
         errors.description = `Description must not exceed ${RULES.description.max} characters.`;
     }
 
-    // ── Category ──
     if (!category) {
         errors.category = 'Please select a category.';
     }
 
-    // ── Regular price ──
     const regularP = parseFloat(regularPrice);
     if (isNaN(regularP) || regularP < 0) {
         errors.regularPrice = 'Regular price must be a positive number.';
     } else {
-        // ── Sale price ──
         const saleP = salePrice ? parseFloat(salePrice) : null;
         if (saleP !== null && !isNaN(saleP) && saleP > regularP) {
             errors.salePrice = 'Sale price cannot exceed regular price.';
         }
     }
 
-    // ── Stock ──
     const stockVal = parseInt(stock);
     if (isNaN(stockVal) || stockVal < 0) {
         errors.stock = 'Stock quantity must be 0 or greater.';
     }
 
-    return errors; // empty object = no errors
+    return errors; 
 };
 
-// ────────────────────────────────────────────────────────────────────
-// 1. LIST  (search · filter · sort · paginate)
-// ────────────────────────────────────────────────────────────────────
+
+
 export const listProducts = async ({
     search   = '',
     page     = 1,
@@ -127,12 +118,9 @@ export const listProducts = async ({
     };
 };
 
-// ────────────────────────────────────────────────────────────────────
-// 2. GET ONE
-// ────────────────────────────────────────────────────────────────────
 export const getProduct = async (id) => {
     const product = await Product
-        .findOne({ _id: id, isDeleted: false })
+        .findOne({ _id: id, isDeleted: false})
         .populate('category', '_id name')
         .lean();
     if (!product) {
@@ -141,9 +129,7 @@ export const getProduct = async (id) => {
     return product;
 };
 
-// ────────────────────────────────────────────────────────────────────
-// 3. DUPLICATE-NAME CHECK  (case-insensitive, excluding self)
-// ────────────────────────────────────────────────────────────────────
+
 export const isDuplicateName = async (name, excludeId = null) => {
     const cleanName = (name || '').trim();
     if (!cleanName) return false;
@@ -155,11 +141,7 @@ export const isDuplicateName = async (name, excludeId = null) => {
     return !!(await Product.findOne(q).lean());
 };
 
-// ────────────────────────────────────────────────────────────────────
-// 4. CREATE
-// ────────────────────────────────────────────────────────────────────
-// 4. CREATE
-// ────────────────────────────────────────────────────────────────────
+
 export const createProduct = async ({
     productName, description, category, brand,
     regularPrice, salePrice, stock,
@@ -236,7 +218,6 @@ export const updateProduct = async (id, {
     const cleanName = productName.trim();
     const cleanDesc = description.trim();
 
-    // ── duplicate check (exclude self) ──
     if (await isDuplicateName(cleanName, id)) {
         const e = new Error('A product with this name already exists.');
         e.validationErrors = { productName: e.message };
@@ -263,7 +244,6 @@ export const updateProduct = async (id, {
     product.images      = images;
     product.colors      = colors;
 
-    // Link variants to color subdocuments
     const mappedVariants = variants.map(v => {
         const matchedColor = product.colors.find(c => c.name.trim().toLowerCase() === (v.color || '').trim().toLowerCase());
         if (!matchedColor) {
@@ -281,7 +261,6 @@ export const updateProduct = async (id, {
             }
         }
         
-        // 2. Try matching by size & color (case-insensitive) as fallback to prevent ID regeneration on updates
         if (!existingId) {
             const existing = product.variants.find(pv => 
                 (pv.size || '').trim().toLowerCase() === (v.size || '').trim().toLowerCase() &&

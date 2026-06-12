@@ -1,13 +1,10 @@
 import Category from '../../models/category.js';
 
-// Helper to escape regex special characters
 const escapeRegex = (string) => {
     return string.replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&');
 };
 
-/**
- * 1. List categories with search, pagination, and sorting.
- */
+
 export const listCategories = async ({ search = '', page = 1, limit = 10, sort = 'desc', status = 'all' }) => {
     const cleanSearch = (search || '').trim();
     const cleanPage   = Math.max(1, parseInt(page) || 1);
@@ -15,6 +12,7 @@ export const listCategories = async ({ search = '', page = 1, limit = 10, sort =
     const skip        = (cleanPage - 1) * cleanLimit;
 
     const query = { isDeleted: false };
+    const categoriesa=await Category.find(query)
     if (cleanSearch) {
         query.name = { $regex: escapeRegex(cleanSearch), $options: 'i' };
     }
@@ -25,8 +23,8 @@ export const listCategories = async ({ search = '', page = 1, limit = 10, sort =
         query.isListed = false;
     }
 
-    // Sorting logic
-    let sortQuery = { createdAt: -1 }; // default: newest first
+    
+    let sortQuery = { createdAt: -1 }; 
     if (sort === 'asc') sortQuery = { createdAt: 1 };
     if (sort === 'az')  sortQuery = { name: 1 };
     if (sort === 'za')  sortQuery = { name: -1 };
@@ -53,9 +51,7 @@ export const listCategories = async ({ search = '', page = 1, limit = 10, sort =
     };
 };
 
-/**
- * 2. Get a single category by ID.
- */
+
 export const getCategory = async (id) => {
     const category = await Category.findOne({ _id: id, isDeleted: false }).lean();
     if (!category) {
@@ -66,9 +62,7 @@ export const getCategory = async (id) => {
     return category;
 };
 
-/**
- * 3. Create a new category with Duplicate Check.
- */
+
 export const createCategory = async ({ name, description, image, isListed = true }) => {
     const cleanName        = (name || '').trim();
     const cleanDescription = (description || '').trim();
@@ -79,7 +73,7 @@ export const createCategory = async ({ name, description, image, isListed = true
         throw error;
     }
 
-    // Case-insensitive duplicate check
+    
     const duplicate = await Category.findOne({
         name: { $regex: `^${escapeRegex(cleanName)}$`, $options: 'i' },
         isDeleted: false
@@ -102,9 +96,7 @@ export const createCategory = async ({ name, description, image, isListed = true
     return newCategory;
 };
 
-/**
- * 4. Toggle Category Visibility (Hide / Show)
- */
+
 export const toggleCategoryStatus = async (id) => {
     const category = await Category.findById(id);
     if (!category) throw new Error('Category not found');
@@ -113,9 +105,7 @@ export const toggleCategoryStatus = async (id) => {
     return await category.save();
 };
 
-/**
- * 5. Update an existing category.
- */
+
 export const updateCategory = async (id, { name, description, image, isListed }) => {
     const cleanName        = (name || '').trim();
     const cleanDescription = (description || '').trim();
@@ -157,9 +147,7 @@ export const updateCategory = async (id, { name, description, image, isListed })
     return updated;
 };
 
-/**
- * 6. Soft delete a category.
- */
+
 export const deleteCategory = async (id) => {
     const deleted = await Category.findOneAndUpdate(
         { _id: id, isDeleted: false },
@@ -175,3 +163,4 @@ export const deleteCategory = async (id) => {
 
     return deleted;
 };
+ 

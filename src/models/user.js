@@ -52,7 +52,11 @@ const userSchema = new mongoose.Schema({
     house: String,
     area: String,
     isDefault: { type: Boolean, default: false }
-  }]
+  }],
+  wallet: {
+    type: Number,
+    default: 5000
+  }
 }, { timestamps: true });
 
 const User = mongoose.models.User || mongoose.model('User', userSchema);

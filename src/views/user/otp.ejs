@@ -83,34 +83,59 @@
     let isTimerExpired = false;
 
 
-    function startTimer() {
-        let timeLeft = 120;
+    function startTimer(duration) {
+        let timeLeft = duration;
         isTimerExpired = false;
-        
         
         if (resendBtn) {
             resendBtn.disabled = true;
             resendBtn.classList.remove('text-gray-900', 'hover:underline');
             resendBtn.classList.add('text-gray-400', 'cursor-not-allowed');
             resendBtn.style.pointerEvents = 'none';
+            resendBtn.style.color = ''; 
+        }
+
+        if (verifyBtn) {
+            verifyBtn.disabled = false;
+            verifyBtn.classList.remove('opacity-50', 'cursor-not-allowed');
         }
 
         clearInterval(timerInterval);
         
-        timerInterval = setInterval(() => {
-            timeLeft--;
-            
-            
+        const updateUI = () => {
             if (timerDisplay) {
                 let minutes = Math.floor(timeLeft / 60);
                 let seconds = timeLeft % 60;
                 timerDisplay.innerHTML = `0${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
             }
+        };
+
+        updateUI();
+
+        if (timeLeft <= 0) {
+            isTimerExpired = true;
+            if (resendBtn) {
+                resendBtn.disabled = false;
+                resendBtn.classList.remove('text-gray-400', 'cursor-not-allowed');
+                resendBtn.classList.add('text-gray-900', 'hover:underline');
+                resendBtn.style.pointerEvents = 'auto';
+                resendBtn.style.color = '#B88E2F'; 
+            }
+            if (verifyBtn) {
+                verifyBtn.disabled = true;
+                verifyBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+            if (timerDisplay) timerDisplay.innerHTML = "00:00";
+            return;
+        }
+        
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            updateUI();
 
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
                 isTimerExpired = true;
-                
                 
                 if (resendBtn) {
                     resendBtn.disabled = false;
@@ -119,13 +144,18 @@
                     resendBtn.style.pointerEvents = 'auto';
                     resendBtn.style.color = '#B88E2F'; 
                 }
+                if (verifyBtn) {
+                    verifyBtn.disabled = true;
+                    verifyBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
                 if (timerDisplay) timerDisplay.innerHTML = "00:00";
             }
         }, 1000);
     }
 
     
-    startTimer();
+    const initialTime = Number("<%= locals.remainingTime !== undefined ? remainingTime : 120 %>") || 120;
+    startTimer(initialTime);
 
     
     inputs.forEach((input, index) => {
@@ -157,7 +187,7 @@
                     timer: 1500,
                     showConfirmButton: false
                 });
-                startTimer(); // 
+                startTimer(120); 
             } else {
                 Swal.fire('Error', data.message, 'error');
                 resendBtn.disabled = false;

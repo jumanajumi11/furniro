@@ -1,0 +1,146 @@
+<%- include('../layout/header') %>
+
+<main class="bg-[#FDFBF7] min-h-[80vh] py-16">
+    <div class="max-w-2xl mx-auto px-4">
+
+        <!-- Success Card -->
+        <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+
+            <!-- Success Header with animation -->
+            <div class="bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 px-6 pt-10 pb-8 text-center relative overflow-hidden">
+                <!-- Decorative confetti dots -->
+                <div class="absolute inset-0 pointer-events-none opacity-30">
+                    <div class="absolute top-4 left-[15%] w-2 h-2 bg-amber-400 rounded-full animate-bounce" style="animation-delay: 0.1s;"></div>
+                    <div class="absolute top-8 left-[35%] w-1.5 h-1.5 bg-green-400 rounded-full animate-bounce" style="animation-delay: 0.3s;"></div>
+                    <div class="absolute top-3 right-[20%] w-2.5 h-2.5 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0.5s;"></div>
+                    <div class="absolute top-10 right-[35%] w-1.5 h-1.5 bg-pink-400 rounded-full animate-bounce" style="animation-delay: 0.2s;"></div>
+                    <div class="absolute top-6 left-[55%] w-2 h-2 bg-purple-400 rounded-full animate-bounce" style="animation-delay: 0.4s;"></div>
+                </div>
+
+                <!-- Success Icon -->
+                <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-5 text-green-500 text-4xl shadow-lg shadow-green-500/10 animate-bounce">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+
+                <h1 class="text-3xl font-extrabold text-gray-900 mb-2">🎉 Order Placed Successfully!</h1>
+                <p class="text-gray-500 text-sm max-w-md mx-auto">Thank you for shopping with us. Your payment has been received, and your package will be processed shortly.</p>
+            </div>
+
+            <!-- Order Info Bar -->
+            <div class="bg-[#FCF9F3] border-y border-amber-100 px-6 py-4 flex flex-wrap justify-between items-center gap-3">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-hashtag text-[#B88E2F] text-xs"></i>
+                    <span class="text-xs text-gray-400 font-semibold">Order Number</span>
+                    <span class="font-bold text-gray-900 text-sm"><%= order.orderNumber %></span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wide <%= order.paymentStatus === 'Paid' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800' %>">
+                        <%= order.paymentStatus %>
+                    </span>
+                    <span class="text-xs text-gray-500 font-semibold flex items-center gap-1">
+                        <i class="fas <%= order.paymentMethod === 'Wallet' ? 'fa-wallet' : (order.paymentMethod === 'COD' ? 'fa-hand-holding-usd' : 'fa-globe') %> text-gray-400"></i>
+                        <%= order.paymentMethod %>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Purchased Items -->
+            <div class="px-6 py-6">
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                    <i class="fas fa-shopping-bag text-[#B88E2F]"></i>
+                    Purchased Items
+                </h3>
+
+                <div class="space-y-3 max-h-[280px] overflow-y-auto pr-1">
+                    <% order.items.forEach(item => { %>
+                        <%
+                            const product = item.productId;
+                            let size = '';
+                            let color = '';
+                            let productName = 'Unavailable Product';
+
+                            if (product) {
+                                productName = product.productName;
+                                if (product.variants && product.variants.length > 0 && item.variantId) {
+                                    const variant = product.variants.id(item.variantId);
+                                    if (variant) {
+                                        size = variant.size;
+                                        color = variant.color;
+                                    }
+                                }
+                            }
+                        %>
+                        <div class="flex items-center gap-4 bg-gray-50/50 rounded-2xl p-3 border border-gray-100">
+                            <!-- Product Image -->
+                            <div class="w-14 h-14 rounded-xl overflow-hidden bg-white border border-gray-100 flex-shrink-0">
+                                <img src="<%= (product && product.images && product.images.length > 0) ? (product.images[0].startsWith('http') ? product.images[0] : '/upload/products/' + product.images[0]) : '/images/default-placeholder.svg' %>" 
+                                     onerror="this.onerror=null; this.src='/images/default-placeholder.svg';" 
+                                     alt="<%= productName %>" 
+                                     class="w-full h-full object-cover">
+                            </div>
+
+                            <!-- Product Info -->
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-bold text-sm text-gray-800 truncate"><%= productName %></h4>
+                                <div class="flex flex-wrap gap-1.5 mt-1">
+                                    <% if (size) { %>
+                                        <span class="text-[9px] font-bold text-gray-400 bg-white px-1.5 py-0.5 rounded border border-gray-100">Size: <%= size %></span>
+                                    <% } %>
+                                    <% if (color) { %>
+                                        <span class="text-[9px] font-bold text-gray-400 bg-white px-1.5 py-0.5 rounded border border-gray-100">Color: <%= color %></span>
+                                    <% } %>
+                                    <span class="text-[9px] font-bold text-gray-400 bg-white px-1.5 py-0.5 rounded border border-gray-100">Qty: <%= item.quantity %></span>
+                                </div>
+                            </div>
+
+                            <!-- Price -->
+                            <div class="text-right flex-shrink-0">
+                                <p class="font-bold text-sm text-gray-800">₹<%= (item.price * item.quantity).toLocaleString('en-IN') %></p>
+                                <% if (item.quantity > 1) { %>
+                                    <p class="text-[10px] text-gray-400 font-semibold">₹<%= item.price.toLocaleString('en-IN') %> each</p>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+
+            <!-- Amount & Delivery Summary -->
+            <div class="px-6 pb-6">
+                <div class="bg-[#FCF9F3] border border-amber-100 rounded-2xl p-5 space-y-3">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-gray-400 font-semibold">Final Amount</span>
+                        <span class="font-extrabold text-[#B88E2F] text-lg">₹<%= order.grandTotal.toLocaleString('en-IN') %></span>
+                    </div>
+                    <div class="border-t border-amber-100/50 pt-3 flex justify-between text-xs">
+                        <span class="text-gray-400 font-semibold">Estimated Delivery</span>
+                        <span class="font-bold text-gray-800"><%= estimatedDeliveryDate %></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="px-6 pb-8 flex flex-col gap-3">
+                <a href="/orders/<%= order._id %>" class="w-full py-3.5 bg-[#B88E2F] hover:bg-[#967325] text-white font-bold rounded-xl shadow-md transition-all text-sm text-center flex items-center justify-center gap-2">
+                    <i class="fas fa-file-alt"></i> View Order Details
+                </a>
+                <a href="/shop" class="w-full py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-all text-sm text-center flex items-center justify-center gap-2">
+                    <i class="fas fa-store"></i> Continue Shopping
+                </a>
+            </div>
+
+        </div>
+
+        <!-- Security footer note -->
+        <div class="flex justify-center items-center gap-4 text-[10px] text-gray-400 font-bold mt-6">
+            <span><i class="fas fa-shield-alt text-green-500"></i> Secure Payment</span>
+            <span>•</span>
+            <span><i class="fas fa-truck text-[#B88E2F]"></i> Fast Delivery</span>
+            <span>•</span>
+            <span>100% Satisfaction</span>
+        </div>
+
+    </div>
+</main>
+
+<%- include('../layout/footer') %>

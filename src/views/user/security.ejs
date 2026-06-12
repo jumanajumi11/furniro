@@ -53,21 +53,14 @@
             <div class="max-w-md mx-auto bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
     
     <% if (user.googleId) { %>
-        <div class="mb-6">
-            <h3 class="text-xl font-extrabold text-gray-900 mb-2">Set/Create Password</h3>
-            <p class="text-sm text-gray-500 mb-6">Since you logged in with Google, you can set a password for direct login.</p>
-            
-            <form id="createPasswordForm" action="/create-password" method="POST" class="space-y-4">
-                <input type="password" id="newPassword" name="newPassword" placeholder="New Password" 
-                       class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-[#B88E2F]/10 focus:border-[#B88E2F] outline-none transition-all" required minlength="6">
-                
-                <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm Password" 
-                       class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-[#B88E2F]/10 focus:border-[#B88E2F] outline-none transition-all" required>
-                
-                <button type="submit" class="w-full bg-[#B88E2F] hover:bg-[#A27B28] text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-orange-100">
-                    Set Password
-                </button>
-            </form>
+        <div class="text-center py-8">
+            <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-100">
+                <i class="fab fa-google text-2xl text-[#4285F4]"></i>
+            </div>
+            <h3 class="text-xl font-extrabold text-gray-900 mb-2">Google Login Account</h3>
+            <p class="text-sm text-gray-500 leading-relaxed max-w-xs mx-auto">
+                You are logged in using Google. Password management and security settings are handled directly through your Google account.
+            </p>
         </div>
 
     <% } else { %>

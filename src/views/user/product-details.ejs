@@ -87,6 +87,12 @@
 
       <!-- ── Right Column: Product Information ────────────────────────── -->
       <div class="space-y-6">
+        <% if (product.isListed === false) { %>
+          <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center gap-2 text-sm font-bold shadow-sm">
+            <i class="fas fa-exclamation-circle text-base flex-shrink-0"></i>
+            <span>This product is currently unavailable.</span>
+          </div>
+        <% } %>
         <div>
           <!-- Title & Badges -->
           <div class="flex items-center gap-3 mb-2">
@@ -182,14 +188,26 @@
           </div>
 
           <!-- Add to Cart -->
-          <button onclick="submitCartAction('add')" id="btn-add-to-cart" class="flex-grow md:flex-grow-0 bg-white border border-[#B88E2F] text-[#B88E2F] hover:bg-[#B88E2F] hover:text-white px-8 py-3 rounded-lg font-bold text-sm shadow-sm transition-all h-12 flex items-center justify-center gap-2">
-            <i class="fas fa-shopping-cart"></i> Add To Cart
-          </button>
+          <% if (product.isListed === false) { %>
+            <button disabled class="flex-grow md:flex-grow-0 bg-gray-250 text-gray-400 border border-gray-300 px-8 py-3 rounded-lg font-bold text-sm shadow-inner h-12 flex items-center justify-center gap-2 cursor-not-allowed">
+              <i class="fas fa-shopping-cart"></i> Add To Cart
+            </button>
+          <% } else { %>
+            <button onclick="submitCartAction('add')" id="btn-add-to-cart" class="flex-grow md:flex-grow-0 bg-white border border-[#B88E2F] text-[#B88E2F] hover:bg-[#B88E2F] hover:text-white px-8 py-3 rounded-lg font-bold text-sm shadow-sm transition-all h-12 flex items-center justify-center gap-2">
+              <i class="fas fa-shopping-cart"></i> Add To Cart
+            </button>
+          <% } %>
 
           <!-- Buy Now -->
-          <button onclick="submitCartAction('buy')" id="btn-buy-now" class="flex-grow md:flex-grow-0 bg-[#B88E2F] text-white hover:bg-[#967325] px-8 py-3 rounded-lg font-bold text-sm shadow-md transition-all h-12 flex items-center justify-center gap-2">
-            <i class="fas fa-bolt"></i> Buy Now
-          </button>
+          <% if (product.isListed === false) { %>
+            <button disabled class="flex-grow md:flex-grow-0 bg-gray-300 text-gray-500 px-8 py-3 rounded-lg font-bold text-sm shadow-inner h-12 flex items-center justify-center gap-2 cursor-not-allowed">
+              <i class="fas fa-bolt"></i> Buy Now
+            </button>
+          <% } else { %>
+            <button onclick="submitCartAction('buy')" id="btn-buy-now" class="flex-grow md:flex-grow-0 bg-[#B88E2F] text-white hover:bg-[#967325] px-8 py-3 rounded-lg font-bold text-sm shadow-md transition-all h-12 flex items-center justify-center gap-2">
+              <i class="fas fa-bolt"></i> Buy Now
+            </button>
+          <% } %>
 
           <!-- Wishlist -->
           <button onclick="toggleWishlist()" id="btn-wishlist" class="w-12 h-12 rounded-lg border border-gray-200 flex items-center justify-center text-lg hover:border-red-400 hover:text-red-500 transition-all focus:outline-none">
@@ -215,9 +233,9 @@
                       <% if (coupon.discountType === 'percentage') { %>
                         Get <%= coupon.discountValue %>% discount on orders
                       <% } else { %>
-                        Save Rp <%= coupon.discountValue.toLocaleString('id-ID') %> flat discount
+                        Save ₹<%= coupon.discountValue.toLocaleString('en-IN') %> flat discount
                       <% } %>
-                      (Min order Rp <%= coupon.minPurchase.toLocaleString('id-ID') %>)
+                      (Min order ₹<%= coupon.minPurchase.toLocaleString('en-IN') %>)
                     </p>
                   </div>
                   <button onclick="copyCouponCode('<%= coupon.code %>')" class="border border-gray-200 text-gray-700 hover:border-[#B88E2F] hover:text-[#B88E2F] text-xs font-bold px-3 py-1.5 rounded-lg transition-all" id="btn-copy-<%= coupon.code %>">
@@ -758,10 +776,10 @@
 
       // Formatted prices
       const displayAmt = salePrice || price || 0;
-      displayPriceEl.textContent = `Rp ${displayAmt.toLocaleString('id-ID')}`;
+      displayPriceEl.textContent = `₹${displayAmt.toLocaleString('en-IN')}`;
 
       if (salePrice && price && price > salePrice) {
-          regularPriceEl.textContent = `Rp ${price.toLocaleString('id-ID')}`;
+          regularPriceEl.textContent = `₹${price.toLocaleString('en-IN')}`;
           regularPriceEl.classList.remove('hidden');
 
           const pct = Math.round((1 - salePrice / price) * 100);
@@ -769,7 +787,7 @@
           discountEl.classList.remove('hidden');
 
           const diff = price - salePrice;
-          savingsEl.textContent = `You Save Rp ${diff.toLocaleString('id-ID')}`;
+          savingsEl.textContent = `You Save ₹${diff.toLocaleString('en-IN')}`;
           savingsEl.classList.remove('hidden');
       } else {
           regularPriceEl.classList.add('hidden');

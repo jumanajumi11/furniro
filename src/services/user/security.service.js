@@ -28,7 +28,7 @@ export const createPassword = async (userId, { newPassword }) => {
     const updatedUser = await User.findByIdAndUpdate(
         userId,
         { password: hashedPassword },
-        { new: true }
+        { returnDocument:'after' }
     );
 
     if (!updatedUser) {
@@ -42,17 +42,19 @@ export const createPassword = async (userId, { newPassword }) => {
  * Reset user password by email (forgot password reset phase).
  */
 export const resetPasswordByEmail = async (email, password) => {
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password.trim(), salt);
-    const updatedUser = await User.findOneAndUpdate(
-        { email: email.toLowerCase().trim() },
-        { password: hashedPassword },
-        { new: true }
-    );
-    if (!updatedUser) {
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    if (!user) {
         throw new Error("User not found.");
     }
-    return updatedUser;
+    if (user.googleId) {
+        throw new Error("This account is registered via Google. Password reset is not allowed.");
+    }
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password.trim(), salt);
+    
+    user.password = hashedPassword;
+    await user.save();
+    return user;
 };
 
 export default {

@@ -6,15 +6,12 @@ import { addToCartSchema, updateQuantitySchema } from '../../validators/cart.val
 
 const router = express.Router();
 
-// Cart Page
+
 router.get('/cart', auth.isLogin, cartController.loadCart);
 
-// Cart operations
+
 router.post('/cart/add', auth.isLogin, validate(addToCartSchema), cartController.addToCart);
 router.post('/cart/update', auth.isLogin, validate(updateQuantitySchema), cartController.updateQuantity);
 router.post('/cart/remove', auth.isLogin, cartController.removeItem);
-
-// Checkout pre-validation
-router.get('/checkout', auth.isLogin, cartController.checkoutValidate);
 
 export default router;

@@ -1,4 +1,6 @@
 <%- include('../layout/header') %>
+<!-- SweetAlert2 CDN for alerts and toasts -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <main class="bg-white min-h-screen">
   <%/* ── Top Hero Banner ─────────────────────────────────────────── */%>
@@ -59,7 +61,7 @@
                 </span>
               <% } %>
               
-              <button onclick="removeWishlistItem('<%= prod._id %>')" 
+              <button onclick="removeWishlistItem(this, '<%= prod._id %>')" 
                       class="absolute top-4 right-4 z-10 bg-white/80 hover:bg-white text-gray-500 hover:text-red-500 w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-sm focus:outline-none"
                       title="Remove from wishlist">
                 <i class="fas fa-trash-alt text-xs"></i>
@@ -81,15 +83,15 @@
 
               <div class="mt-auto">
                 <div class="flex items-center gap-2 mb-4">
-                  <span class="font-bold text-lg text-gray-900">Rp <%= price.toLocaleString('id-ID') %></span>
+                  <span class="font-bold text-lg text-gray-900">₹<%= price.toLocaleString('en-IN') %></span>
                   <% if (prod.salePrice && prod.regularPrice > prod.salePrice) { %>
-                    <span class="text-gray-450 line-through text-xs font-semibold">Rp <%= prod.regularPrice.toLocaleString('id-ID') %></span>
+                    <span class="text-gray-450 line-through text-xs font-semibold">₹<%= prod.regularPrice.toLocaleString('en-IN') %></span>
                   <% } %>
                 </div>
 
                 <div class="space-y-2.5">
                   <% if (!isOutOfStock) { %>
-                    <button onclick="moveToCart('<%= prod._id %>')" 
+                    <button onclick="moveToCart(this, '<%= prod._id %>')" 
                             class="w-full bg-[#B88E2F] hover:bg-[#967325] text-white font-bold text-sm py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-sm focus:outline-none">
                       <i class="fas fa-shopping-cart text-xs"></i> Move to Cart
                     </button>
@@ -112,7 +114,7 @@
 
 <script>
   // AJAX: Remove product from wishlist directly
-  async function removeWishlistItem(productId) {
+  async function removeWishlistItem(btn, productId) {
       try {
           const result = await Swal.fire({
               title: 'Remove Item?',
@@ -126,6 +128,9 @@
 
           if (!result.isConfirmed) return;
 
+          // Disable button to prevent double-clicks
+          if (btn) btn.disabled = true;
+
           const response = await fetch('/wishlist/remove', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -133,6 +138,13 @@
           });
 
           const data = await response.json();
+
+          // Handle unauthorized access (session expired)
+          if (response.status === 401) {
+              window.location.href = data.redirectUrl || '/login?error=Please login to perform this action';
+              return;
+          }
+
           if (!response.ok) {
               throw new Error(data.message || 'Could not remove item');
           }
@@ -166,6 +178,7 @@
 
       } catch (error) {
           console.error('Remove wishlist error:', error);
+          if (btn) btn.disabled = false;
           Swal.fire({
               icon: 'error',
               title: 'Error',
@@ -176,8 +189,14 @@
   }
 
   // AJAX: Move item from wishlist to cart
-  async function moveToCart(productId) {
+  async function moveToCart(btn, productId) {
       try {
+          // Disable button to prevent double-clicks
+          if (btn) {
+              btn.disabled = true;
+              btn.innerHTML = '<i class="fas fa-spinner fa-spin text-xs"></i> Moving...';
+          }
+
           const response = await fetch('/wishlist/move-to-cart', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -185,6 +204,30 @@
           });
 
           const data = await response.json();
+
+          // Handle unauthorized access (session expired)
+          if (response.status === 401) {
+              window.location.href = data.redirectUrl || '/login?error=Please login to perform this action';
+              return;
+          }
+
+          if (!data.success) {
+              if (data.alreadyInCart) {
+                  Swal.fire({
+                      icon: 'info',
+                      title: 'Already in Cart',
+                      text: data.message || 'Product is already in your cart.',
+                      confirmButtonColor: '#B88E2F'
+                  });
+                  if (btn) {
+                      btn.disabled = false;
+                      btn.innerHTML = '<i class="fas fa-shopping-cart text-xs"></i> Move to Cart';
+                  }
+                  return;
+              }
+              throw new Error(data.message || 'Could not move item to cart');
+          }
+
           if (!response.ok) {
               throw new Error(data.message || 'Could not move item to cart');
           }
@@ -222,6 +265,10 @@
 
       } catch (error) {
           console.error('Move to cart error:', error);
+          if (btn) {
+              btn.disabled = false;
+              btn.innerHTML = '<i class="fas fa-shopping-cart text-xs"></i> Move to Cart';
+          }
           Swal.fire({
               icon: 'error',
               title: 'Action Failed',

@@ -23,6 +23,7 @@ import { seedProductsIfEmpty } from './src/services/product/seed.service.js';
 import Cart from './src/models/cart.js';
 import Category from './src/models/category.js';
 import wishlistService from './src/services/user/wishlist.service.js';
+import { formatCurrency } from './src/utils/helpers.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -113,6 +114,7 @@ app.use(
     passport.initialize(),
     passport.session(),
     async (req, res, next) => {
+        res.locals.formatCurrency = formatCurrency;
         res.locals.cartCount = 0;
         res.locals.wishlistCount = 0;
         res.locals.wishlistProductIds = [];
@@ -134,7 +136,6 @@ app.use(
                     if (cart && cart.items) {
                         res.locals.cartCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
                     }
-                    // Auto-clean unlisted or deleted items in the wishlist in real-time
                     const wishlist = await wishlistService.cleanUnavailableWishlistItems(userId);
                     if (wishlist && wishlist.products) {
                         res.locals.wishlistCount = wishlist.products.length;

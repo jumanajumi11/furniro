@@ -1,9 +1,9 @@
 import wishlistService from '../../services/user/wishlist.service.js';
 import cartService from '../../services/user/cart.service.js';
+import Product from '../../models/product.js';
+import Cart from '../../models/cart.js';
 
-/**
- * GET Wishlist Page
- */
+
 export const loadWishlist = async (req, res) => {
     try {
         const userId = req.session.user_id || (req.session.user ? req.session.user._id : null);
@@ -11,7 +11,6 @@ export const loadWishlist = async (req, res) => {
             return res.redirect('/login?error=Please login to view your wishlist');
         }
 
-        // Auto-clean unlisted or deleted items in the wishlist
         const wishlist = await wishlistService.cleanUnavailableWishlistItems(userId);
         const products = wishlist ? wishlist.products : [];
 
@@ -28,9 +27,7 @@ export const loadWishlist = async (req, res) => {
     }
 };
 
-/**
- * POST Toggle Wishlist Item (AJAX)
- */
+
 export const toggleWishlist = async (req, res) => {
     try {
         const userId = req.session.user_id || (req.session.user ? req.session.user._id : null);
@@ -54,9 +51,7 @@ export const toggleWishlist = async (req, res) => {
     }
 };
 
-/**
- * POST Remove Item from Wishlist directly (AJAX)
- */
+
 export const removeItem = async (req, res) => {
     try {
         const userId = req.session.user_id || (req.session.user ? req.session.user._id : null);
@@ -65,6 +60,9 @@ export const removeItem = async (req, res) => {
         }
 
         const { productId } = req.body;
+        if (!productId) {
+            return res.status(400).json({ success: false, message: 'Product ID missing' });
+        }
         const result = await wishlistService.removeItemFromWishlist(userId, productId);
 
         return res.json({
@@ -79,9 +77,7 @@ export const removeItem = async (req, res) => {
     }
 };
 
-/**
- * POST Move Item from Wishlist to Cart (AJAX)
- */
+
 export const moveToCart = async (req, res) => {
     try {
         const userId = req.session.user_id || (req.session.user ? req.session.user._id : null);
@@ -91,13 +87,44 @@ export const moveToCart = async (req, res) => {
 
         const { productId } = req.body;
         
-        // addItemToCart automatically adds the item (choosing the first available variant if it has variants)
-        // and removes the item from the wishlist.
-        const result = await cartService.addItemToCart(userId, productId, null, 1);
+        const product = await Product.findById(productId);
+        if (!product || product.isDeleted || !product.isListed) {
+            return res.status(400).json({ success: false, message: 'This product is currently unavailable' });
+        }
+
+        let targetVariantId = null;
+        if (product.variants && product.variants.length > 0) {
+            const selectedVariant = product.variants.find(v => v.stock > 0);
+            if (!selectedVariant) {
+                return res.status(400).json({ success: false, message: 'This item is currently out of stock' });
+            }
+            targetVariantId = selectedVariant._id;
+        }
+
+        const cart = await Cart.findOne({ userId });
+        let alreadyInCart = false;
+        if (cart) {
+            alreadyInCart = cart.items.some(item => 
+                item.productId.toString() === productId.toString() &&
+                (targetVariantId 
+                    ? item.variantId && item.variantId.toString() === targetVariantId.toString()
+                    : !item.variantId)
+            );
+        }
+
+        if (alreadyInCart) {
+            return res.status(200).json({
+                success: false,
+                alreadyInCart: true,
+                message: 'Product is already in your cart.'
+            });
+        }
+
+        const result = await cartService.addItemToCart(userId, productId, targetVariantId, 1);
         
         return res.json({
             success: true,
-            message: 'Product moved to cart successfully!',
+            message: 'Product moved to cart successfully.',
             cartCount: result.cartCount,
             wishlistCount: result.wishlistCount
         });

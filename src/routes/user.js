@@ -10,6 +10,7 @@ import wishlistRoutes from './user/wishlist.routes.js';
 import otpRoutes from './user/otp.routes.js';
 import securityRoutes from './user/security.routes.js';
 import googleRoutes from './user/google.routes.js';
+import checkoutRoutes from './user/checkout.routes.js';
 
 const router = express.Router();
 
@@ -23,5 +24,6 @@ router.use('/', wishlistRoutes);
 router.use('/', otpRoutes);
 router.use('/', securityRoutes);
 router.use('/', googleRoutes);
+router.use('/', checkoutRoutes);
 
 export default router;

@@ -122,10 +122,10 @@
         }
     }
 
-    // 2. Real-time Validation (ടൈപ്പ് ചെയ്യുമ്പോൾ എറർ മെസ്സേജ് കളയാൻ)
+    
     document.querySelectorAll('#signupForm input').forEach(input => {
         input.addEventListener('input', function() {
-            // ഓരോ ഇൻപുട്ടിന്റെയും എറർ ഐഡി കണ്ടെത്തുന്നു
+            
             let errorId;
             if (this.id === 'confirmPassword') {
                 errorId = 'confirmError';
@@ -135,7 +135,7 @@
 
             const errorP = document.getElementById(errorId);
             
-            // ടൈപ്പ് ചെയ്യുമ്പോൾ മെസ്സേജും ചുവന്ന ബോർഡറും മാറ്റുന്നു
+            
             if (errorP) {
                 errorP.classList.add('hidden');
             }
@@ -187,7 +187,7 @@
             isValid = false;
         }
 
-        // എറർ ഉണ്ടെങ്കിൽ ഫോം സബ്മിറ്റ് ചെയ്യുന്നത് തടയുന്നു
+        
         if (!isValid) {
             e.preventDefault();
         }

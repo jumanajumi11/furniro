@@ -1,0 +1,125 @@
+<%- include('../layout/header') %>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="text-sm text-gray-500 mb-8 flex items-center gap-2">
+        <a href="/" class="hover:text-[#B88E2F]">Home</a>
+        <i class="fas fa-chevron-right text-xs"></i>
+        <span class="text-gray-800">My Account</span>
+    </div>
+
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Available Coupons</h1>
+        <p class="text-gray-500">Collect promo vouchers and save big on your checkouts.</p>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Sidebar Navigation -->
+        <aside class="w-full lg:w-72 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden py-6 px-4 h-fit">
+            <nav class="flex flex-col text-sm font-medium">
+                <a href="/profile" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                    <i class="far fa-user text-lg w-5 text-center"></i>
+                    Profile Information
+                </a>
+                <a href="/addresses" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                    <i class="fas fa-map-marker-alt text-lg w-5 text-center"></i>
+                    My Addresses
+                </a>
+                <a href="/orders" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                    <i class="fas fa-box text-lg w-5 text-center"></i>
+                    My Orders
+                </a>
+                <a href="/wishlist" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                    <i class="far fa-heart text-lg w-5 text-center"></i>
+                    My Wishlist
+                </a>
+                <a href="/wallet" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                    <i class="fas fa-wallet text-lg w-5 text-center"></i>
+                    My Wallet
+                </a>
+                <a href="/coupons" class="flex items-center gap-4 px-6 py-3.5 bg-[#FCF9F4] text-[#B88E2F] border-l-4 border-[#B88E2F]">
+                    <i class="fas fa-ticket-alt text-lg w-5 text-center"></i>
+                    Coupons
+                </a>
+                <a href="/security" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                    <i class="fas fa-shield-alt text-lg w-5 text-center"></i>
+                    Security Settings
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Coupons Grid -->
+        <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <% if (coupons && coupons.length > 0) { %>
+                <% coupons.forEach(coupon => { %>
+                    <div class="bg-white border-2 border-dashed border-amber-200 hover:border-[#B88E2F]/60 rounded-3xl p-6 shadow-sm flex flex-col justify-between relative overflow-hidden transition-all">
+                        
+                        <!-- Circular coupon punch holes styling -->
+                        <div class="absolute w-6 h-6 bg-[#FDFBF7] border-r border-amber-100 rounded-full -left-3 top-1/2 -translate-y-1/2"></div>
+                        <div class="absolute w-6 h-6 bg-[#FDFBF7] border-l border-amber-100 rounded-full -right-3 top-1/2 -translate-y-1/2"></div>
+
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="px-3 py-1 bg-amber-50 border border-amber-100 rounded-lg text-xs font-bold text-[#B88E2F] uppercase tracking-wider">
+                                    <%= coupon.discountType === 'percentage' ? `${coupon.discountValue}% Off` : `₹${coupon.discountValue} Off` %>
+                                </span>
+                                <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                                    <i class="far fa-clock"></i> Expires: <%= new Date(coupon.expiryDate).toLocaleDateString('en-IN', { dateStyle: 'medium' }) %>
+                                </span>
+                            </div>
+                            
+                            <h3 class="font-extrabold text-gray-900 text-lg mb-2">Save on checkout using <%= coupon.code %></h3>
+                            <div class="space-y-1 text-xs text-gray-500 font-medium mb-4">
+                                <p>Minimum purchase threshold: <span class="font-bold text-gray-800">₹<%= coupon.minPurchase.toLocaleString('en-IN') %></span></p>
+                                <% if (coupon.maxDiscount) { %>
+                                    <p>Maximum discount limit: <span class="font-bold text-gray-800">₹<%= coupon.maxDiscount.toLocaleString('en-IN') %></span></p>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 mt-4">
+                            <div class="flex-1 bg-[#FDFBF7] border border-amber-100 rounded-xl px-4 py-2.5 text-center font-extrabold text-sm text-gray-800 tracking-widest select-all uppercase">
+                                <%= coupon.code %>
+                            </div>
+                            <button onclick="copyCode('<%= coupon.code %>')" class="px-5 py-3 bg-[#B88E2F] hover:bg-[#967325] text-white text-xs font-bold rounded-xl shadow transition-all flex items-center gap-1.5" id="btn-<%= coupon.code %>">
+                                <i class="far fa-copy"></i> Copy
+                            </button>
+                        </div>
+
+                    </div>
+                <% }) %>
+            <% } else { %>
+                <div class="col-span-full bg-white rounded-3xl p-16 border border-gray-100 shadow-sm text-center">
+                    <i class="fas fa-ticket-alt text-5xl text-gray-200 mb-4 block"></i>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">No Active Coupons</h3>
+                    <p class="text-gray-400 text-sm">Check back later for active promotional vouchers!</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function copyCode(code) {
+        navigator.clipboard.writeText(code).then(() => {
+            const btn = document.getElementById(`btn-${code}`);
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-check"></i> Copied';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="far fa-copy"></i> Copy';
+                }, 2000);
+            }
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Coupon Copied!',
+                text: `Voucher code "${code}" has been saved to your clipboard. Use it at checkout to claim your discount!`,
+                confirmButtonColor: '#B88E2F'
+            });
+        }).catch(err => {
+            console.error('Clipboard copy failed:', err);
+        });
+    }
+</script>
+
+<%- include('../layout/footer') %>

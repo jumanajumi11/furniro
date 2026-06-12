@@ -111,6 +111,9 @@ export const toggleWishlist = async (userId, productId) => {
  * Remove an item from the wishlist directly.
  */
 export const removeItemFromWishlist = async (userId, productId) => {
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+        throw new Error('Invalid Product ID');
+    }
     let wishlist = await Wishlist.findOne({ userId });
     if (!wishlist) {
         return { success: true, wishlistCount: 0 };

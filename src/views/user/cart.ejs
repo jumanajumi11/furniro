@@ -150,7 +150,7 @@
 
                   <!-- Unit Price -->
                   <td class="py-6 px-4 font-semibold text-gray-600 text-sm">
-                    Rp <%= price.toLocaleString('id-ID') %>
+                    <%= formatCurrency(price) %>
                   </td>
 
                   <!-- Quantity Controls -->
@@ -166,13 +166,13 @@
                       <button onclick="updateQty(this, 1)" 
                               class="qty-btn px-2.5 py-1 text-gray-500 hover:bg-gray-100 font-bold h-full border-l transition-colors focus:outline-none"
                               data-max-stock="<%= stock %>"
-                              <%= (stock <= 0 || item.quantity >= stock || item.quantity >= 10) ? 'disabled' : '' %>>+</button>
+                              <%= (stock <= 0) ? 'disabled' : '' %>>+</button>
                     </div>
                   </td>
 
                   <!-- Subtotal -->
                   <td class="py-6 px-4 font-bold text-gray-800 text-sm item-subtotal">
-                    Rp <%= itemSubtotal.toLocaleString('id-ID') %>
+                    <%= formatCurrency(itemSubtotal) %>
                   </td>
 
                   <!-- Remove Button -->
@@ -196,7 +196,7 @@
             <div class="flex justify-between items-center text-sm">
               <span class="text-gray-600 font-medium">Subtotal</span>
               <span class="text-gray-900 font-semibold" id="cart-subtotal">
-                Rp <%= totals.subtotal.toLocaleString('id-ID') %>
+                <%= formatCurrency(totals.subtotal) %>
               </span>
             </div>
             
@@ -204,7 +204,7 @@
               <div class="flex justify-between items-center text-sm">
                 <span class="text-green-600 font-medium">Product Discount</span>
                 <span class="text-green-600 font-semibold" id="cart-discount">
-                  -Rp <%= totals.discount.toLocaleString('id-ID') %>
+                  -<%= formatCurrency(totals.discount) %>
                 </span>
               </div>
             <% } %>
@@ -215,17 +215,17 @@
                 <i class="far fa-question-circle text-[10px] text-gray-400 cursor-help" title="Standard value-added tax of 10%"></i>
               </div>
               <span class="text-gray-900 font-semibold" id="cart-tax">
-                Rp <%= totals.tax.toLocaleString('id-ID') %>
+                <%= formatCurrency(totals.tax) %>
               </span>
             </div>
 
             <div class="flex justify-between items-center text-sm">
               <div class="flex flex-col">
                 <span class="text-gray-600 font-medium">Shipping Charge</span>
-                <span class="text-[10px] text-gray-400 font-medium">Free over Rp 500.000</span>
+                <span class="text-[10px] text-gray-400 font-medium">Free over ₹5,00,000</span>
               </div>
               <span class="text-gray-900 font-semibold" id="cart-shipping">
-                <%= totals.shippingCharge === 0 ? 'Free' : `Rp ${totals.shippingCharge.toLocaleString('id-ID')}` %>
+                <%= totals.shippingCharge === 0 ? 'Free' : formatCurrency(totals.shippingCharge) %>
               </span>
             </div>
 
@@ -234,7 +234,7 @@
             <div class="flex justify-between items-end">
               <span class="text-gray-900 font-bold text-base mb-1">Total</span>
               <span class="text-2xl font-extrabold text-[#B88E2F]" id="cart-total">
-                Rp <%= totals.grandTotal.toLocaleString('id-ID') %>
+                <%= formatCurrency(totals.grandTotal) %>
               </span>
             </div>
           </div>
@@ -300,6 +300,11 @@
 </main>
 
 <script>
+  // Client-side currency helper
+  function formatCurrency(amount) {
+      return '₹' + parseFloat(amount).toLocaleString('en-IN');
+  }
+
   // Toast notifications configuration
   const Toast = Swal.mixin({
       toast: true,
@@ -314,11 +319,11 @@
       document.querySelectorAll('.qty-btn').forEach(btn => {
           if (disabled) btn.setAttribute('disabled', 'true');
           else {
-              // Only re-enable if variant stock permits
-              const input = btn.parentElement.querySelector('.qty-input');
-              const val = parseInt(input.value);
-              const maxStock = parseInt(btn.getAttribute('data-max-stock'));
-              if (btn.textContent === '+' && (val >= maxStock || val >= 10)) {
+              // Only disable if variant stock is 0 (out of stock)
+              const row = btn.closest('.cart-row');
+              const plusBtn = row.querySelector('.qty-btn[data-max-stock]');
+              const maxStock = plusBtn ? parseInt(plusBtn.getAttribute('data-max-stock') || 0) : 0;
+              if (maxStock <= 0) {
                   btn.setAttribute('disabled', 'true');
               } else {
                   btn.removeAttribute('disabled');
@@ -337,21 +342,21 @@
 
   // Recalculate totals in the sidebar based on JSON response
   function updateSidebarTotals(totals) {
-      document.getElementById('cart-subtotal').textContent = `Rp ${totals.subtotal.toLocaleString('id-ID')}`;
+      document.getElementById('cart-subtotal').textContent = formatCurrency(totals.subtotal);
       
       const discountEl = document.getElementById('cart-discount');
       if (discountEl) {
           if (totals.discount > 0) {
-              discountEl.textContent = `-Rp ${totals.discount.toLocaleString('id-ID')}`;
+              discountEl.textContent = `-${formatCurrency(totals.discount)}`;
               discountEl.parentElement.classList.remove('hidden');
           } else {
               discountEl.parentElement.classList.add('hidden');
           }
       }
 
-      document.getElementById('cart-tax').textContent = `Rp ${totals.tax.toLocaleString('id-ID')}`;
-      document.getElementById('cart-shipping').textContent = totals.shippingCharge === 0 ? 'Free' : `Rp ${totals.shippingCharge.toLocaleString('id-ID')}`;
-      document.getElementById('cart-total').textContent = `Rp ${totals.grandTotal.toLocaleString('id-ID')}`;
+      document.getElementById('cart-tax').textContent = formatCurrency(totals.tax);
+      document.getElementById('cart-shipping').textContent = totals.shippingCharge === 0 ? 'Free' : formatCurrency(totals.shippingCharge);
+      document.getElementById('cart-total').textContent = formatCurrency(totals.grandTotal);
   }
 
   // Update item quantity (AJAX)
@@ -362,9 +367,37 @@
       
       const input = row.querySelector('.qty-input');
       const currentVal = parseInt(input.value);
-      const newVal = currentVal + change;
+      
+      // Stock and max limit validation
+      const plusBtn = row.querySelector('.qty-btn[data-max-stock]');
+      const maxStock = plusBtn ? parseInt(plusBtn.getAttribute('data-max-stock') || 0) : 0;
 
-      if (newVal < 1 || newVal > 10) return;
+      if (change === 1) {
+          if (currentVal >= 10) {
+              Toast.fire({
+                  icon: 'warning',
+                  title: 'Quantity cannot exceed the maximum purchase limit of 10 units'
+              });
+              return;
+          }
+          if (currentVal >= maxStock) {
+              Toast.fire({
+                  icon: 'warning',
+                  title: `Only ${maxStock} unit(s) are available in stock`
+              });
+              return;
+          }
+      } else if (change === -1) {
+          if (currentVal <= 1) {
+              Toast.fire({
+                  icon: 'warning',
+                  title: 'Quantity must be at least 1'
+              });
+              return;
+          }
+      }
+
+      const newVal = currentVal + change;
 
       // Lock buttons
       setControlsState(true);
@@ -387,7 +420,7 @@
           input.value = newVal;
 
           // Update item subtotal
-          row.querySelector('.item-subtotal').textContent = `Rp ${data.itemSubtotal.toLocaleString('id-ID')}`;
+          row.querySelector('.item-subtotal').textContent = formatCurrency(data.itemSubtotal);
 
           // Update sidebar totals
           updateSidebarTotals(data.totals);
@@ -402,11 +435,9 @@
           });
 
       } catch (err) {
-          Swal.fire({
+          Toast.fire({
               icon: 'error',
-              title: 'Update Failed',
-              text: err.message,
-              confirmButtonColor: '#B88E2F'
+              title: err.message || 'Update Failed'
           });
       } finally {
           // Unlock buttons

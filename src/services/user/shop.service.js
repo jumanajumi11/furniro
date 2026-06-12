@@ -3,9 +3,7 @@ import mongoose from 'mongoose';
 import Product  from '../../models/product.js';
 import Category from '../../models/category.js';
 
-/**
- * Get active listed products for the homepage.
- */
+
 export const getHomeProducts = async () => {
     const sofaCategories = [
         { name: 'L Shaped Sofa',   img: 'https://res.cloudinary.com/dp9odkfmd/image/upload/v1776920338/image_113_wlmvvt.png' },
@@ -26,7 +24,7 @@ export const getHomeProducts = async () => {
  * Get filtered, sorted, paginated list of products for the shop page.
  */
 export const getShopProducts = async (queryObj) => {
-    const baseFilter = { isListed: true, isDeleted: false };
+    const baseFilter = { isDeleted: false };
 
     // ── Search ──────────────────────────────────────────────────────
     let searchQuery = '';
@@ -111,7 +109,7 @@ export const getShopProducts = async (queryObj) => {
         Category.find({ isDeleted: false, isListed: true })
             .sort({ name: 1 })
             .lean(),
-        Product.distinct('variants.size', { isListed: true, isDeleted: false })
+        Product.distinct('variants.size', { isDeleted: false })
     ]);
 
     const categories  = categoryDocs.map(c => c.name);

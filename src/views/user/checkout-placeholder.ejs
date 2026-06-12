@@ -55,7 +55,7 @@
               <% } %>
               <span class="text-xs text-gray-400 font-bold ml-1">x<%= item.quantity %></span>
             </div>
-            <span class="font-medium text-gray-900">Rp <%= (price * item.quantity).toLocaleString('id-ID') %></span>
+            <span class="font-medium text-gray-900"><%= formatCurrency(price * item.quantity) %></span>
           </div>
         <% }) %>
       </div>
@@ -65,22 +65,22 @@
       <div class="space-y-3">
         <div class="flex justify-between text-sm text-gray-600">
           <span>Subtotal</span>
-          <span class="font-semibold text-gray-900">Rp <%= totals.subtotal.toLocaleString('id-ID') %></span>
+          <span class="font-semibold text-gray-900"><%= formatCurrency(totals.subtotal) %></span>
         </div>
         <% if (totals.discount > 0) { %>
           <div class="flex justify-between text-sm text-green-600">
             <span>Discount</span>
-            <span class="font-semibold">-Rp <%= totals.discount.toLocaleString('id-ID') %></span>
+            <span class="font-semibold">-<%= formatCurrency(totals.discount) %></span>
           </div>
         <% } %>
         <div class="flex justify-between text-sm text-gray-600">
           <span>VAT (10%)</span>
-          <span class="font-semibold text-gray-900">Rp <%= totals.tax.toLocaleString('id-ID') %></span>
+          <span class="font-semibold text-gray-900"><%= formatCurrency(totals.tax) %></span>
         </div>
         <div class="flex justify-between text-sm text-gray-600">
           <span>Shipping Charge</span>
           <span class="font-semibold text-gray-900">
-            <%= totals.shippingCharge === 0 ? 'Free' : `Rp ${totals.shippingCharge.toLocaleString('id-ID')}` %>
+            <%= totals.shippingCharge === 0 ? 'Free' : formatCurrency(totals.shippingCharge) %>
           </span>
         </div>
         
@@ -88,7 +88,7 @@
 
         <div class="flex justify-between items-end">
           <span class="font-bold text-gray-900 text-base">Grand Total</span>
-          <span class="text-xl font-extrabold text-[#B88E2F]">Rp <%= totals.grandTotal.toLocaleString('id-ID') %></span>
+          <span class="text-xl font-extrabold text-[#B88E2F]"><%= formatCurrency(totals.grandTotal) %></span>
         </div>
       </div>
     </div>

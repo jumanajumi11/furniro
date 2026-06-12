@@ -323,7 +323,7 @@ export const calculateCartTotals = (populatedItems) => {
         }
     }
 
-    // Shipping charge is free for purchases above Rp 500,000 threshold
+    // Shipping charge is free for purchases above ₹500,000 threshold
     const shippingThreshold = 500000;
     const shippingCharge = (netCost === 0 || netCost >= shippingThreshold) ? 0 : baseShippingCharge;
 

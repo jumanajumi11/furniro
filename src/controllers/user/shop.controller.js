@@ -62,15 +62,15 @@ export const loadProductDetails = async (req, res) => {
 
         const product = await Product.findById(id).populate('category').lean();
         
-        // Error handling if product is deleted, blocked, or not found
-        if (!product || product.isDeleted || !product.isListed) {
-            return res.redirect('/shop?error=Product is currently unavailable');
+        
+        if (!product || product.isDeleted) {
+            return res.redirect('/shop?error=This product is currently unavailable.');
         }
 
-        // Determine logged in user
+        
         const userId = req.session.user_id || (req.session.user ? req.session.user._id : null);
 
-        // Check if verified purchaser (has delivered order with this product)
+        
         let isVerifiedPurchaser = false;
         if (userId) {
             const hasOrdered = await Order.findOne({
@@ -83,7 +83,7 @@ export const loadProductDetails = async (req, res) => {
             }
         }
 
-        // Ratings & Reviews Summary
+        
         const reviews = await Review.find({ productId: product._id }).sort({ createdAt: -1 }).lean();
         const totalReviews = reviews.length;
         let averageRating = 0;
@@ -100,7 +100,7 @@ export const loadProductDetails = async (req, res) => {
             });
             averageRating = parseFloat((sum / totalReviews).toFixed(1));
             
-            // Calculate percentages
+            
             for (let stars = 1; stars <= 5; stars++) {
                 ratingPercentages[stars] = Math.round((ratingDistribution[stars] / totalReviews) * 100);
             }
@@ -112,15 +112,13 @@ export const loadProductDetails = async (req, res) => {
             expiryDate: { $gt: new Date() }
         }).lean();
 
-        // ── Fetch ALL distinct sizes from the entire Product collection ──
-        // This ensures the product detail page displays every size in the
-        // system, not just the sizes attached to the current product's variants.
+       
         const allSystemSizes = (await Product.distinct('variants.size', {
             isListed: true,
             isDeleted: false
         })).filter(Boolean);
 
-        // Related Products (from same category, excluding current product)
+        
         const relatedProducts = await Product.find({
             category: product.category._id,
             _id: { $ne: product._id },
@@ -128,7 +126,6 @@ export const loadProductDetails = async (req, res) => {
             isDeleted: false
         }).populate('category').limit(4).lean();
 
-        // Recently Viewed Products logic using signed/unsigned cookies
         let recentlyViewedIds = [];
         if (req.cookies.recentlyViewed) {
             try {
@@ -138,18 +135,15 @@ export const loadProductDetails = async (req, res) => {
             }
         }
 
-        // Add current product to the recently viewed list (move to top, limit to 5)
         recentlyViewedIds = [id, ...recentlyViewedIds.filter(item => item !== id)].slice(0, 5);
         res.cookie('recentlyViewed', JSON.stringify(recentlyViewedIds), { maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true });
 
-        // Retrieve product details for other recently viewed items
         const recentlyViewedProducts = await Product.find({
             _id: { $in: recentlyViewedIds.filter(itemId => itemId !== id) },
             isListed: true,
             isDeleted: false
         }).populate('category').limit(4).lean();
 
-        // Fetch user's wishlist state to pass to view
         let isInWishlist = false;
         if (userId) {
             const wishlist = await Wishlist.findOne({ userId, products: product._id }).lean();
@@ -180,9 +174,6 @@ export const loadProductDetails = async (req, res) => {
     }
 };
 
-/**
- * POST Submit Review (verified purchasers only)
- */
 export const addReview = async (req, res) => {
     try {
         const { id } = req.params;
@@ -198,7 +189,6 @@ export const addReview = async (req, res) => {
             return res.redirect('/shop?error=Product not found');
         }
 
-        // Verify purchase
         const hasOrdered = await Order.findOne({
             userId,
             'items.productId': product._id,
@@ -209,7 +199,6 @@ export const addReview = async (req, res) => {
             return res.redirect(`/shop/product/${id}?error=Only verified purchasers who received this product can write a review`);
         }
 
-        // Validate review inputs
         const score = parseInt(rating);
         if (isNaN(score) || score < 1 || score > 5) {
             return res.redirect(`/shop/product/${id}?error=Rating must be between 1 and 5 stars`);
@@ -221,8 +210,7 @@ export const addReview = async (req, res) => {
             return res.redirect(`/shop/product/${id}?error=Review comment is required`);
         }
 
-        // Handle uploaded files
-        const images = [];
+       const images = [];
         if (req.files && req.files.length > 0) {
             req.files.forEach(file => {
                 images.push('/upload/' + file.filename);
@@ -249,9 +237,7 @@ export const addReview = async (req, res) => {
     }
 };
 
-/**
- * POST Add to Cart (AJAX)
- */
+
 export const addToCart = async (req, res) => {
     try {
         // ── STEP 1: Log incoming request ──────────────────────────────────
@@ -260,7 +246,7 @@ export const addToCart = async (req, res) => {
 
         const { productId, variantId: rawVariantId, quantity } = req.body;
 
-        // Treat the string "null" the same as JS null (safety for stringified payloads)
+        
         const variantId = (rawVariantId === 'null' || rawVariantId === '' || !rawVariantId)
             ? null
             : rawVariantId;
@@ -322,7 +308,7 @@ export const addToCart = async (req, res) => {
                     return res.status(400).json({ success: false, message: 'Selected variant is invalid' });
                 }
             } else {
-                // Quick-add from shop card: auto-pick first variant with stock, else first overall
+               
                 selectedVariant = product.variants.find(v => v.stock > 0) || product.variants[0];
                 console.log('[5] Auto-selected variant:', selectedVariant?._id, '| stock:', selectedVariant?.stock);
             }
@@ -335,7 +321,7 @@ export const addToCart = async (req, res) => {
                 });
             }
         } else {
-            // No variants – use product-level stock
+            
             if (product.stock < qty) {
                 console.log(`[5] ✗ Product stock (${product.stock}) < qty (${qty}) → 400`);
                 return res.status(400).json({
@@ -383,9 +369,7 @@ export const addToCart = async (req, res) => {
     }
 };
 
-/**
- * POST Buy Now (Direct Checkout Flow - AJAX)
- */
+
 export const buyNow = async (req, res) => {
     try {
         const { productId, variantId, quantity } = req.body;
@@ -402,7 +386,7 @@ export const buyNow = async (req, res) => {
 
         const product = await Product.findById(productId);
         if (!product || product.isDeleted || !product.isListed) {
-            return res.status(404).json({ success: false, message: 'Product is unavailable' });
+            return res.status(400).json({ success: false, message: 'This product is currently unavailable.' });
         }
 
         if (product.variants && product.variants.length > 0) {
@@ -413,38 +397,29 @@ export const buyNow = async (req, res) => {
             if (!selectedVariant) {
                 return res.status(400).json({ success: false, message: 'Selected variant is invalid' });
             }
+            if (selectedVariant.stock <= 0) {
+                return res.status(400).json({ success: false, message: 'The selected variant is out of stock.' });
+            }
             if (selectedVariant.stock < qty) {
                 return res.status(400).json({ success: false, message: `Insufficient stock. Only ${selectedVariant.stock} items left.` });
             }
         } else {
+            if (product.stock <= 0) {
+                return res.status(400).json({ success: false, message: 'This product is out of stock.' });
+            }
             if (product.stock < qty) {
                 return res.status(400).json({ success: false, message: `Insufficient stock. Only ${product.stock} items left.` });
             }
         }
 
-        // Add to user cart
-        let cart = await Cart.findOne({ userId });
-        if (!cart) {
-            cart = new Cart({ userId, items: [] });
-        }
+        // Store Buy Now item in session
+        req.session.buyNowItem = {
+            productId,
+            variantId: variantId || null,
+            quantity: qty
+        };
 
-        const existingItemIndex = cart.items.findIndex(item => 
-            item.productId.toString() === productId.toString() && 
-            (variantId ? (item.variantId && item.variantId.toString() === variantId.toString()) : !item.variantId)
-        );
-
-        if (existingItemIndex > -1) {
-            cart.items[existingItemIndex].quantity = qty; // For direct checkout, set to target quantity
-        } else {
-            cart.items.push({
-                productId,
-                variantId: variantId ? new mongoose.Types.ObjectId(variantId) : null,
-                quantity: qty
-            });
-        }
-
-        await cart.save();
-        return res.json({ success: true, redirectUrl: '/cart' });
+        return res.json({ success: true, redirectUrl: '/checkout?buyNow=true' });
 
     } catch (error) {
         console.error('Buy Now Error:', error.message);

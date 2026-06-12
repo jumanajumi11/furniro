@@ -135,6 +135,14 @@ export const sendResetOTP = async (req, res) => {
         }
 
         const otp = generateOTP();
+        // Unconditional logging for debugging (will appear regardless of NODE_ENV)
+        console.log('\n=================================');
+        console.log('OTP GENERATED');
+        console.log('Email:', email);
+        console.log('OTP:', otp);
+        console.log('Generated At:', new Date().toISOString());
+        console.log('Expires In: 60 Seconds');
+        console.log('=================================\n');
 
         req.session.resetOTP = otp;
         req.session.resetEmail = email;
@@ -330,6 +338,9 @@ export const getUsers = async (req, res) => {
 
         let query = {
             isAdmin: false,
+            isBlocked:true,
+            name: { $regex: '^f', $options: 'i' },
+
             $or: [
                 {
                     name: {
@@ -445,6 +456,7 @@ export const blockUser = async (req, res) => {
         });
     }
 };
+
 
 // ---------- Dashboard ----------
 export const loadDashboard = async (req, res) => {

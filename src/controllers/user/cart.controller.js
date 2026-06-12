@@ -144,9 +144,6 @@ export const removeItem = async (req, res) => {
     }
 };
 
-/**
- * GET Validate Checkout Restrictions
- */
 export const checkoutValidate = async (req, res) => {
     try {
         const userId = req.session.user_id || (req.session.user ? req.session.user._id : null);
@@ -154,7 +151,7 @@ export const checkoutValidate = async (req, res) => {
             return res.redirect('/login?error=Please login to proceed');
         }
 
-        // Run real-time checks
+        
         const warnings = await cartService.cleanUnavailableItems(userId);
         if (warnings.length > 0) {
             return res.redirect('/cart?error=Some items in your cart were updated or are unavailable');
@@ -165,7 +162,7 @@ export const checkoutValidate = async (req, res) => {
             return res.redirect('/cart?error=Your cart is empty');
         }
 
-        // Validate individual items
+        
         for (const item of cart.items) {
             const product = item.productId;
             if (!product || product.isDeleted || !product.isListed) {
@@ -190,8 +187,7 @@ export const checkoutValidate = async (req, res) => {
             }
         }
 
-        // Render checkout page or success redirect to checkout
-        // Check if checkout view exists or create a simple placeholder
+        
         res.render('user/checkout-placeholder', {
             user: req.session.user || null,
             totals: cartService.calculateCartTotals(cart.items),

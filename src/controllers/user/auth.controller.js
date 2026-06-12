@@ -18,10 +18,10 @@ export const signup = async (req, res, next) => {
         const { name, email, password } = req.body;
         const userEmail = email.toLowerCase().trim();
 
-        // Check if user already exists
+        
         const otpData = await otpService.sendOtp(userEmail, 'signup');
 
-        // Hash password to store in session (do not save to DB yet)
+
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password.trim(), salt);
 
@@ -34,6 +34,7 @@ export const signup = async (req, res, next) => {
         };
         req.session.otpExpiry = Date.now() + (5 * 60 * 1000);
         req.session.purpose = "signup";
+        req.session.resendCount = 0;
         
         req.session.save(err => {
             if (err) {

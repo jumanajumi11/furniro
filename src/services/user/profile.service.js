@@ -56,7 +56,7 @@ export const removeProfileImage = async (userId) => {
     const updatedUser = await User.findByIdAndUpdate(
         userId,
         { $set: { image: "" } },
-        { new: true }
+        { returnDocument:'after' }
     );
     if (!updatedUser) {
         throw new Error("User not found");

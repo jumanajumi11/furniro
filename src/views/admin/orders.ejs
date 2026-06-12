@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Management - Furniro Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F9FAFB; }
+        .status-dropdown {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23374151'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.65rem center;
+            background-size: 0.75em;
+            padding-right: 1.75rem !important;
+            white-space: nowrap;
+            min-width: 160px;
+        }
+        .status-badge {
+            white-space: nowrap;
+            min-width: 160px;
+            display: inline-block;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+<%- include('./adminPartials/adminSidebar.ejs', { activePage: 'orders' }) %>
+
+<main class="flex-1 p-6 lg:p-10 overflow-y-auto max-w-7xl mx-auto w-full">
+    
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">ORDER MANAGEMENT</h1>
+            <p class="text-gray-500 mt-1 text-sm font-medium">Track customer orders, manage shipments, and update statuses.</p>
+        </div>
+        
+        <div class="flex items-center gap-3 self-end sm:self-auto bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm">
+            <div class="text-right">
+                <p class="text-xs font-black text-[#B88E2F] uppercase tracking-widest">System Admin</p>
+                <p class="text-sm font-bold text-gray-900 leading-none mt-0.5">Jumana</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-[#B88E2F] flex items-center justify-center text-white font-extrabold text-sm shadow-inner">
+                JU
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <!-- Total Orders -->
+        <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+                <span class="text-gray-400 text-xs font-bold uppercase tracking-wider">Total</span>
+                <div class="p-2 bg-gray-50 text-gray-600 rounded-xl"><i class="fas fa-boxes"></i></div>
+            </div>
+            <div class="mt-4">
+                <h3 class="text-2xl font-black text-gray-900"><%= counts.total %></h3>
+                <p class="text-gray-400 text-[10px] font-semibold mt-1">Orders placed</p>
+            </div>
+        </div>
+        <!-- Pending Orders -->
+        <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+                <span class="text-gray-400 text-xs font-bold uppercase tracking-wider">Pending</span>
+                <div class="p-2 bg-amber-50 text-amber-500 rounded-xl"><i class="fas fa-clock"></i></div>
+            </div>
+            <div class="mt-4">
+                <h3 class="text-2xl font-black text-amber-500"><%= counts.pending %></h3>
+                <p class="text-amber-500/80 text-[10px] font-semibold mt-1">Awaiting action</p>
+            </div>
+        </div>
+        <!-- Shipped Orders -->
+        <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+                <span class="text-gray-400 text-xs font-bold uppercase tracking-wider">Shipped</span>
+                <div class="p-2 bg-blue-50 text-blue-500 rounded-xl"><i class="fas fa-truck"></i></div>
+            </div>
+            <div class="mt-4">
+                <h3 class="text-2xl font-black text-blue-500"><%= counts.shipped %></h3>
+                <p class="text-blue-500/80 text-[10px] font-semibold mt-1">In transit</p>
+            </div>
+        </div>
+        <!-- Delivered Orders -->
+        <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+                <span class="text-gray-400 text-xs font-bold uppercase tracking-wider">Delivered</span>
+                <div class="p-2 bg-green-50 text-green-500 rounded-xl"><i class="fas fa-check-double"></i></div>
+            </div>
+            <div class="mt-4">
+                <h3 class="text-2xl font-black text-green-500"><%= counts.delivered %></h3>
+                <p class="text-green-500/80 text-[10px] font-semibold mt-1">Completed</p>
+            </div>
+        </div>
+        <!-- Cancelled Orders -->
+        <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+                <span class="text-gray-400 text-xs font-bold uppercase tracking-wider">Cancelled</span>
+                <div class="p-2 bg-rose-50 text-rose-500 rounded-xl"><i class="fas fa-times"></i></div>
+            </div>
+            <div class="mt-4">
+                <h3 class="text-2xl font-black text-rose-500"><%= counts.cancelled %></h3>
+                <p class="text-rose-500/80 text-[10px] font-semibold mt-1">Voided / Refunded</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtering UI Tabs -->
+    <div class="flex flex-wrap gap-2 mb-6 border-b border-gray-100 pb-4">
+        <a href="/admin/orders?status=All&search=<%= encodeURIComponent(search) %>&sort=<%= sort %>" 
+           class="px-4 py-2 text-xs font-bold rounded-2xl border transition-all <%= status === 'All' || status === 'all' ? 'bg-[#B88E2F] text-white border-[#B88E2F] shadow-md shadow-[#B88E2F]/10' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50' %>">
+            All Orders
+        </a>
+        <a href="/admin/orders?status=active&search=<%= encodeURIComponent(search) %>&sort=<%= sort %>" 
+           class="px-4 py-2 text-xs font-bold rounded-2xl border transition-all <%= status === 'active' || !status ? 'bg-[#B88E2F] text-white border-[#B88E2F] shadow-md shadow-[#B88E2F]/10' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50' %>">
+            Active Orders
+        </a>
+        <a href="/admin/orders?status=Return Requested&search=<%= encodeURIComponent(search) %>&sort=<%= sort %>" 
+           class="px-4 py-2 text-xs font-bold rounded-2xl border transition-all <%= status === 'Return Requested' ? 'bg-[#B88E2F] text-white border-[#B88E2F] shadow-md shadow-[#B88E2F]/10' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50' %>">
+            Return Requested
+        </a>
+        <a href="/admin/orders?status=Return Approved&search=<%= encodeURIComponent(search) %>&sort=<%= sort %>" 
+           class="px-4 py-2 text-xs font-bold rounded-2xl border transition-all <%= status === 'Return Approved' ? 'bg-[#B88E2F] text-white border-[#B88E2F] shadow-md shadow-[#B88E2F]/10' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50' %>">
+            Returned
+        </a>
+        <a href="/admin/orders?status=Return Rejected&search=<%= encodeURIComponent(search) %>&sort=<%= sort %>" 
+           class="px-4 py-2 text-xs font-bold rounded-2xl border transition-all <%= status === 'Return Rejected' ? 'bg-[#B88E2F] text-white border-[#B88E2F] shadow-md shadow-[#B88E2F]/10' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50' %>">
+            Return Rejected
+        </a>
+    </div>
+
+    <!-- Filters, Search & Sorting -->
+    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-5 mb-6">
+        <form method="GET" action="/admin/orders" class="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
+            <input type="hidden" name="page" value="1">
+            <input type="hidden" name="status" value="<%= status %>">
+            
+            <div class="flex-1 flex flex-col sm:flex-row gap-3">
+                <!-- Search Input -->
+                <div class="relative flex-1 min-w-[240px]">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                        <i class="fas fa-search text-sm"></i>
+                    </span>
+                    <input type="text" name="search" placeholder="Search by Order ID, Name, Email..." value="<%= search || '' %>"
+                           class="w-full bg-gray-50 border border-gray-100 text-gray-800 text-sm rounded-2xl pl-10 pr-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                </div>
+            </div>
+
+            <div class="flex flex-wrap sm:flex-nowrap gap-3 items-center">
+                <!-- Sort Select -->
+                <div class="relative w-full sm:w-48">
+                    <select name="sort" onchange="this.form.submit()"
+                            class="w-full bg-gray-50 border border-gray-100 text-gray-700 text-sm rounded-2xl pl-4 pr-10 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all cursor-pointer">
+                        <option value="newest" <%= sort === 'newest' ? 'selected' : '' %>>Newest First</option>
+                        <option value="oldest" <%= sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
+                        <option value="highAmount" <%= sort === 'highAmount' ? 'selected' : '' %>>Highest Amount</option>
+                        <option value="lowAmount" <%= sort === 'lowAmount' ? 'selected' : '' %>>Lowest Amount</option>
+                    </select>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <button type="submit" class="flex-1 sm:flex-none px-6 py-3 bg-[#B88E2F] text-white font-bold text-sm rounded-2xl hover:bg-[#9c7524] shadow-md shadow-[#B88E2F]/10 transition">
+                        Apply
+                    </button>
+                    <a href="/admin/orders" class="px-5 py-3 bg-gray-100 text-gray-600 font-bold text-sm rounded-2xl hover:bg-gray-200 transition text-center flex items-center justify-center" title="Clear All Filters">
+                        Clear
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Orders Table Container -->
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto w-full">
+            <table class="w-full text-left min-w-[1050px]">
+                <thead class="bg-gray-50/75 border-b border-gray-100 sticky top-0 backdrop-blur-md">
+                    <tr>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Order ID</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Customer</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Grand Total</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Payment Details</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider text-center">Status</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    <% if (orders && orders.length > 0) { %>
+                        <% orders.forEach(order => { %>
+                            <tr class="hover:bg-gray-50/30 transition-colors">
+                                <!-- Order ID -->
+                                <td class="px-6 py-5.5">
+                                    <p class="font-bold text-gray-900 text-sm"><%= order.orderNumber || order._id %></p>
+                                </td>
+                                
+                                <!-- Date -->
+                                <td class="px-6 py-5.5 text-xs text-gray-500 font-semibold">
+                                    <%= new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) %>
+                                </td>
+                                
+                                <!-- Customer -->
+                              <td class="px-6 py-5.5">
+    <div class="flex items-center">
+
+        <% if (order.userId && order.userId.image) { %>
+            <img
+                src="<%= order.userId.image %>"
+                alt="Avatar"
+                class="w-10 h-10 rounded-full object-cover mr-3"
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+            >
+
+            <div
+                style="display:none"
+                class="w-10 h-10 rounded-full bg-[#B88E2F] text-white font-bold flex items-center justify-center mr-3"
+            >
+                <%= (order.userId.name || 'U').charAt(0).toUpperCase() %>
+            </div>
+
+        <% } else { %>
+
+            <div
+                class="w-10 h-10 rounded-full bg-[#B88E2F] text-white font-bold flex items-center justify-center mr-3"
+            >
+                <%= (order.userId?.name || 'U').charAt(0).toUpperCase() %>
+            </div>
+
+        <% } %>
+
+        <div>
+            <p class="font-bold text-gray-800 text-xs">
+                <%= order.userId ? order.userId.name : (order.shippingAddress ? order.shippingAddress.name : 'Guest User') %>
+            </p>
+
+            <p class="text-[10px] text-gray-400 font-medium italic mt-0.5">
+                <%= order.userId ? order.userId.email : 'Deleted Email' %>
+            </p>
+
+            <p class="text-[10px] text-gray-400 font-medium mt-0.5">
+                <%= order.shippingAddress ? order.shippingAddress.phone : '' %>
+            </p>
+        </div>
+
+    </div>
+</td>
+                                
+                                <!-- Grand Total -->
+                                <td class="px-6 py-5.5">
+                                    <p class="font-extrabold text-[#B88E2F] text-sm">
+                                        ₹<%= (order.grandTotal || 0).toLocaleString('en-IN') %>
+                                    </p>
+                                </td>
+                                
+                                <!-- Payment Details -->
+                                <td class="px-6 py-5.5 text-xs">
+                                    <p class="font-bold text-gray-700"><%= order.paymentMethod || 'Razorpay' %></p>
+                                    <%
+                                        let payClass = 'text-gray-400 bg-gray-50 border-gray-200';
+                                        if (order.paymentStatus === 'Paid') payClass = 'text-green-600 bg-green-50 border-green-200';
+                                        else if (order.paymentStatus === 'Pending') payClass = 'text-amber-600 bg-amber-50 border-amber-200';
+                                        else if (order.paymentStatus === 'Refunded') payClass = 'text-blue-600 bg-blue-50 border-blue-200';
+                                        else if (order.paymentStatus === 'Failed') payClass = 'text-red-600 bg-red-50 border-red-200';
+                                    %>
+                                    <span class="inline-block text-[9px] uppercase font-black px-2 py-0.5 rounded border tracking-wide mt-1 <%= payClass %>">
+                                        <%= order.paymentStatus || 'Pending' %>
+                                    </span>
+                                </td>
+                                
+                                <!-- Status (Single unified display) -->
+                                <td class="px-6 py-5.5 text-center">
+                                    <%
+                                        /* Derive the effective display status */
+                                        let effectiveStatus = order.status || 'Pending';
+                                        if (order.returnRequest) {
+                                            const retSt = order.returnRequest.status;
+                                            if (retSt === 'Requested') effectiveStatus = 'Return Requested';
+                                            else if (retSt === 'Approved') effectiveStatus = 'Returned';
+                                            else if (retSt === 'Rejected') effectiveStatus = 'Return Rejected';
+                                        }
+
+                                        let statusColor = 'bg-gray-100 text-gray-700 border-gray-200';
+                                        if (effectiveStatus === 'Pending' || effectiveStatus === 'Pending Payment') statusColor = 'bg-amber-100 text-amber-700 border-amber-200';
+                                        else if (effectiveStatus === 'Processing') statusColor = 'bg-blue-100 text-blue-700 border-blue-200';
+                                        else if (effectiveStatus === 'Shipped') statusColor = 'bg-indigo-100 text-indigo-700 border-indigo-200';
+                                        else if (effectiveStatus === 'Out For Delivery') statusColor = 'bg-purple-100 text-purple-700 border-purple-200';
+                                        else if (effectiveStatus === 'Delivered') statusColor = 'bg-green-100 text-green-700 border-green-200';
+                                        else if (effectiveStatus === 'Cancelled') statusColor = 'bg-red-100 text-red-700 border-red-200';
+                                        else if (effectiveStatus === 'Returned') statusColor = 'bg-violet-100 text-violet-700 border-violet-200';
+                                        else if (effectiveStatus === 'Return Requested') statusColor = 'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200';
+                                        else if (effectiveStatus === 'Return Rejected') statusColor = 'bg-red-100 text-red-700 border-red-200';
+                                        else if (effectiveStatus === 'Payment Failed') statusColor = 'bg-rose-100 text-rose-700 border-rose-200';
+                                        
+                                        const isTerminal = ['Delivered', 'Cancelled', 'Returned', 'Return Requested', 'Return Rejected', 'Payment Failed'].includes(effectiveStatus);
+                                        const nextStatusMap = {
+                                            'Pending': 'Processing',
+                                            'Pending Payment': 'Processing',
+                                            'Processing': 'Shipped',
+                                            'Shipped': 'Out For Delivery',
+                                            'Out For Delivery': 'Delivered'
+                                        };
+                                        const allowedNextStatus = nextStatusMap[effectiveStatus] || null;
+                                    %>
+                                    <% if (isTerminal || !allowedNextStatus) { %>
+                                        <span class="status-badge text-[10px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full border <%= statusColor %>">
+                                            <%= effectiveStatus === 'Pending Payment' ? 'Pending' : effectiveStatus %>
+                                        </span>
+                                    <% } else { %>
+                                        <select onchange="updateOrderStatus(this, '<%= order._id %>')" 
+                                                class="status-dropdown text-[10px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full border outline-none cursor-pointer transition-all <%= statusColor %>">
+                                            <option value="<%= effectiveStatus %>" selected><%= effectiveStatus === 'Pending Payment' ? 'Pending' : effectiveStatus %></option>
+                                            <option value="<%= allowedNextStatus %>"><%= allowedNextStatus %></option>
+                                        </select>
+                                    <% } %>
+                                </td>
+                                
+                                <!-- Actions -->
+                                <td class="px-6 py-5.5 text-right">
+                                    <div class="flex flex-col sm:flex-row items-center justify-end gap-2">
+                                        <a href="/admin/orders/<%= order._id %>"
+                                           class="px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-100 text-gray-500 hover:bg-[#B88E2F] hover:text-white hover:border-[#B88E2F] transition flex items-center gap-1.5 shadow-sm text-[10px] font-bold"
+                                           title="View Details">
+                                            <i class="fas fa-eye text-[10px]"></i> View Details
+                                        </a>
+                                        <% if (order.returnRequest) { %>
+                                            <a href="/admin/orders/<%= order._id %>/return-request"
+                                               class="px-3 py-1.5 rounded-xl bg-orange-50 border border-orange-100 text-orange-600 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition flex items-center gap-1.5 shadow-sm text-[10px] font-bold"
+                                               title="Return Request">
+                                                <i class="fas fa-undo text-[10px]"></i> Return Request
+                                            </a>
+                                        <% } %>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="7" class="py-14 text-center text-gray-400 font-bold italic">
+                                <i class="fas fa-inbox text-3xl text-gray-200 mb-3 block"></i>
+                                No orders match the selected criteria.
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Server-side Pagination Footer -->
+        <% if (totalOrders > 0) { %>
+            <div class="px-6 py-5 bg-gray-50/50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <span class="text-xs text-gray-500 font-medium">
+                    Showing <%= (currentPage - 1) * 10 + 1 %>–<%= Math.min(currentPage * 10, totalOrders) %> of <%= totalOrders %> Orders
+                </span>
+                
+                <% if (totalPages > 1) { %>
+                    <div class="flex items-center gap-1.5">
+                        <!-- Prev Page Button -->
+                        <% if (currentPage > 1) { %>
+                            <a href="/admin/orders?page=<%= currentPage - 1 %>&search=<%= encodeURIComponent(search) %>&status=<%= status %>&sort=<%= sort %>" 
+                               class="w-9 h-9 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-100 transition flex items-center justify-center text-xs font-bold shadow-sm">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        <% } else { %>
+                            <span class="w-9 h-9 bg-gray-100 border border-gray-100 text-gray-400 rounded-xl flex items-center justify-center text-xs font-bold cursor-not-allowed">
+                                <i class="fas fa-chevron-left"></i>
+                            </span>
+                        <% } %>
+
+                        <!-- Page Numbers Loop -->
+                        <% for (let i = 1; i <= totalPages; i++) { %>
+                            <% if (i === currentPage) { %>
+                                <span class="w-9 h-9 bg-[#B88E2F] text-white rounded-xl flex items-center justify-center text-xs font-black shadow-md shadow-[#B88E2F]/20">
+                                    <%= i %>
+                                </span>
+                            <% } else { %>
+                                <a href="/admin/orders?page=<%= i %>&search=<%= encodeURIComponent(search) %>&status=<%= status %>&sort=<%= sort %>"
+                                   class="w-9 h-9 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-100 transition flex items-center justify-center text-xs font-bold shadow-sm">
+                                    <%= i %>
+                                </a>
+                            <% } %>
+                        <% } %>
+
+                        <!-- Next Page Button -->
+                        <% if (currentPage < totalPages) { %>
+                            <a href="/admin/orders?page=<%= currentPage + 1 %>&search=<%= encodeURIComponent(search) %>&status=<%= status %>&sort=<%= sort %>" 
+                               class="w-9 h-9 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-100 transition flex items-center justify-center text-xs font-bold shadow-sm">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        <% } else { %>
+                            <span class="w-9 h-9 bg-gray-100 border border-gray-100 text-gray-400 rounded-xl flex items-center justify-center text-xs font-bold cursor-not-allowed">
+                                <i class="fas fa-chevron-right"></i>
+                            </span>
+                        <% } %>
+                    </div>
+                <% } %>
+            </div>
+        <% } %>
+    </div>
+</main>
+
+<script>
+    // AJAX status updating handler with SweetAlert2 confirmation
+    function updateOrderStatus(select, orderId) {
+        const newStatus = select.value;
+        const defaultConfirmButtonColor = '#B88E2F';
+
+        Swal.fire({
+            title: 'Update Order Status?',
+            text: `Confirm updating order's status to "${newStatus}".`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: defaultConfirmButtonColor,
+            cancelButtonColor: '#9CA3AF',
+            confirmButtonText: 'Yes, update status',
+            cancelButtonText: 'Cancel',
+            customClass: {
+                popup: 'rounded-2xl',
+                confirmButton: 'rounded-xl font-bold px-5 py-2.5 text-xs',
+                cancelButton: 'rounded-xl font-bold px-5 py-2.5 text-xs'
+            }
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                // Show loader
+                Swal.fire({
+                    title: 'Updating...',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+
+                try {
+                    const response = await fetch(`/admin/orders/update-status`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ orderId, status: newStatus })
+                    });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Updated!',
+                            text: data.message,
+                            timer: 1500,
+                            showConfirmButton: false,
+                            customClass: { popup: 'rounded-2xl' }
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Failed to update',
+                            text: data.message,
+                            confirmButtonColor: defaultConfirmButtonColor,
+                            customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-xl font-bold px-5 py-2.5 text-xs' }
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    }
+                } catch (err) {
+                    console.error('AJAX status update error:', err);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'An unexpected network error occurred.',
+                        confirmButtonColor: defaultConfirmButtonColor,
+                        customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-xl font-bold px-5 py-2.5 text-xs' }
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                }
+            } else {
+                // Reset select element back to its default value on cancel
+                window.location.reload();
+            }
+        });
+    }
+
+
+</script>
+
+</body>
+</html>

@@ -2,6 +2,32 @@ import User from '../../models/user.js';
 import { generateOTP } from '../../utils/generateOTP.js';
 import { sendOTPEmail } from '../../utils/mail.js';
 
+const formatTimestamp = (ms) => {
+    const d = new Date(ms);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const seconds = String(d.getSeconds()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+};
+
+const logOtpToConsole = (email, otp, durationMs) => {
+    if (process.env.NODE_ENV !== "production") {
+        const now = Date.now();
+        const formattedGen = formatTimestamp(now);
+        const formattedExp = formatTimestamp(now + durationMs);
+        console.log("\n=================================");
+        console.log("OTP GENERATED");
+        console.log(`Email: ${email}`);
+        console.log(`OTP: ${otp}`);
+        console.log(`Generated At: ${formattedGen}`);
+        console.log(`Expiry At: ${formattedExp}`);
+        console.log("=================================\n");
+    }
+};
+
 /**
  * Send an OTP to the given email for a specific purpose.
  */
@@ -22,13 +48,24 @@ export const sendOtp = async (email, purpose = 'signup') => {
         if (!user) {
             throw new Error("No account exists with this email address!");
         }
+        if (user.googleId) {
+            throw new Error("This account is registered via Google. Please sign in with Google.");
+        }
         if (!user.isVerified) {
             throw new Error("This email address is not verified. Please verify your email first.");
         }
     }
 
     const otp = generateOTP();
-    console.log(`[${purpose.toUpperCase()}] OTP for ${cleanEmail}: ${otp}`);
+    // Unconditional logging for debugging (will appear regardless of NODE_ENV)
+    console.log('\n=================================');
+    console.log('OTP GENERATED');
+    console.log('Email:', cleanEmail);
+    console.log('OTP:', otp);
+    console.log('Generated At:', new Date().toISOString());
+    console.log('Expires In: 120 Seconds');
+    console.log('=================================\n');
+    logOtpToConsole(cleanEmail, otp, 120 * 1000); // 2 minutes expiry
     try {
         await sendOTPEmail(cleanEmail, otp);
     } catch (mailError) {
@@ -54,7 +91,15 @@ export const sendEmailUpdateOtp = async (newEmail, currentUserId) => {
     }
 
     const otp = generateOTP();
-    console.log(`[EMAIL UPDATE] OTP for ${cleanEmail}: ${otp}`);
+    // Unconditional logging for debugging (will appear regardless of NODE_ENV)
+    console.log('\n=================================');
+    console.log('OTP GENERATED');
+    console.log('Email:', cleanEmail);
+    console.log('OTP:', otp);
+    console.log('Generated At:', new Date().toISOString());
+    console.log('Expires In: 60 Seconds');
+    console.log('=================================\n');
+    logOtpToConsole(cleanEmail, otp, 60 * 1000); // 1 minute expiry
     try {
         await sendOTPEmail(cleanEmail, otp);
     } catch (mailError) {
@@ -158,7 +203,7 @@ export const verifyAndSaveEmail = async (otp, sessionData, sessionOtpExpiry, use
     const updatedUser = await User.findByIdAndUpdate(
         userId,
         { email: sessionData.newEmail },
-        { new: true }
+        { returnDocument:'after'}
     );
 
     return updatedUser;

@@ -51,7 +51,7 @@ export const addAddress = async (userId, addressData) => {
     const updatedUser = await User.findByIdAndUpdate(
         userId,
         { $push: { addresses: newAddress } },
-        { new: true }
+        { returnDocument:'after' }
     );
 
     return updatedUser;
@@ -90,7 +90,7 @@ export const editAddress = async (userId, addressId, addressData) => {
                 "addresses.$.isDefault": isDefaultBool
             }
         },
-        { new: true }
+        { returnDocument:'after' }
     );
 
     if (!updatedUser) {
@@ -107,7 +107,7 @@ export const deleteAddress = async (userId, addressId) => {
     const updatedUser = await User.findByIdAndUpdate(
         userId,
         { $pull: { addresses: { _id: addressId } } },
-        { new: true }
+        { returnDocument:'after' }
     );
     return updatedUser;
 };

@@ -3,6 +3,7 @@ import express from 'express';
 import * as adminController from '../controllers/admin.controller.js';
 import categoryRoutes from './admin/category.routes.js';
 import productRoutes  from './admin/product.routes.js';
+import ordersRoutes   from './admin/orders.routes.js';
 import * as auth from '../middlewares/auth.js';
 
 const router = express.Router();
@@ -48,5 +49,9 @@ router.use('/', categoryRoutes);
 // ================= PRODUCTS =================
 
 router.use('/', productRoutes);
+
+// ================= ORDERS =================
+
+router.use('/', ordersRoutes);
 
 export default router;

@@ -1,8 +1,8 @@
 import dotenv from 'dotenv';
 dotenv.config();
 import mongoose from 'mongoose';
-import Product from './src/models/product.js';
-import connectDB from './src/config/db.js';
+import Product from '../src/models/product.js';
+import connectDB from '../src/config/db.js';
 
 async function check() {
     await connectDB();

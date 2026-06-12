@@ -173,14 +173,14 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mb-1.5">Regular Price (Rp) <span class="text-red-500">*</span></label>
+                        <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mb-1.5">Regular Price (₹) <span class="text-red-500">*</span></label>
                         <input type="number" id="regularPrice" name="regularPrice" min="0" value="<%= product.regularPrice %>" placeholder="0"
                                class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/30 focus:border-[#B88E2F] transition-all">
                         <span id="priceError" class="err-msg hidden"></span>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mb-1.5">Sale Price (Rp)</label>
+                        <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mb-1.5">Sale Price (₹)</label>
                         <input type="number" id="salePrice" name="salePrice" min="0" value="<%= product.salePrice || '' %>" placeholder="0"
                                class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/30 focus:border-[#B88E2F] transition-all">
                         <span id="salePriceError" class="err-msg hidden"></span>
@@ -909,20 +909,42 @@ ${color.colorName}
 }
 
 // ─── Variants Management ──────────────────────────────────────────
+// Predefined size options
+const PREDEFINED_SIZES = ['S', 'M', 'L', 'XL', 'XXL', '2 Seater', '3 Seater', '6 Seater', 'Single', 'Double', 'King', 'Queen'];
+
 function addVariant(v = {}) {
     variantCount++;
     const id = `variant-${variantCount}`;
     const row = document.createElement('div');
     row.id = id;
-    row.className = 'grid grid-cols-5 gap-3 items-center p-4 bg-gray-50 rounded-xl border border-gray-100';
+    row.className = 'grid grid-cols-5 gap-3 items-start p-4 bg-gray-50 rounded-xl border border-gray-100';
     if (v._id) {
         row.setAttribute('data-variant-id', v._id);
     }
-    
+
+    // Determine if existing size is custom (not in predefined list)
+    const existingSize = v.size || '';
+    const isCustom = existingSize && !PREDEFINED_SIZES.includes(existingSize);
+    const selectValue = isCustom ? '__custom__' : existingSize;
+
+    const sizeOptions = PREDEFINED_SIZES.map(s =>
+        `<option value="${s}" ${selectValue === s ? 'selected' : ''}>${s}</option>`
+    ).join('');
+
     row.innerHTML = `
         <div>
-            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">Size</label>
-            <input type="text" placeholder="e.g. M" value="${v.size || ''}" class="var-size w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#B88E2F]">
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">Size <span class="text-red-500">*</span></label>
+            <select class="var-size-select w-full px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:border-[#B88E2F]">
+                <option value="">— Select —</option>
+                ${sizeOptions}
+                <option value="__custom__" ${isCustom ? 'selected' : ''}>Custom Size</option>
+            </select>
+            <input
+                type="text"
+                placeholder="Enter custom size"
+                value="${isCustom ? existingSize : ''}"
+                class="var-size-custom mt-1 w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#B88E2F] ${isCustom ? '' : 'hidden'}"
+            >
         </div>
         <div>
             <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">Color</label>
@@ -931,7 +953,7 @@ function addVariant(v = {}) {
             </select>
         </div>
         <div>
-            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">Price (Rp)</label>
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">Price (₹)</label>
             <input type="number" min="0" placeholder="0" value="${v.price || ''}" class="var-price w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#B88E2F]">
         </div>
         <div>
@@ -944,12 +966,11 @@ function addVariant(v = {}) {
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
             </button>
         </div>`;
-    
+
     $('variantRows').appendChild(row);
-    
     // Populate colors and restore chosen color selection
     refreshColorOptions();
-    if(v.color) {
+    if (v.color) {
         row.querySelector('.variant-color').value = v.color;
     }
     updateStockFromVariants();
@@ -975,16 +996,39 @@ function updateStockFromVariants() {
     }
 }
 
-// Event delegation to capture dynamic variant stock updates in real time
+// Event delegation — handle size dropdown toggle + stock recalc
+document.getElementById('variantRows').addEventListener('change', (e) => {
+    if (e.target.classList.contains('var-size-select')) {
+        const customInput = e.target.closest('div').querySelector('.var-size-custom');
+        if (e.target.value === '__custom__') {
+            customInput.classList.remove('hidden');
+            customInput.required = true;
+            customInput.focus();
+        } else {
+            customInput.classList.add('hidden');
+            customInput.required = false;
+            customInput.value = '';
+        }
+    }
+});
 document.getElementById('variantRows').addEventListener('input', (e) => {
     if (e.target.classList.contains('var-stock')) {
         updateStockFromVariants();
     }
 });
 
+function getResolvedSize(row) {
+    const select = row.querySelector('.var-size-select');
+    if (!select) return '';
+    if (select.value === '__custom__') {
+        return (row.querySelector('.var-size-custom')?.value || '').trim();
+    }
+    return select.value.trim();
+}
+
 function collectVariants() {
     variants = [...document.querySelectorAll('#variantRows > div')].map(row => {
-        const sizeVal  = row.querySelector('.var-size')?.value?.trim() || '';
+        const sizeVal  = getResolvedSize(row);
         const colorVal = row.querySelector('.variant-color')?.value || '';
         const priceVal = row.querySelector('.var-price')?.value?.trim() || '';
         const stockVal = row.querySelector('.var-stock')?.value?.trim() || '';
@@ -1118,6 +1162,28 @@ $('saveBtn').addEventListener('click', async () => {
 
     // Variant Validation (on submit only)
     collectVariants();
+
+    // Extra check: custom size selected but no text entered
+    const customSizeRows = document.querySelectorAll('#variantRows > div');
+    for (let i = 0; i < customSizeRows.length; i++) {
+        const row = customSizeRows[i];
+        const sel = row.querySelector('.var-size-select');
+        if (sel && sel.value === '__custom__') {
+            const customVal = (row.querySelector('.var-size-custom')?.value || '').trim();
+            if (!customVal) {
+                await Swal.fire({
+                    icon: 'warning',
+                    title: 'Custom Size Required',
+                    text: `Variant #${i + 1} has "Custom Size" selected but no size name was entered. Please fill in the custom size.`,
+                    confirmButtonColor: '#B88E2F',
+                    customClass: { popup: 'rounded-2xl' }
+                });
+                document.getElementById('variantRows').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+        }
+    }
+
     if (variants.length > 0) {
         let badVariantIdx = -1;
         let missingFields = [];

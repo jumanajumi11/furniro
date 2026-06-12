@@ -7,9 +7,9 @@ export const listCategories = async (req, res) => {
         const search = req.query.search || '';
         const page   = parseInt(req.query.page)  || 1;
         const limit  = parseInt(req.query.limit) || 10;
-        const sort   = req.query.sort   || 'desc';   // desc, asc, az, za
+        const sort   = req.query.sort   || 'desc';   
         const status = req.query.status || 'all';    // all, listed, hidden
-        const totalActive = await Category.countDocuments({ isListed: true }); // ഇത് ചേർക്കുക
+        const totalActive = await Category.countDocuments({ isListed: true }); 
 
         const result = await categoryService.listCategories({ search, page, limit, sort, status });
 
@@ -59,10 +59,10 @@ export const createCategory = async (req, res) => {
 export const toggleStatus = async (req, res) => {
     try {
         const { id } = req.params;
-        // സർവീസ് വഴി സ്റ്റാറ്റസ് മാറ്റുന്നു
+        
         const updatedCategory = await categoryService.toggleCategoryStatus(id);
         
-        // redirect ഒഴിവാക്കി JSON നൽകുക
+        
         return res.status(200).json({ 
             success: true, 
             isListed: updatedCategory.isListed 

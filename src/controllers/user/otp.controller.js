@@ -18,6 +18,7 @@ export const forgotPassword = async (req, res, next) => {
             otpGeneratedAt: otpData.otpGeneratedAt
         };
         req.session.purpose = "forgot";
+        req.session.resendCount = 0;
 
         req.session.save((err) => {
             if (err) {
@@ -32,8 +33,19 @@ export const forgotPassword = async (req, res, next) => {
 };
 
 export const getOtpPage = (req, res) => {
-    const email = req.session.userTempData ? req.session.userTempData.email : null;
-    res.render('user/otp', { email: email, error: null });
+    if (!req.session.userTempData) {
+        const purpose = req.session.purpose;
+        if (purpose === 'signup') {
+            return res.redirect('/signup');
+        }
+        return res.redirect('/forgot-password');
+    }
+    const email = req.session.userTempData.email;
+    const expirationLimit = 120 * 1000; // 
+    const generatedAt = req.session.userTempData.otpGeneratedAt || Date.now();
+    const remainingTime = Math.max(0, Math.floor((generatedAt + expirationLimit - Date.now()) / 1000));
+
+    res.render('user/otp', { email: email, error: null, remainingTime: remainingTime });
 };
 
 export const verifyOTP = async (req, res, next) => {
@@ -46,6 +58,10 @@ export const verifyOTP = async (req, res, next) => {
 
         if (purpose === "forgot") {
             req.session.allowReset = true;
+            if (req.session.userTempData) {
+                delete req.session.userTempData.otp;
+                delete req.session.userTempData.otpGeneratedAt;
+            }
             return res.json({ success: true, redirectUrl: result.redirectUrl });
         } else {
             // SignUp flow
@@ -110,12 +126,21 @@ export const resendOTP = async (req, res, next) => {
     try {
         const tempData = req.session.userTempData;
         if (!tempData || !tempData.email) {
-            return res.status(400).json({ success: false, message: "Session expired. Please sign up again." });
+            return res.status(400).json({ success: false, message: "Session expired. Please request a new OTP." });
+        }
+
+        if (req.session.resendCount === undefined) {
+            req.session.resendCount = 0;
+        }
+
+        if (req.session.resendCount >= 3) {
+            return res.status(400).json({ success: false, message: "Maximum resend attempts reached. Please restart the process." });
         }
 
         const email = tempData.email;
         const otpData = await otpService.sendOtp(email, req.session.purpose || 'signup');
 
+        req.session.resendCount += 1;
         req.session.userTempData.otp = otpData.otp;
         req.session.userTempData.otpGeneratedAt = otpData.otpGeneratedAt;
 

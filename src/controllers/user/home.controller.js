@@ -1,10 +1,10 @@
-// src/controllers/user/home.controller.js
+
 import Product  from '../../models/product.js';
 import Category from '../../models/category.js';
 
 export const loadHome = async (req, res) => {
     try {
-        // ── 1. Sofa category cards (static images, dynamic links) ──
+        
         const sofaCategories = [
             {
                 name: 'L Shaped Sofa',
@@ -25,15 +25,15 @@ export const loadHome = async (req, res) => {
             isListed:  true,
             isDeleted: false
         })
-        .populate('category', 'name')   // populate category so name is available
-        .sort({ createdAt: -1 })        // newest first
-        .limit(9)                       // 3 per row × 3 rows on homepage
+        .populate('category', 'name')   
+        .sort({ createdAt: -1 })        
+        .limit(9)                       
         .lean();
 
         res.render('user/home', {
             user:    req.session.user || null,
-            category: sofaCategories,   // sofa-type cards in the "Shop by type" section
-            products                    // dynamic product grid
+            category: sofaCategories,   
+            products                    
         });
 
     } catch (error) {

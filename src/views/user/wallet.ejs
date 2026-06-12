@@ -1,0 +1,192 @@
+<%- include('../layout/header') %>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="text-sm text-gray-500 mb-8 flex items-center gap-2">
+        <a href="/" class="hover:text-[#B88E2F]">Home</a>
+        <i class="fas fa-chevron-right text-xs"></i>
+        <span class="text-gray-800">My Account</span>
+    </div>
+
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">My Wallet</h1>
+        <p class="text-gray-500">Manage your account funds and deposits.</p>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Sidebar Navigation -->
+        <aside class="w-full lg:w-72 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden py-6 px-4 h-fit">
+            <nav class="flex flex-col text-sm font-medium">
+                <a href="/profile" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                    <i class="far fa-user text-lg w-5 text-center"></i>
+                    Profile Information
+                </a>
+                <a href="/addresses" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                    <i class="fas fa-map-marker-alt text-lg w-5 text-center"></i>
+                    My Addresses
+                </a>
+                <a href="/orders" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                    <i class="fas fa-box text-lg w-5 text-center"></i>
+                    My Orders
+                </a>
+                <a href="/wishlist" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                    <i class="far fa-heart text-lg w-5 text-center"></i>
+                    My Wishlist
+                </a>
+                <a href="/wallet" class="flex items-center gap-4 px-6 py-3.5 bg-[#FCF9F4] text-[#B88E2F] border-l-4 border-[#B88E2F]">
+                    <i class="fas fa-wallet text-lg w-5 text-center"></i>
+                    My Wallet
+                </a>
+                <a href="/coupons" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                    <i class="fas fa-ticket-alt text-lg w-5 text-center"></i>
+                    Coupons
+                </a>
+                <a href="/security" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                    <i class="fas fa-shield-alt text-lg w-5 text-center"></i>
+                    Security Settings
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Wallet Dashboard Contents -->
+        <div class="flex-1 space-y-8">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Large Balance Card -->
+                <div class="bg-gradient-to-br from-[#B88E2F] to-[#8E6A21] rounded-3xl p-6 text-white shadow-md relative overflow-hidden flex flex-col justify-between min-h-[180px]">
+                    <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/5 rounded-full z-0"></div>
+                    <div class="absolute -right-2 -top-2 w-20 h-20 bg-white/5 rounded-full z-0"></div>
+                    <div class="flex justify-between items-start relative z-10">
+                        <div>
+                            <p class="text-xs uppercase tracking-widest text-white/70 font-semibold">Wallet Balance</p>
+                            <h2 class="text-3xl font-extrabold mt-1" id="display-wallet-balance">₹5,000</h2>
+                        </div>
+                        <i class="fas fa-wallet text-3xl text-white/40"></i>
+                    </div>
+                    <div class="mt-8 relative z-10">
+                        <p class="text-[10px] uppercase tracking-widest text-white/50 font-semibold">Account Holder</p>
+                        <p class="font-bold text-sm text-white/90 mt-0.5"><%= user.name || 'Customer' %></p>
+                    </div>
+                </div>
+
+                <!-- Add Money Box -->
+                <div class="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-extrabold text-gray-800 text-base mb-2">Deposit Funds</h3>
+                        <p class="text-xs text-gray-400 font-semibold">Simulate depositing funds instantly into your Furniro wallet.</p>
+                    </div>
+                    
+                    <form onsubmit="depositFunds(event)" class="mt-4 flex gap-2">
+                        <div class="relative flex-1">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">₹</span>
+                            <input type="text" id="deposit-amount" placeholder="Enter Amount" class="w-full pl-8 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm outline-none focus:border-[#B88E2F] font-bold text-gray-800">
+                        </div>
+                        <button type="submit" class="px-6 py-3 bg-[#B88E2F] hover:bg-[#967325] text-white text-xs font-bold rounded-2xl shadow transition-all">
+                            Add Funds
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Transaction logs -->
+            <div class="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
+                <h3 class="font-extrabold text-gray-800 text-base mb-6 flex items-center gap-2">
+                    <i class="fas fa-list text-[#B88E2F]"></i>
+                    Transaction History
+                </h3>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-gray-100 text-gray-400 uppercase tracking-wider font-bold">
+                                <th class="py-3 pr-4">Date & Time</th>
+                                <th class="py-3 px-4">Description</th>
+                                <th class="py-3 px-4 text-center">Type</th>
+                                <th class="py-3 pl-4 text-right">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transaction-body">
+                            <% if (transactions && transactions.length > 0) { %>
+                                <% transactions.forEach(tx => { %>
+                                    <tr class="border-b border-gray-50 text-gray-600 font-medium">
+                                        <td class="py-4 pr-4">
+                                            <%= new Date(tx.date).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) %>
+                                        </td>
+                                        <td class="py-4 px-4 font-bold text-gray-800"><%= tx.description %></td>
+                                        <td class="py-4 px-4 text-center">
+                                            <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider <%= tx.type === 'credit' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
+                                                <%= tx.type %>
+                                            </span>
+                                        </td>
+                                        <td class="py-4 pl-4 text-right font-extrabold <%= tx.type === 'credit' ? 'text-green-600' : 'text-red-500' %>">
+                                            <%= tx.type === 'credit' ? '+' : '-' %>₹<%= tx.amount.toLocaleString('en-IN') %>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="4" class="py-8 text-center text-gray-400 font-bold italic">No transactions recorded yet.</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    restrictNumericInput(document.getElementById('deposit-amount'));
+
+    function restrictNumericInput(el) {
+        if (!el) return;
+        el.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    }
+
+    async function depositFunds(e) {
+        e.preventDefault();
+        const input = document.getElementById('deposit-amount');
+        const amount = Number(input.value.trim());
+
+        // if (isNaN(amount) || amount <= 0 || amount > 50000) {
+        //     return Swal.fire({
+        //         icon: 'warning',
+        //         title: 'Invalid Deposit',
+        //         text: 'Please specify a deposit amount between ₹1 and ₹50,000.',
+        //         confirmButtonColor: '#B88E2F'
+        //     });
+        // }
+
+        try {
+            const res = await fetch('/wallet/add-money', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount })
+            });
+            const data = await res.json();
+            if (data.success) {
+                input.value = '';
+                document.getElementById('display-wallet-balance').textContent = `₹${data.walletBalance.toLocaleString('en-IN')}`;
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Deposit Successful',
+                    text: data.message,
+                    confirmButtonColor: '#B88E2F'
+                }).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire({ icon: 'error', title: 'Deposit Failed', text: data.message });
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+</script>
+
+<%- include('../layout/footer') %>

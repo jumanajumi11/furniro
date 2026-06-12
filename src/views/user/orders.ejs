@@ -1,0 +1,627 @@
+<%- include('../layout/header') %>
+
+<style>
+    /* Smooth expand/collapse animation for inline order details */
+    .order-expand-panel {
+        max-height: 0;
+        opacity: 0;
+        overflow: hidden;
+        transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                    opacity   0.25s ease;
+    }
+    .order-expand-panel.open {
+        opacity: 1;
+    }
+</style>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Breadcrumb -->
+    <div class="text-sm text-gray-500 mb-8 flex items-center gap-2">
+        <a href="/" class="hover:text-[#B88E2F] transition-colors">Home</a>
+        <i class="fas fa-chevron-right text-xs"></i>
+        <span class="text-gray-800 font-semibold">My Orders</span>
+    </div>
+
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">My Orders</h1>
+        <p class="text-gray-500">Track and manage your order history.</p>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-8">
+
+        <!-- ── Sidebar Navigation ── -->
+        <aside class="w-full lg:w-72 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden py-6 px-4 h-fit">
+            <nav class="flex flex-col text-sm font-medium">
+                <a href="/profile" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                    <i class="far fa-user text-lg w-5 text-center"></i> Profile Information
+                </a>
+                <a href="/addresses" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                    <i class="fas fa-map-marker-alt text-lg w-5 text-center"></i> My Addresses
+                </a>
+                <a href="/orders" class="flex items-center gap-4 px-6 py-3.5 bg-[#FCF9F4] text-[#B88E2F] border-l-4 border-[#B88E2F]">
+                    <i class="fas fa-box text-lg w-5 text-center"></i> My Orders
+                </a>
+                <a href="/wishlist" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                    <i class="far fa-heart text-lg w-5 text-center"></i> My Wishlist
+                </a>
+                <a href="/wallet" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                    <i class="fas fa-wallet text-lg w-5 text-center"></i> My Wallet
+                </a>
+                <a href="/coupons" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                    <i class="fas fa-ticket-alt text-lg w-5 text-center"></i> Coupons
+                </a>
+                <a href="/security" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
+                    <i class="fas fa-shield-alt text-lg w-5 text-center"></i> Security Settings
+                </a>
+            </nav>
+        </aside>
+
+        <!-- ═══════════════════════════════════════
+             MAIN ORDERS SECTION
+        ═══════════════════════════════════════ -->
+        <div class="flex-1 overflow-x-auto">
+            <% if (orders && orders.length > 0) { %>
+
+                <%
+                    /* ══ STATIC LOOKUP MAPS (declared once, outside the loop) ══ */
+                    const STATUS_COLORS = {
+                        'Pending':             { cls: 'text-gray-500',   dot: 'bg-gray-400'   },
+                        'Pending Payment':     { cls: 'text-gray-500',   dot: 'bg-gray-400'   },
+                        'Payment Failed':      { cls: 'text-rose-600',   dot: 'bg-rose-500'   },
+                        'Placed':              { cls: 'text-amber-600',  dot: 'bg-amber-400'  },
+                        'Processing':          { cls: 'text-amber-600',  dot: 'bg-amber-400'  },
+                        'Shipped':             { cls: 'text-blue-600',   dot: 'bg-blue-500'   },
+                        'Delivered':           { cls: 'text-green-600',  dot: 'bg-green-500'  },
+                        'Cancelled':           { cls: 'text-red-600',    dot: 'bg-red-500'    },
+                        'Partially Cancelled': { cls: 'text-orange-600', dot: 'bg-orange-400' },
+                        'Return Requested':    { cls: 'text-orange-600', dot: 'bg-orange-500' },
+                        'Returned':            { cls: 'text-purple-600', dot: 'bg-purple-500' },
+                    };
+                    const PAY_COLORS = {
+                        'Paid':     { cls: 'text-green-600',  dot: 'bg-green-500'  },
+                        'Pending':  { cls: 'text-amber-600',  dot: 'bg-amber-400'  },
+                        'Refunded': { cls: 'text-blue-600',   dot: 'bg-blue-500'   },
+                        'Failed':   { cls: 'text-red-600',    dot: 'bg-red-500'    },
+                    };
+                    const ITEM_BADGE = {
+                        'Pending':          'bg-gray-100  text-gray-600',
+                        'Placed':           'bg-gray-100  text-gray-600',
+                        'Processing':       'bg-amber-50  text-amber-700',
+                        'Shipped':          'bg-blue-50   text-blue-700',
+                        'Out For Delivery': 'bg-purple-50 text-purple-700',
+                        'Delivered':        'bg-green-50  text-green-700',
+                        'Cancelled':        'bg-red-50    text-red-700',
+                        'Return Requested': 'bg-orange-50 text-orange-700',
+                        'Returned':         'bg-purple-50 text-purple-700',
+                        'Return Rejected':  'bg-red-50    text-red-700',
+                    };
+                    const cancellableStatuses = ['Placed', 'Pending', 'Processing', 'Pending Payment'];
+                %>
+
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden min-w-[700px]">
+
+                    <!-- ── TABLE HEADER ── -->
+                    <div class="grid grid-cols-[120px_100px_1fr_110px_120px_110px_130px] items-center px-5 py-3 bg-gray-50 border-b border-gray-100">
+                        <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Order ID</span>
+                        <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Date</span>
+                        <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Items</span>
+                        <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Total</span>
+                        <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Status</span>
+                        <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Payment</span>
+                        <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest text-right">Actions</span>
+                    </div>
+
+                    <!-- ── ORDER ROWS ── -->
+                    <% orders.forEach(order => { %>
+                        <%
+                            /* Per-iteration variables use let to avoid redeclaration errors */
+                            let oStat = STATUS_COLORS[order.status] || STATUS_COLORS['Pending'];
+                            let pStat = PAY_COLORS[order.paymentStatus] || PAY_COLORS['Pending'];
+
+                            /* First product image for the table row preview */
+                            let previewProd = order.items[0] && order.items[0].productId;
+                            let previewRaw  = previewProd && previewProd.images && previewProd.images.length > 0
+                                ? previewProd.images[0] : null;
+                            let previewSrc  = previewRaw
+                                ? (previewRaw.startsWith('http') ? previewRaw : '/upload/products/' + previewRaw)
+                                : '/images/placeholder.png';
+                            let previewName = previewProd ? previewProd.productName : 'Product';
+
+                            /* Can entire order be cancelled? */
+                            let hasNonCancellable = order.items.some(it => {
+                                let st = it.status || 'Placed';
+                                return st !== 'Cancelled' && !cancellableStatuses.includes(st);
+                            });
+                            let allCancelled = order.items.every(it => (it.status || 'Placed') === 'Cancelled');
+                            let canCancelOrder = !hasNonCancellable && !allCancelled
+                                && order.status !== 'Cancelled'
+                                && order.status !== 'Delivered'
+                                && order.status !== 'Returned';
+                        %>
+
+
+                        <!-- ═══ TABLE ROW ═══ -->
+                        <div class="grid grid-cols-[120px_100px_1fr_110px_120px_110px_130px] items-center px-5 py-4 border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+
+                            <!-- Order ID -->
+                            <span class="font-extrabold text-gray-900 text-xs"><%= order.orderNumber %></span>
+
+                            <!-- Date -->
+                            <span class="text-xs text-gray-500 font-medium">
+                                <%= new Date(order.createdAt).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) %>
+                            </span>
+
+                            <!-- Items preview: image + truncated name -->
+                            <div class="flex items-center gap-3 min-w-0 pr-2">
+                                <div class="w-9 h-9 rounded-full overflow-hidden bg-gray-100 border border-gray-100 flex-shrink-0">
+                                    <img src="<%= previewSrc %>" alt="<%= previewName %>"
+                                         class="w-full h-full object-cover"
+                                         onerror="this.src='/images/placeholder.png';">
+                                </div>
+                                <span class="text-xs text-gray-700 font-semibold truncate"><%= previewName.length > 18 ? previewName.substring(0, 18) + '...' : previewName %></span>
+                            </div>
+
+                            <!-- Total -->
+                            <span class="font-extrabold text-[#B88E2F] text-sm">₹<%= order.grandTotal.toLocaleString('en-IN') %></span>
+
+                            <!-- Order Status -->
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full flex-shrink-0 <%= oStat.dot %>"></span>
+                                <span class="text-xs font-bold <%= oStat.cls %>"><%= order.status %></span>
+                            </div>
+
+                            <!-- Payment Status -->
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full flex-shrink-0 <%= pStat.dot %>"></span>
+                                <span class="text-xs font-bold <%= pStat.cls %>"><%= order.paymentStatus %></span>
+                            </div>
+
+                            <!-- Actions: View + Track -->
+                            <div class="flex items-center justify-end gap-3">
+                                <a href="/orders/<%= order._id %>"
+                                   class="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline transition-colors">
+                                    View
+                                </a>
+                                <% if (order.status === 'Delivered') { %>
+                                    <a href="/orders/<%= order._id %>"
+                                       class="text-xs font-bold text-gray-700 hover:text-[#B88E2F] transition-colors">
+                                        Track
+                                    </a>
+                                <% } else { %>
+                                    <button onclick="toggleOrderDetails('<%= order._id %>')"
+                                             id="track-btn-<%= order._id %>"
+                                             class="text-xs font-bold text-gray-700 hover:text-[#B88E2F] transition-colors cursor-pointer">
+                                        Track
+                                    </button>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <!-- ═══════════════════════════════════════
+                             EXPANDABLE DETAILS PANEL
+                             Opens below the order row on Track click.
+                        ═══════════════════════════════════════ -->
+                        <div class="order-expand-panel" id="panel-<%= order._id %>">
+                            <div class="bg-[#FAFAFA] border-b border-gray-100 px-6 py-6">
+
+                                <!-- ── ORDER ITEMS SECTION ── -->
+                                <p class="text-[10px] font-extrabold text-gray-500 uppercase tracking-[0.15em] mb-4">Order Items</p>
+
+                                <div class="space-y-3 mb-6">
+                                    <% order.items.forEach(item => { %>
+                                        <%
+                                            const prod    = item.productId;
+                                            const rawImg  = prod && prod.images && prod.images.length > 0 ? prod.images[0] : null;
+                                            const imgSrc  = rawImg ? (rawImg.startsWith('http') ? rawImg : '/upload/products/' + rawImg) : '/images/placeholder.png';
+                                            const pName   = prod ? prod.productName : 'Product Unavailable';
+
+                                            /* Determine item display status: active items always reflect the order status */
+                                            let iStatus;
+                                            if (['Cancelled', 'Returned', 'Return Requested', 'Return Rejected'].includes(item.status)) {
+                                                iStatus = item.status;
+                                            } else if (['Cancelled', 'Returned', 'Return Requested', 'Return Rejected'].includes(order.status)) {
+                                                iStatus = order.status;
+                                            } else {
+                                                iStatus = order.status || 'Processing';
+                                            }
+                                            const iBadge  = ITEM_BADGE[iStatus] || 'bg-gray-100 text-gray-600';
+
+                                            /* Variant info (size / color) */
+                                            let varSize = '', varColor = '';
+                                            if (prod && prod.variants && prod.variants.length > 0 && item.variantId) {
+                                                const v = typeof prod.variants.id === 'function' ? prod.variants.id(item.variantId) : null;
+                                                if (v) { varSize = v.size || ''; varColor = v.color || ''; }
+                                            }
+
+                                            /* Cancel eligibility per item */
+                                            const canCancelItem = cancellableStatuses.includes(iStatus)
+                                                && order.status !== 'Cancelled'
+                                                && order.status !== 'Delivered';
+                                        %>
+
+                                        <div class="bg-white rounded-xl border border-gray-100 p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                                            <!-- Product image -->
+                                            <div class="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 border border-gray-100 flex-shrink-0">
+                                                <img src="<%= imgSrc %>" alt="<%= pName %>"
+                                                     class="w-full h-full object-cover"
+                                                     onerror="this.src='/images/placeholder.png';">
+                                            </div>
+
+                                            <!-- Product info -->
+                                            <div class="flex-1 min-w-0">
+                                                <p class="font-bold text-sm text-gray-900"><%= pName %></p>
+                                                <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-xs text-gray-500">
+                                                    <span>Qty: <span class="font-bold text-gray-700"><%= item.quantity %></span></span>
+                                                    <% if (varSize) { %>
+                                                        <span>&bull; Size: <span class="font-bold text-gray-700"><%= varSize %></span></span>
+                                                    <% } %>
+                                                    <% if (varColor) { %>
+                                                        <span>&bull; Color: <span class="font-bold text-gray-700"><%= varColor %></span></span>
+                                                    <% } %>
+                                                </div>
+                                                <p class="font-extrabold text-[#B88E2F] text-sm mt-1.5">₹<%= (item.price * item.quantity).toLocaleString('en-IN') %></p>
+                                            </div>
+
+                                            <!-- Status + Cancel -->
+                                            <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+                                                <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide <%= iBadge %>">
+                                                    <%= iStatus %>
+                                                </span>
+                                                <% if (canCancelItem) { %>
+                                                    <button onclick="cancelItem('<%= order._id %>', '<%= item._id %>')"
+                                                            class="text-[11px] font-bold text-red-500 hover:text-red-700 hover:underline transition-colors cursor-pointer mt-0.5">
+                                                        Cancel
+                                                    </button>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                    <% }) %>
+                                </div>
+
+                                <!-- ── ORDER SUMMARY ROW ── -->
+                                <div class="bg-white rounded-xl border border-gray-100 overflow-hidden">
+                                    <div class="grid grid-cols-2 sm:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
+                                        <!-- Subtotal -->
+                                        <div class="px-5 py-4">
+                                            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Subtotal</p>
+                                            <p class="font-extrabold text-gray-900 text-sm">₹<%= order.subtotal.toLocaleString('en-IN') %></p>
+                                        </div>
+                                        <!-- Offer Save -->
+                                        <div class="px-5 py-4">
+                                            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Offer Save</p>
+                                            <p class="font-extrabold text-sm <%= order.discount > 0 ? 'text-red-500' : 'text-red-500' %>">
+                                                -₹<%= (order.discount || 0).toLocaleString('en-IN') %>
+                                            </p>
+                                        </div>
+                                        <!-- Coupon -->
+                                        <div class="px-5 py-4">
+                                            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Coupon</p>
+                                            <p class="font-extrabold text-red-500 text-sm">
+                                                -₹<%= (order.couponDiscount || 0).toLocaleString('en-IN') %>
+                                            </p>
+                                        </div>
+                                        <!-- Shipping -->
+                                        <div class="px-5 py-4">
+                                            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Shipping</p>
+                                            <p class="font-extrabold text-gray-900 text-sm">
+                                                <%= order.shippingCharge === 0 ? 'Free' : '₹' + order.shippingCharge.toLocaleString('en-IN') %>
+                                            </p>
+                                        </div>
+                                        <!-- Total -->
+                                        <div class="px-5 py-4">
+                                            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">Total</p>
+                                            <p class="font-extrabold text-[#B88E2F] text-sm">₹<%= order.grandTotal.toLocaleString('en-IN') %></p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Cancel Order button -->
+                                <% if (canCancelOrder) { %>
+                                    <div class="flex justify-end mt-4">
+                                        <button onclick="cancelOrder('<%= order._id %>')"
+                                                class="px-5 py-2.5 border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 text-xs font-bold rounded-xl transition-all">
+                                            Cancel Order
+                                        </button>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div><!-- end expand panel -->
+
+                    <% }) %>
+                </div>
+
+            <% } else { %>
+                <!-- Empty state -->
+                <div class="bg-white rounded-3xl p-16 border border-gray-100 shadow-sm text-center">
+                    <i class="fas fa-box text-5xl text-gray-200 mb-4 block"></i>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">No Orders Placed Yet</h3>
+                    <p class="text-gray-400 text-sm mb-6">Explore our wide selection of premium furniture and place your first order!</p>
+                    <a href="/shop" class="px-8 py-3.5 bg-[#B88E2F] hover:bg-[#967325] text-white font-bold rounded-2xl shadow-md transition-all inline-block text-sm">
+                        Go to Shop
+                    </a>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</main>
+
+<!-- SweetAlert2 for cancel confirmations -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   ACCORDION – Toggle order details panels
+   Only one panel open at a time. Second click closes it.
+═══════════════════════════════════════════════════════ */
+let currentlyOpen = null;
+
+function toggleOrderDetails(orderId) {
+    const panel = document.getElementById('panel-' + orderId);
+    if (!panel) return;
+
+    /* Clicking the same order → close it */
+    if (currentlyOpen === orderId) {
+        closePanel(panel);
+        currentlyOpen = null;
+        return;
+    }
+
+    /* Close the previously open panel first */
+    if (currentlyOpen) {
+        const prev = document.getElementById('panel-' + currentlyOpen);
+        if (prev) closePanel(prev);
+    }
+
+    /* Open the clicked panel */
+    openPanel(panel);
+    currentlyOpen = orderId;
+
+    /* Smooth scroll into view */
+    setTimeout(() => {
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 120);
+}
+
+function openPanel(panel) {
+    panel.classList.add('open');
+    panel.style.maxHeight = panel.scrollHeight + 'px';
+}
+
+function closePanel(panel) {
+    panel.style.maxHeight = '0';
+    panel.classList.remove('open');
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   CANCEL SINGLE ITEM (AJAX)
+═══════════════════════════════════════════════════════ */
+async function cancelItem(orderId, itemId) {
+    const { value: reason } = await Swal.fire({
+        title: 'Cancel Item',
+        text: 'Choose a reason for cancelling this item:',
+        input: 'select',
+        inputOptions: {
+            'Ordered by mistake':             'Ordered by mistake',
+            'Found a better price elsewhere': 'Found a better price elsewhere',
+            'Delivery is taking too long':    'Delivery is taking too long',
+            'Changed my mind':                'Changed my mind',
+            'Other':                          'Other'
+        },
+        inputPlaceholder: 'Select a reason',
+        showCancelButton: true,
+        confirmButtonColor: '#B88E2F',
+        cancelButtonColor: '#9CA3AF',
+        confirmButtonText: 'Continue',
+        customClass: {
+            popup: 'rounded-2xl',
+            confirmButton: 'rounded-xl text-xs font-bold px-6 py-2.5',
+            cancelButton:  'rounded-xl text-xs font-bold px-6 py-2.5'
+        },
+        inputValidator: v => { if (!v) return 'Please select a reason'; }
+    });
+    if (!reason) return;
+
+    let finalReason = reason;
+    if (reason === 'Other') {
+        const { value: custom } = await Swal.fire({
+            title: 'Specify Reason',
+            input: 'textarea',
+            inputPlaceholder: 'Tell us why you are cancelling…',
+            showCancelButton: true,
+            confirmButtonColor: '#B88E2F',
+            confirmButtonText: 'Confirm',
+            customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-xl text-xs font-bold px-6 py-2.5', cancelButton: 'rounded-xl text-xs font-bold px-6 py-2.5' },
+            inputValidator: v => { if (!v || !v.trim()) return 'You must specify a reason'; }
+        });
+        if (!custom) return;
+        finalReason = custom.trim();
+    }
+
+    Swal.fire({ title: 'Processing…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    try {
+        const res  = await fetch(`/orders/${orderId}/items/${itemId}/cancel`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason: finalReason })
+        });
+        const data = await res.json();
+        if (data.success) {
+            await Swal.fire({
+                icon: 'success', title: 'Item Cancelled',
+                html: `<p class="text-sm text-gray-500">${data.message}</p>` +
+                      (data.refundAmount ? `<p class="text-xs text-green-600 mt-2 font-bold">Refunded: ₹${data.refundAmount.toLocaleString('en-IN')}</p>` : ''),
+                confirmButtonColor: '#B88E2F',
+                customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-xl text-xs font-bold px-6 py-2.5' }
+            });
+            window.location.reload();
+        } else {
+            Swal.fire({ icon: 'error', title: 'Failed', text: data.message, confirmButtonColor: '#B88E2F' });
+        }
+    } catch (e) {
+        Swal.fire({ icon: 'error', title: 'Error', text: 'Something went wrong.', confirmButtonColor: '#B88E2F' });
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   CANCEL ENTIRE ORDER (AJAX)
+═══════════════════════════════════════════════════════ */
+async function cancelOrder(orderId) {
+    const { value: reason } = await Swal.fire({
+        title: 'Cancel Entire Order',
+        text: 'Choose a reason:',
+        input: 'select',
+        inputOptions: {
+            'Ordered by mistake':             'Ordered by mistake',
+            'Found a better price elsewhere': 'Found a better price elsewhere',
+            'Delivery is taking too long':    'Delivery is taking too long',
+            'Changed my mind':                'Changed my mind',
+            'Other':                          'Other'
+        },
+        inputPlaceholder: 'Select a reason',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#9CA3AF',
+        confirmButtonText: 'Continue',
+        customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-xl text-xs font-bold px-6 py-2.5', cancelButton: 'rounded-xl text-xs font-bold px-6 py-2.5' },
+        inputValidator: v => { if (!v) return 'Please select a reason'; }
+    });
+    if (!reason) return;
+
+    let finalReason = reason;
+    if (reason === 'Other') {
+        const { value: custom } = await Swal.fire({
+            title: 'Specify Reason',
+            input: 'textarea',
+            inputPlaceholder: 'Tell us why…',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            confirmButtonText: 'Confirm',
+            customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-xl text-xs font-bold px-6 py-2.5', cancelButton: 'rounded-xl text-xs font-bold px-6 py-2.5' },
+            inputValidator: v => { if (!v || !v.trim()) return 'You must specify a reason'; }
+        });
+        if (!custom) return;
+        finalReason = custom.trim();
+    }
+
+    Swal.fire({ title: 'Processing…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    try {
+        const res  = await fetch(`/orders/${orderId}/cancel`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason: finalReason })
+        });
+        const data = await res.json();
+        if (data.success) {
+            await Swal.fire({
+                icon: 'success', title: 'Order Cancelled',
+                html: `<p class="text-sm text-gray-500">${data.message}</p>`,
+                confirmButtonColor: '#B88E2F',
+                customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-xl text-xs font-bold px-6 py-2.5' }
+            });
+            window.location.reload();
+        } else {
+            Swal.fire({ icon: 'error', title: 'Failed', text: data.message, confirmButtonColor: '#B88E2F' });
+        }
+    } catch (e) {
+        Swal.fire({ icon: 'error', title: 'Error', text: 'Something went wrong.', confirmButtonColor: '#B88E2F' });
+    }
+}
+
+async function requestReturnOrder(orderId) {
+    const { value: reason } = await Swal.fire({
+        title: 'Return Order',
+        text: 'Please choose a reason for returning this order:',
+        input: 'select',
+        inputOptions: {
+            'Item damaged on arrival': 'Item damaged on arrival',
+            'Quality not as expected': 'Quality not as expected',
+            'Incorrect item received': 'Incorrect item received',
+            'Changed my mind': 'Changed my mind',
+            'Other': 'Other'
+        },
+        inputPlaceholder: 'Select a reason',
+        showCancelButton: true,
+        confirmButtonColor: '#B88E2F',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Submit Request',
+        customClass: {
+            popup: 'rounded-2xl',
+            confirmButton: 'rounded-xl text-xs font-bold px-6 py-2.5',
+            cancelButton:  'rounded-xl text-xs font-bold px-6 py-2.5'
+        },
+        inputValidator: (value) => { if (!value) return 'You need to select a reason!'; }
+    });
+
+    if (!reason) return;
+
+    let finalReason = reason;
+    if (reason === 'Other') {
+        const { value: customReason } = await Swal.fire({
+            title: 'Specify Return Reason',
+            input: 'textarea',
+            inputPlaceholder: 'Please tell us why you want to return this order...',
+            showCancelButton: true,
+            confirmButtonColor: '#B88E2F',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Submit Request',
+            customClass: {
+                popup: 'rounded-2xl',
+                confirmButton: 'rounded-xl text-xs font-bold px-6 py-2.5',
+                cancelButton:  'rounded-xl text-xs font-bold px-6 py-2.5'
+            },
+            inputValidator: (value) => { if (!value || !value.trim()) return 'You must specify a reason!'; }
+        });
+        if (!customReason) return;
+        finalReason = customReason.trim();
+    }
+
+    Swal.fire({
+        title: 'Submitting Return Request...',
+        html: '<p class="text-xs text-gray-400">Please wait while we submit your return request.</p>',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => Swal.showLoading()
+    });
+
+    try {
+        const res = await fetch(`/orders/${orderId}/return`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason: finalReason })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            await Swal.fire({
+                icon: 'success',
+                title: 'Return Requested',
+                text: data.message || 'Your return request has been submitted successfully.',
+                confirmButtonColor: '#B88E2F',
+                customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-xl text-xs font-bold px-6 py-2.5' }
+            });
+            window.location.reload();
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Request Failed',
+                text: data.message || 'Unable to request return.',
+                confirmButtonColor: '#B88E2F',
+                customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-xl text-xs font-bold px-6 py-2.5' }
+            });
+        }
+    } catch (err) {
+        console.error('Return Request Error:', err);
+        Swal.fire({
+            icon: 'error',
+            title: 'Connection Error',
+            text: 'An unexpected error occurred. Please try again.',
+            confirmButtonColor: '#B88E2F'
+        });
+    }
+}
+</script>
+
+<%- include('../layout/footer') %>

@@ -26,6 +26,10 @@ export const loadSecurity = async (req, res, next) => {
 export const changePassword = async (req, res, next) => {
     try {
         const userId = req.session.user._id;
+        const user = await profileService.getUserById(userId);
+        if (user && user.googleId) {
+            throw new Error("Password changes are not allowed for Google accounts.");
+        }
         await securityService.changePassword(userId, req.body);
         res.redirect('/security?success=Password updated successfully');
     } catch (error) {
@@ -36,6 +40,10 @@ export const changePassword = async (req, res, next) => {
 export const createPassword = async (req, res, next) => {
     try {
         const userId = req.session.user._id;
+        const user = await profileService.getUserById(userId);
+        if (user && user.googleId) {
+            throw new Error("Password changes are not allowed for Google accounts.");
+        }
         const updatedUser = await securityService.createPassword(userId, req.body);
 
         req.session.user.password = updatedUser.password;

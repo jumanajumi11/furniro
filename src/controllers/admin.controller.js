@@ -1,5 +1,4 @@
 
-
 import * as adminService from '../services/admin/admin.service.js';
 
 
@@ -18,4 +17,5 @@ export const  logout = (req, res) => adminService.logout(req, res);
 export const  getUsers = (req, res) => adminService.getUsers(req, res);
 export const blockUser = (req, res) => adminService.blockUser(req, res);
 export const  toggleBlock = (req, res) => adminService.toggleBlock(req, res);
+
 

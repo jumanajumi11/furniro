@@ -1,9 +1,6 @@
 import * as productService from '../../services/admin/product.service.js';
 import Category  from '../../models/category.js';
 
-// ────────────────────────────────────────────────────────────────────
-// 1. LIST  /admin/products
-// ────────────────────────────────────────────────────────────────────
 export const listProducts = async (req, res) => {
     try {
         const { search = '', page = 1, limit = 10, sort = 'newest', category = '', status = 'all' } = req.query;
@@ -34,9 +31,6 @@ export const listProducts = async (req, res) => {
     }
 };
 
-// ────────────────────────────────────────────────────────────────────
-// 2. SHOW Add-Product page  GET /admin/products/add
-// ────────────────────────────────────────────────────────────────────
 export const showAddProduct = async (req, res) => {
     try {
         const categories = await Category.find({ isDeleted: false, isListed: true }).sort({ name: 1 }).lean();
@@ -47,22 +41,17 @@ export const showAddProduct = async (req, res) => {
     }
 };
 
-// ────────────────────────────────────────────────────────────────────
-// 3. CREATE  POST /admin/products
-// ────────────────────────────────────────────────────────────────────
+
 export const createProduct = async (req, res) => {
     try {
         const { productName, description, category, brand, regularPrice, salePrice, stock, isListed } = req.body;
 
-        // Debug: log received files
         console.log('[createProduct] Files received:', (req.files || []).length);
         (req.files || []).forEach(f => console.log(`  ${f.fieldname}: ${f.originalname} (${f.mimetype}, ${f.size} bytes) -> ${f.filename}`));
         console.log('[createProduct] Colors JSON:', req.body.colors ? req.body.colors.substring(0, 200) : 'EMPTY');
 
-        // Parse colors from JSON body field
         let colors = []
         try { colors = JSON.parse(req.body.colors || '[]'); } catch (_) {}
-        // Validate color fields (name, hex, default uniqueness)
         const hexRegex = /^#([A-Fa-f0-9]{6})$/;
         let defaultCount = 0;
         for (const col of colors) {
@@ -77,7 +66,6 @@ export const createProduct = async (req, res) => {
         if (defaultCount > 1) {
             return res.status(400).json({ success: false, message: 'Only one default color can be set.', errors: { colors: 'Multiple default colors.' } });
         }
-        // Map uploaded files to colors
         colors.forEach(color => {
             const fieldName = `colorImages_${color.tempIndex}`;
             const colorFiles = (req.files || []).filter(f => f.fieldname === fieldName);
@@ -88,11 +76,9 @@ export const createProduct = async (req, res) => {
             delete color.existingImages;
         });
 
-        // Parse variants from JSON body field
         let variants = [];
         try { variants = JSON.parse(req.body.variants || '[]'); } catch (_) {}
 
-        // Validate variants (size, color, price, stock) and ensure color exists
         if (variants && variants.length) {
             const seen = new Set();
             const colorNames = colors.map(c => c.name.toLowerCase());
@@ -114,7 +100,6 @@ export const createProduct = async (req, res) => {
                 seen.add(key);
             }
         }
-// Validate colors and image count
         if (colors.length < 1) {
             return res.status(400).json({ success: false, message: 'At least one color is required.', errors: { colors: 'At least one color is required.' } });
         }
@@ -130,7 +115,6 @@ export const createProduct = async (req, res) => {
             }
         }
 
-        // Set default color's images on main product images list
         let defaultColor = colors.find(c => c.isDefault);
         if (!defaultColor && colors.length > 0) {
             defaultColor = colors[0];
@@ -153,9 +137,7 @@ export const createProduct = async (req, res) => {
     }
 };
 
-// ────────────────────────────────────────────────────────────────────
-// 4. SHOW Edit-Product page  GET /admin/products/:id/edit
-// ────────────────────────────────────────────────────────────────────
+
 export const showEditProduct = async (req, res) => {
     try {
         const [product, categories] = await Promise.all([
@@ -168,24 +150,21 @@ export const showEditProduct = async (req, res) => {
         res.redirect('/admin/products');
     }
 };
-
-// ────────────────────────────────────────────────────────────────────
-// 5. UPDATE  PUT /admin/products/:id
-// ────────────────────────────────────────────────────────────────────
+ 
 export const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
         const { productName, description, category, brand, regularPrice, salePrice, stock, isListed } = req.body;
 
-        // Debug: log received files
+        
         console.log('[updateProduct] Files received:', (req.files || []).length);
         (req.files || []).forEach(f => console.log(`  ${f.fieldname}: ${f.originalname} (${f.mimetype}, ${f.size} bytes) -> ${f.filename}`));
         console.log('[updateProduct] Colors JSON:', req.body.colors ? req.body.colors.substring(0, 200) : 'EMPTY');
 
-        // Parse colors from JSON body field
+        
         let colors = [];
         try { colors = JSON.parse(req.body.colors || '[]'); } catch (_) {}
-        // Validate color fields (name, hex, default uniqueness)
+        
         const hexRegex = /^#([A-Fa-f0-9]{6})$/;
         let defaultCount = 0;
         for (const col of colors) {
@@ -200,7 +179,7 @@ export const updateProduct = async (req, res) => {
         if (defaultCount > 1) {
             return res.status(400).json({ success: false, message: 'Only one default color can be set.', errors: { colors: 'Multiple default colors.' } });
         }
-        // Map uploaded files to colors and merge with existing images
+        
         colors.forEach(color => {
             const fieldName = `colorImages_${color.tempIndex}`;
             const colorFiles = (req.files || []).filter(f => f.fieldname === fieldName);
@@ -213,10 +192,10 @@ export const updateProduct = async (req, res) => {
 
 
 
-        // Parse variants from JSON body field
+        
         let variants = [];
         try { variants = JSON.parse(req.body.variants || '[]'); } catch (_) {}
-        // Validate variants (size, color, price, stock) and ensure color exists
+        
         if (variants && variants.length) {
             const seen = new Set();
             const colorNames = colors.map(c => c.name.toLowerCase());
@@ -238,7 +217,7 @@ export const updateProduct = async (req, res) => {
                 seen.add(key);
             }
         }
-        // Validate colors and image count
+        
         if (colors.length < 1) {
             return res.status(400).json({ success: false, message: 'At least one color is required.', errors: { colors: 'At least one color is required.' } });
         }
@@ -254,7 +233,7 @@ export const updateProduct = async (req, res) => {
             }
         }
 
-        // Set default color's images on main product images list
+        
         let defaultColor = colors.find(c => c.isDefault);
         if (!defaultColor && colors.length > 0) {
             defaultColor = colors[0];
@@ -284,9 +263,7 @@ export const updateProduct = async (req, res) => {
     }
 };
 
-// ────────────────────────────────────────────────────────────────────
-// 6. TOGGLE LISTING  PATCH /admin/products/:id/toggle
-// ────────────────────────────────────────────────────────────────────
+
 export const toggleProductListing = async (req, res) => {
     try {
         const product = await productService.toggleProductListing(req.params.id);
@@ -297,9 +274,7 @@ export const toggleProductListing = async (req, res) => {
     }
 };
 
-// ────────────────────────────────────────────────────────────────────
-// 7. SOFT DELETE  DELETE /admin/products/:id
-// ────────────────────────────────────────────────────────────────────
+
 export const deleteProduct = async (req, res) => {
     try {
         await productService.softDeleteProduct(req.params.id);
@@ -310,9 +285,7 @@ export const deleteProduct = async (req, res) => {
     }
 };
 
-// ────────────────────────────────────────────────────────────────────
-// 8. CHECK DUPLICATE NAME  GET /admin/products/check-name
-// ────────────────────────────────────────────────────────────────────
+
 export const checkProductName = async (req, res) => {
     try {
         const { name, excludeId } = req.query;

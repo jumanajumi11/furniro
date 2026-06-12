@@ -83,133 +83,99 @@
         <!-- Global error banner -->
         <div id="globalError" class="hidden bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm font-semibold"></div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="max-w-4xl mx-auto space-y-6">
 
-            <!-- ── LEFT COLUMN (2/3) ──────────────────────────────── -->
-            <div class="lg:col-span-2 space-y-6">
-
-                <!-- Product Info card -->
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
-                    <div>
-                        <h2 class="text-base font-black text-gray-900">Product Information</h2>
-                        <p class="text-xs text-gray-400 mt-0.5">Basic details about the furniture item</p>
-                    </div>
-
-                    <!-- Product Name -->
-                    <div>
-                        <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mb-1.5">
-                            Product Name <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text" id="productName" name="productName" placeholder="e.g. Modern Wooden Sofa"
-                               class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/30 focus:border-[#B88E2F] transition-all"
-                               autocomplete="off">
-                        <span id="nameError" class="err-msg hidden"></span>
-                    </div>
-
-                    <!-- Category -->
-                    <div>
-                        <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mb-1.5">
-                            Category <span class="text-red-500">*</span>
-                        </label>
-                        <select id="category" name="category"
-                                class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/30 focus:border-[#B88E2F] transition-all">
-                            <option value="">— Select Category —</option>
-                            <% categories.forEach(c => { %>
-                            <option value="<%= c._id %>"><%= c.name %></option>
-                            <% }) %>
-                        </select>
-                        <span id="categoryError" class="err-msg hidden"></span>
-                    </div>
-
-                    <!-- Description -->
-                    <div>
-                        <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mb-1.5">Description <span class="text-red-500">*</span></label>
-                        <textarea id="description" name="description" rows="4"
-                                  placeholder="Enter furniture product description including material, dimensions, and features."
-                                  class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/30 focus:border-[#B88E2F] transition-all resize-none"></textarea>
-                        <span id="descError" class="err-msg hidden"></span>
-                    </div>
+            <!-- Product Info card -->
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+                <div>
+                    <h2 class="text-base font-black text-gray-900">Product Information</h2>
+                    <p class="text-xs text-gray-400 mt-0.5">Basic details about the furniture item</p>
                 </div>
 
-                <!-- Colors & Images card -->
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
-                    <div>
-                        <h2 class="text-base font-black text-gray-900">Colors &amp; Images</h2>
-                        <p class="text-xs text-gray-400 mt-0.5">Add color options. Each color option requires a name, a hex color, and between 1 to 3 images.</p>
-                    </div>
-
-                    <span id="colorsError" class="err-msg hidden"></span>
-
-                    <div id="react-colors-root"></div>
+                <!-- Product Name -->
+                <div>
+                    <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mb-1.5">
+                        Product Name <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="productName" name="productName" placeholder="e.g. Modern Wooden Sofa"
+                           class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/30 focus:border-[#B88E2F] transition-all"
+                           autocomplete="off">
+                    <span id="nameError" class="err-msg hidden"></span>
                 </div>
 
-                <!-- Variants card -->
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h2 class="text-base font-black text-gray-900">Product Variants</h2>
-                            <p class="text-xs text-gray-400 mt-0.5">Define variant choices. Each variant requires size, selected color, price, and stock levels.</p>
-                        </div>
-                        <button type="button" onclick="addVariant()"
-                                class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#B88E2F] hover:bg-[#A07828] text-white font-bold text-xs transition-all shadow-sm active:scale-95">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                            Add Variant
-                        </button>
-                    </div>
-
-                    <div id="variantRows" class="space-y-3">
-                        <!-- Variant rows injected by JS -->
-                    </div>
-                    <p class="text-[10px] text-gray-400 font-semibold">Each variant = unique combination of Size + Color.</p>
+                <!-- Category -->
+                <div>
+                    <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mb-1.5">
+                        Category <span class="text-red-500">*</span>
+                    </label>
+                    <select id="category" name="category"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/30 focus:border-[#B88E2F] transition-all">
+                        <option value="">— Select Category —</option>
+                        <% categories.forEach(c => { %>
+                        <option value="<%= c._id %>"><%= c.name %></option>
+                        <% }) %>
+                    </select>
+                    <span id="categoryError" class="err-msg hidden"></span>
                 </div>
 
-            </div><!-- /left -->
-
-            <!-- ── RIGHT COLUMN (1/3) ─────────────────────────────── -->
-            <div class="space-y-6">
-
-                <!-- Pricing & Stock card -->
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5 sticky top-20">
-                    <div>
-                        <h2 class="text-base font-black text-gray-900">Pricing &amp; Stock</h2>
-                        <p class="text-xs text-gray-400 mt-0.5">Base prices and default catalog stock level</p>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mb-1.5">Regular Price (Rp) <span class="text-red-500">*</span></label>
-                        <input type="number" id="regularPrice" name="regularPrice" min="0" placeholder="0"
-                               class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/30 focus:border-[#B88E2F] transition-all">
-                        <span id="priceError" class="err-msg hidden"></span>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mb-1.5">Sale Price (Rp)</label>
-                        <input type="number" id="salePrice" name="salePrice" min="0" placeholder="0"
-                               class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/30 focus:border-[#B88E2F] transition-all">
-                        <span id="salePriceError" class="err-msg hidden"></span>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mb-1.5">Total Base Stock <span class="text-red-500">*</span></label>
-                        <input type="number" id="stock" name="stock" min="0" placeholder="0"
-                               class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/30 focus:border-[#B88E2F] transition-all">
-                        <span id="stockError" class="err-msg hidden"></span>
-                    </div>
-
-                    <!-- Status -->
-                    <div>
-                        <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mb-1.5">Status</label>
-                        <select id="isListed" name="isListed"
-                                class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/30 focus:border-[#B88E2F] transition-all">
-                            <option value="true">Active (visible on store)</option>
-                            <option value="false">Hidden</option>
-                        </select>
-                    </div>
+                <!-- Description -->
+                <div>
+                    <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mb-1.5">Description <span class="text-red-500">*</span></label>
+                    <textarea id="description" name="description" rows="4"
+                              placeholder="Enter furniture product description including material, dimensions, and features."
+                              class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/30 focus:border-[#B88E2F] transition-all resize-none"></textarea>
+                    <span id="descError" class="err-msg hidden"></span>
                 </div>
 
-            </div><!-- /right -->
+                <!-- Status -->
+                <div>
+                    <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mb-1.5">Status</label>
+                    <select id="isListed" name="isListed"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/30 focus:border-[#B88E2F] transition-all">
+                        <option value="true">Active (visible on store)</option>
+                        <option value="false">Hidden</option>
+                    </select>
+                </div>
 
-        </div><!-- /grid -->
+                <!-- Hidden Inputs for Pricing & Stock to maintain backend compatibility -->
+                <input type="hidden" id="regularPrice" name="regularPrice" value="0">
+                <input type="hidden" id="salePrice" name="salePrice" value="">
+                <input type="hidden" id="stock" name="stock" value="0">
+            </div>
+
+            <!-- Colors & Images card -->
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+                <div>
+                    <h2 class="text-base font-black text-gray-900">Colors &amp; Images</h2>
+                    <p class="text-xs text-gray-400 mt-0.5">Add color options. Each color option requires a name, a hex color, and between 1 to 3 images.</p>
+                </div>
+
+                <span id="colorsError" class="err-msg hidden"></span>
+
+                <div id="react-colors-root"></div>
+            </div>
+
+            <!-- Variants card -->
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-base font-black text-gray-900">Product Variants</h2>
+                        <p class="text-xs text-gray-400 mt-0.5">Define variant choices. Each variant requires size, selected color, price, and stock levels.</p>
+                    </div>
+                    <button type="button" onclick="addVariant()"
+                            class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#B88E2F] hover:bg-[#A07828] text-white font-bold text-xs transition-all shadow-sm active:scale-95">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                        Add Variant
+                    </button>
+                </div>
+
+                <div id="variantRows" class="space-y-3">
+                    <!-- Variant rows injected by JS -->
+                </div>
+                <p class="text-[10px] text-gray-400 font-semibold">Each variant = unique combination of Size + Color.</p>
+            </div>
+
+        </div><!-- /container -->
     </div>
 </main>
 
@@ -895,17 +861,39 @@ ${color.colorName}
 }
 
 // ─── Variants Management ──────────────────────────────────────────
+// Predefined size options
+const PREDEFINED_SIZES = ['S', 'M', 'L', 'XL', 'XXL', '2 Seater', '3 Seater', '6 Seater', 'Single', 'Double', 'King', 'Queen'];
+
 function addVariant(v = {}) {
     variantCount++;
     const id = `variant-${variantCount}`;
     const row = document.createElement('div');
     row.id = id;
-    row.className = 'grid grid-cols-5 gap-3 items-center p-4 bg-gray-50 rounded-xl border border-gray-100';
-    
+    row.className = 'grid grid-cols-5 gap-3 items-start p-4 bg-gray-50 rounded-xl border border-gray-100';
+
+    // Determine if existing size is custom (not in predefined list)
+    const existingSize = v.size || '';
+    const isCustom = existingSize && !PREDEFINED_SIZES.includes(existingSize);
+    const selectValue = isCustom ? '__custom__' : existingSize;
+
+    const sizeOptions = PREDEFINED_SIZES.map(s =>
+        `<option value="${s}" ${selectValue === s ? 'selected' : ''}>${s}</option>`
+    ).join('');
+
     row.innerHTML = `
         <div>
-            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">Size</label>
-            <input type="text" placeholder="e.g. M" value="${v.size || ''}" class="var-size w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#B88E2F]">
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">Size <span class="text-red-500">*</span></label>
+            <select class="var-size-select w-full px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:border-[#B88E2F]">
+                <option value="">— Select —</option>
+                ${sizeOptions}
+                <option value="__custom__" ${isCustom ? 'selected' : ''}>Custom Size</option>
+            </select>
+            <input
+                type="text"
+                placeholder="Enter custom size"
+                value="${isCustom ? existingSize : ''}"
+                class="var-size-custom mt-1 w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#B88E2F] ${isCustom ? '' : 'hidden'}"
+            >
         </div>
         <div>
             <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">Color</label>
@@ -914,7 +902,7 @@ function addVariant(v = {}) {
             </select>
         </div>
         <div>
-            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">Price (Rp)</label>
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">Price (₹)</label>
             <input type="number" min="0" placeholder="0" value="${v.price || ''}" class="var-price w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#B88E2F]">
         </div>
         <div>
@@ -927,7 +915,7 @@ function addVariant(v = {}) {
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
             </button>
         </div>`;
-    
+
     $('variantRows').appendChild(row);
     refreshColorOptions();
     if (v.color) {
@@ -945,33 +933,60 @@ function removeVariant(id) {
 function updateStockFromVariants() {
     collectVariants();
     const stockInput = document.getElementById('stock');
-    if (variants.length > 0) {
-        const total = variants.reduce((sum, v) => sum + (parseInt(v.stock) || 0), 0);
-        stockInput.value = total;
-        stockInput.readOnly = true;
-        stockInput.classList.add('bg-gray-100', 'cursor-not-allowed');
-    } else {
-        stockInput.readOnly = false;
-        stockInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
+    const regularPriceInput = document.getElementById('regularPrice');
+    
+    // Sum stock from variants
+    const totalStock = variants.reduce((sum, v) => sum + (parseInt(v.stock) || 0), 0);
+    if (stockInput) {
+        stockInput.value = totalStock;
+    }
+
+    // Get min price from variants
+    const prices = variants.map(v => parseFloat(v.price)).filter(p => !isNaN(p) && p >= 0);
+    const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+    if (regularPriceInput) {
+        regularPriceInput.value = minPrice;
     }
 }
 
-// Event delegation to capture dynamic variant stock updates in real time
+// Event delegation — handle size dropdown toggle + stock recalc
+document.getElementById('variantRows').addEventListener('change', (e) => {
+    if (e.target.classList.contains('var-size-select')) {
+        const customInput = e.target.closest('div').querySelector('.var-size-custom');
+        if (e.target.value === '__custom__') {
+            customInput.classList.remove('hidden');
+            customInput.required = true;
+            customInput.focus();
+        } else {
+            customInput.classList.add('hidden');
+            customInput.required = false;
+            customInput.value = '';
+        }
+    }
+});
 document.getElementById('variantRows').addEventListener('input', (e) => {
-    if (e.target.classList.contains('var-stock')) {
+    if (e.target.classList.contains('var-stock') || e.target.classList.contains('var-price')) {
         updateStockFromVariants();
     }
 });
 
+function getResolvedSize(row) {
+    const select = row.querySelector('.var-size-select');
+    if (!select) return '';
+    if (select.value === '__custom__') {
+        return (row.querySelector('.var-size-custom')?.value || '').trim();
+    }
+    return select.value.trim();
+}
+
 function collectVariants() {
     variants = [...document.querySelectorAll('#variantRows > div')].map(row => {
-        const sizeVal = row.querySelector('.var-size')?.value?.trim() || '';
+        const sizeVal  = getResolvedSize(row);
         const colorVal = row.querySelector('.variant-color')?.value || '';
         const priceVal = row.querySelector('.var-price')?.value?.trim() || '';
         const stockVal = row.querySelector('.var-stock')?.value?.trim() || '';
-        
         return {
-            size: sizeVal,
+            size:  sizeVal,
             color: colorVal,
             price: priceVal,
             stock: stockVal
@@ -1039,52 +1054,24 @@ function validateCategory() {
 }
 $('category').addEventListener('change', validateCategory);
 
-function validateRegularPrice() {
-    const priceVal = $('regularPrice').value;
-    const price = parseFloat(priceVal);
-    if (priceVal.trim() === '' || isNaN(price) || price < 0) { showErr('priceError', 'Regular price must be a positive number.', 'regularPrice'); return false; }
-    clearErr('priceError', 'regularPrice');
-    return true;
-}
-$('regularPrice').addEventListener('input', validateRegularPrice);
-
-function validateSalePrice() {
-    const price = parseFloat($('regularPrice').value);
-    const saleVal = $('salePrice').value;
-    if (saleVal.trim() === '') { clearErr('salePriceError', 'salePrice'); return true; }
-    const saleP = parseFloat(saleVal);
-    if (isNaN(saleP) || saleP < 0) { showErr('salePriceError', 'Sale price must be a positive number.', 'salePrice'); return false; }
-    if (!isNaN(price) && saleP > price) { showErr('salePriceError', 'Sale price cannot exceed regular price.', 'salePrice'); return false; }
-    clearErr('salePriceError', 'salePrice');
-    return true;
-}
-$('salePrice').addEventListener('input', validateSalePrice);
-
-function validateStock() {
-    const stockVal = $('stock').value;
-    const stock = parseInt(stockVal);
-    if (stockVal.trim() === '' || isNaN(stock) || stock < 0) { showErr('stockError', 'Stock quantity must be 0 or greater.', 'stock'); return false; }
-    clearErr('stockError', 'stock');
-    return true;
-}
-$('stock').addEventListener('input', validateStock);
+// Price and stock values are auto-computed from variants
 
 // ─── Submit handler ───────────────────────────────────────────────
 $('publishBtn').addEventListener('click', async () => {
+    // Make sure latest values are calculated and stored in hidden fields
+    updateStockFromVariants();
+
     // Clear errors
-    ['nameError','categoryError','descError','priceError','salePriceError','stockError','colorsError'].forEach(id => {
-        const inpMap = { nameError:'productName', categoryError:'category', descError:'description', priceError:'regularPrice', salePriceError:'salePrice', stockError:'stock', colorsError:'react-colors-root' };
+    ['nameError','categoryError','descError','colorsError'].forEach(id => {
+        const inpMap = { nameError:'productName', categoryError:'category', descError:'description', colorsError:'react-colors-root' };
         clearErr(id, inpMap[id]);
     });
 
     const isNameOk = validateName();
     const isDescOk = validateDescription();
     const isCatOk  = validateCategory();
-    const isPriceOk = validateRegularPrice();
-    const isSaleOk = validateSalePrice();
-    const isStockOk = validateStock();
 
-    if (!isNameOk || !isDescOk || !isCatOk || !isPriceOk || !isSaleOk || !isStockOk) return;
+    if (!isNameOk || !isDescOk || !isCatOk) return;
 
     // Colors Validation from React Component
     const colorData = window.ReactColorsComponent ? window.ReactColorsComponent.getData() : { isValid: false, errors: ['Colors component not initialized.'] };
@@ -1099,6 +1086,28 @@ $('publishBtn').addEventListener('click', async () => {
 
     // Variant Validation (on submit only)
     collectVariants();
+
+    // Extra check: custom size selected but no text entered
+    const customSizeRows = document.querySelectorAll('#variantRows > div');
+    for (let i = 0; i < customSizeRows.length; i++) {
+        const row = customSizeRows[i];
+        const sel = row.querySelector('.var-size-select');
+        if (sel && sel.value === '__custom__') {
+            const customVal = (row.querySelector('.var-size-custom')?.value || '').trim();
+            if (!customVal) {
+                await Swal.fire({
+                    icon: 'warning',
+                    title: 'Custom Size Required',
+                    text: `Variant #${i + 1} has "Custom Size" selected but no size name was entered. Please fill in the custom size.`,
+                    confirmButtonColor: '#B88E2F',
+                    customClass: { popup: 'rounded-2xl' }
+                });
+                document.getElementById('variantRows').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+        }
+    }
+
     if (variants.length > 0) {
         let badVariantIdx = -1;
         let missingFields = [];
