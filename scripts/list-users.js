@@ -8,7 +8,7 @@ async function run() {
     await mongoose.connect('mongodb://127.0.0.1:27017/furnitureDB');
     console.log('Connected to DB');
 
-    const userId = '69f31cd24bd0b1d65f2ec555'; // <-- Replace with real user ID
+    const userId = '69f31cd24bd0b1d65f2ec555'; 
     let cart = await Cart.findOne({ userId });
     console.log('Current cart:', cart);
 

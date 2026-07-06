@@ -8,7 +8,7 @@ export const RULES = {
     description: { min: 20, max: 1000 }
 };
 
-export const validateProductFields = ({ productName, description, category, regularPrice, salePrice, stock }) => {
+export const validateProductFields = ({ productName, description, category }) => {
     const errors = {};
 
     // ── Product name ──
@@ -32,21 +32,6 @@ export const validateProductFields = ({ productName, description, category, regu
 
     if (!category) {
         errors.category = 'Please select a category.';
-    }
-
-    const regularP = parseFloat(regularPrice);
-    if (isNaN(regularP) || regularP < 0) {
-        errors.regularPrice = 'Regular price must be a positive number.';
-    } else {
-        const saleP = salePrice ? parseFloat(salePrice) : null;
-        if (saleP !== null && !isNaN(saleP) && saleP > regularP) {
-            errors.salePrice = 'Sale price cannot exceed regular price.';
-        }
-    }
-
-    const stockVal = parseInt(stock);
-    if (isNaN(stockVal) || stockVal < 0) {
-        errors.stock = 'Stock quantity must be 0 or greater.';
     }
 
     return errors; 
@@ -144,11 +129,10 @@ export const isDuplicateName = async (name, excludeId = null) => {
 
 export const createProduct = async ({
     productName, description, category, brand,
-    regularPrice, salePrice, stock,
     images = [], variants = [], colors = [], isListed = true
 }) => {
-    // ── field-level validation ──
-    const fieldErrors = validateProductFields({ productName, description, category, regularPrice, salePrice, stock });
+    
+    const fieldErrors = validateProductFields({ productName, description, category });
     if (Object.keys(fieldErrors).length) {
         const e = new Error(Object.values(fieldErrors)[0]);
         e.validationErrors = fieldErrors;
@@ -158,31 +142,27 @@ export const createProduct = async ({
     const cleanName = productName.trim();
     const cleanDesc = description.trim();
 
-    // ── duplicate check ──
+    
     if (await isDuplicateName(cleanName)) {
         const e = new Error('A product with this name already exists.');
         e.validationErrors = { productName: e.message };
         throw e;
     }
 
-    const regularP = parseFloat(regularPrice);
-    const saleP    = salePrice ? parseFloat(salePrice) : null;
-    const stockVal = parseInt(stock) || 0;
-
     const product = new Product({
         productName:  cleanName,
         description:  cleanDesc,
         category,
         brand:        (brand || 'Furniro').trim(),
-        regularPrice: regularP,
-        salePrice:    isNaN(saleP) ? null : saleP,
-        stock:        stockVal,
+        regularPrice: 0,
+        salePrice:    null,
+        stock:        0,
         images,
         colors,
         isListed:     isListed !== false && isListed !== 'false'
     });
 
-    // Link variants to color subdocuments
+    
     const mappedVariants = variants.map(v => {
         const matchedColor = product.colors.find(c => c.name.toLowerCase() === v.color.toLowerCase());
         return {
@@ -199,16 +179,13 @@ export const createProduct = async ({
     return product;
 };
 
-// ────────────────────────────────────────────────────────────────────
-// 5. UPDATE
-// ────────────────────────────────────────────────────────────────────
+
 export const updateProduct = async (id, {
     productName, description, category, brand,
-    regularPrice, salePrice, stock,
     images = [], variants = [], colors = [], isListed = true
 }) => {
-    // ── field-level validation ──
-    const fieldErrors = validateProductFields({ productName, description, category, regularPrice, salePrice, stock });
+    
+    const fieldErrors = validateProductFields({ productName, description, category });
     if (Object.keys(fieldErrors).length) {
         const e = new Error(Object.values(fieldErrors)[0]);
         e.validationErrors = fieldErrors;
@@ -224,10 +201,6 @@ export const updateProduct = async (id, {
         throw e;
     }
 
-    const regularP = parseFloat(regularPrice);
-    const saleP    = salePrice ? parseFloat(salePrice) : null;
-    const stockVal = parseInt(stock) ?? 0;
-
     const product = await Product.findOne({ _id: id, isDeleted: false });
     if (!product) {
         const e = new Error('Product not found.'); e.statusCode = 404; throw e;
@@ -236,9 +209,6 @@ export const updateProduct = async (id, {
     product.productName = cleanName;
     product.description = cleanDesc;
     product.brand       = (brand || 'Furniro').trim();
-    product.regularPrice = regularP;
-    product.salePrice    = isNaN(saleP) ? null : saleP;
-    product.stock       = stockVal < 0 ? 0 : stockVal;
     product.isListed    = isListed !== false && isListed !== 'false';
     if (category) product.category = category;
     product.images      = images;
@@ -253,7 +223,7 @@ export const updateProduct = async (id, {
         }
 
         let existingId = null;
-        // 1. Try matching by ID sent from client
+        
         if (v.id || v._id) {
             const existing = product.variants.id(v.id || v._id);
             if (existing) {
@@ -292,9 +262,6 @@ export const updateProduct = async (id, {
     
 };
 
-// ────────────────────────────────────────────────────────────────────
-// 6. TOGGLE  isListed
-// ────────────────────────────────────────────────────────────────────
 export const toggleProductListing = async (id) => {
     const product = await Product.findOne({ _id: id, isDeleted: false });
     if (!product) { const e = new Error('Product not found'); e.statusCode = 404; throw e; }
@@ -303,9 +270,6 @@ export const toggleProductListing = async (id) => {
     return product;
 };
 
-// ────────────────────────────────────────────────────────────────────
-// 7. SOFT DELETE
-// ────────────────────────────────────────────────────────────────────
 export const softDeleteProduct = async (id) => {
     const deleted = await Product.findOneAndUpdate(
         { _id: id, isDeleted: false },
@@ -316,9 +280,6 @@ export const softDeleteProduct = async (id) => {
     return deleted;
 };
 
-// ────────────────────────────────────────────────────────────────────
-// 8. STATS
-// ────────────────────────────────────────────────────────────────────
 export const getProductStats = async () => {
     const [total, lowStock, outOfStock, categoryCount] = await Promise.all([
         Product.countDocuments({ isDeleted: false }),

@@ -1,8 +1,8 @@
 import Joi from 'joi';
 
 /**
- * Validation middleware builder that validates request body against a Joi schema.
- * @param {Joi.ObjectSchema} schema Joi Schema
+ 
+ * @param {Joi.ObjectSchema} 
  * @param {string} source 'body' | 'query' | 'params'
  */
 export const validate = (schema, source = 'body') => {
@@ -13,7 +13,7 @@ export const validate = (schema, source = 'body') => {
         if (error) {
             const errorMessage = error.details[0].message;
 
-            // Route-specific validation handling
+            
             const path = req.path;
 
             if (path === '/signup') {
@@ -32,14 +32,14 @@ export const validate = (schema, source = 'body') => {
                 return res.redirect(`/security?error=${encodeURIComponent(errorMessage)}`);
             }
 
-            // General JSON API response
+            
             return res.status(400).json({
                 success: false,
                 message: errorMessage
             });
         }
 
-        // Replace raw request data with validated/coerced values
+        
         req[source] = value;
         next();
     };

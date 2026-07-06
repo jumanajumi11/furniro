@@ -5,14 +5,22 @@ const orderItemSchema = new mongoose.Schema({
     variantId: { type: mongoose.Schema.Types.ObjectId }, // Variant ID is optional for products without variants
     quantity:  { type: Number, required: true },
     price:     { type: Number, required: true },
+    color:     { type: String }, // selected color name at purchase
+    size:      { type: String }, // selected size at purchase
+    image:     { type: String }, // image path/filename used for variant at purchase
     status: {
         type: String,
-        default: 'Placed',
-        enum: ['Placed', 'Processing', 'Shipped', 'Out For Delivery', 'Delivered', 'Cancelled', 'Returned', 'Return Requested', 'Return Rejected']
+        default: 'Pending',
+        enum: ['Pending', 'Processing', 'Shipped', 'Out For Delivery', 'Delivered', 'Cancelled', 'Return Requested', 'Returned', 'Return Rejected']
     },
     cancellationReason: { type: String },
     cancelledAt: { type: Date },
-    refundAmount: { type: Number }
+    refundAmount: { type: Number },
+    deliveredAt: { type: Date },
+    returnedAt: { type: Date },
+    returnReason: { type: String },
+    returnRequestDate: { type: Date },
+    returnStatus: { type: String, enum: ['None', 'Requested', 'Approved', 'Rejected', 'Returned'], default: 'None' }
 });
 
 const orderSchema = new mongoose.Schema({
@@ -38,15 +46,22 @@ const orderSchema = new mongoose.Schema({
     couponDiscount:{ type: Number, default: 0 },
     grandTotal:    { type: Number, required: true },
     couponCode:    { type: String },
+    razorpayOrderId:   { type: String },
+    razorpayPaymentId: { type: String },
+    razorpaySignature: { type: String },
     notes:         { type: String },
     cancellationReason: { type: String },
     returnReason:       { type: String },
+    refundStatus:       { type: String, enum: ['None', 'Pending', 'Processed', 'Failed'], default: 'None' },
+    refundedAmount:     { type: Number, default: 0 },
+    refundDate:         { type: Date },
     status: {
         type: String,
         default: 'Pending Payment',
         enum: [
             'Pending Payment',
             'Payment Failed',
+            'Pending',
             'Processing',
             'Shipped',
             'Out For Delivery',
@@ -55,7 +70,10 @@ const orderSchema = new mongoose.Schema({
             'Partially Cancelled',
             'Return Requested',
             'Returned',
-            'Return Rejected'
+            'Return Rejected',
+            'Partially Completed',
+            'Partially Delivered',
+            'Partially Returned'
         ]
     }
 }, { timestamps: true });

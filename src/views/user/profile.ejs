@@ -1,4 +1,3 @@
-<%- include('../layout/account-sidebar') %>
 <%- include('../layout/header') %>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -16,42 +15,7 @@
 
         <div class="flex flex-col lg:flex-row gap-8">
             
-            <aside class="w-full lg:w-72 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden py-4 h-fit">
-                <nav class="flex flex-col text-sm font-medium">
-                    <a href="/profile" class="flex items-center gap-4 px-6 py-3.5 bg-[#FCF9F4] text-[#B88E2F] border-l-4 border-[#B88E2F]">
-                        <i class="far fa-user text-lg w-5 text-center"></i>
-                        Profile Information
-                    </a>
-                    <a href="/addresses" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-                        <i class="fas fa-map-marker-alt text-lg w-5 text-center"></i>
-                        My Addresses
-                    </a>
-                    <a href="/orders" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-                        <i class="fas fa-box text-lg w-5 text-center"></i>
-                        My Orders
-                    </a>
-                    <a href="/wishlist" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-                        <i class="far fa-heart text-lg w-5 text-center"></i>
-                        My Wishlist
-                    </a>
-                    <a href="/wallet" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-                        <i class="fas fa-wallet text-lg w-5 text-center"></i>
-                        My Wallet
-                    </a>
-                    <a href="/coupons" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-                        <i class="fas fa-ticket-alt text-lg w-5 text-center"></i>
-                        Coupons
-                    </a>
-                    <a href="/notifications" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-                        <i class="far fa-bell text-lg w-5 text-center"></i>
-                        Notifications
-                    </a>
-                    <a href="/security" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-                        <i class="fas fa-shield-alt text-lg w-5 text-center"></i>
-                        Security Settings
-                    </a>
-                </nav>
-            </aside>
+            <%- include('../layout/account-sidebar', { activePage: 'profile' }) %>
 
            
         
@@ -67,7 +31,7 @@
     <div class="relative group">
         <div class="w-32 h-32 rounded-full overflow-hidden bg-[#B88E2F] flex items-center justify-center text-white text-4xl font-bold border-4 border-white shadow-md">
             <% if (user && user.image && user.image !== "") { %>
-                <img src="/upload/<%= user.image %>" class="w-full h-full object-cover">
+                <img src="<%= user.image.startsWith('http') ? user.image : '/upload/' + user.image %>" class="w-full h-full object-cover">
             <% } else { %>
                 <span><%= user.email ? user.email[0].toUpperCase() : 'U' %></span>
             <% } %>

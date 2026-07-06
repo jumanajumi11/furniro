@@ -2,30 +2,50 @@
 
 <main class="bg-white">
 
-  <%/* ══════════════════════════════════════════════════════════════
-       HERO BANNER
-     ══════════════════════════════════════════════════════════════ */%>
-  <section class="relative w-full h-[500px] md:h-screen flex items-center justify-end overflow-hidden">
-
-    <img src="/images/banner.png"
-         class="absolute inset-0 w-full h-full object-cover -z-0"
-         alt="Banner">
-
-    <div class="container mx-auto px-6 relative z-10 flex justify-end">
-      <div class="bg-[#FFF3E3] p-8 md:p-16 rounded-lg max-w-lg shadow-xl mr-0 md:mr-10">
-        <p class="font-bold tracking-[3px] text-gray-800 mb-2 text-sm uppercase">NEW ARRIVAL</p>
-        <h1 class="text-[#B88E2F] text-4xl md:text-6xl font-bold leading-tight mb-4">
-          Discover Our <br> New Collection
-        </h1>
-        <p class="text-gray-600 mb-8 leading-relaxed">
-          Experience the finest craftsmanship with our latest furniture designs, tailored for your modern lifestyle.
-        </p>
-        <a href="/shop" class="bg-[#B88E2F] text-white px-10 py-4 font-bold uppercase hover:bg-[#967325] transition-all inline-block">
-          BUY NOW
-        </a>
+  <% if (locals.banners && banners.length > 0) { %>
+    <section class="relative w-full h-[500px] md:h-[600px] overflow-hidden group">
+      <!-- Slides wrapper -->
+      <div id="sliderWrapper" class="flex w-full h-full transition-transform duration-700 ease-out">
+        <% banners.forEach((banner, idx) => { %>
+          <div class="w-full h-full shrink-0 relative flex items-center justify-start overflow-hidden">
+            <img src="<%= banner.imageUrl.startsWith('http') ? banner.imageUrl : '/upload/banners/' + banner.imageUrl %>"
+                 class="absolute inset-0 w-full h-full object-cover"
+                 alt="<%= banner.title %>">
+            <div class="absolute inset-0 bg-black/10"></div>
+            
+            <div class="container mx-auto px-6 relative z-10 flex justify-start">
+              <div class="bg-[#FFF3E3]/95 backdrop-blur-sm p-8 md:p-14 rounded-2xl max-w-lg shadow-xl ml-0 md:ml-10 transition duration-300 hover:scale-[1.01]">
+                <p class="font-bold tracking-[3px] text-gray-800 mb-2 text-xs md:text-sm uppercase">New Arrival</p>
+                <h2 class="text-[#B88E2F] text-3xl md:text-5xl font-extrabold leading-tight mb-4 tracking-tight">
+                  <%= banner.title %>
+                </h2>
+                <a href="/shop" class="bg-[#B88E2F] text-white px-8 py-3.5 font-bold text-xs md:text-sm uppercase rounded-xl hover:bg-[#967325] shadow-lg shadow-[#B88E2F]/20 hover:shadow-xl transition-all duration-300 inline-block">
+                  BUY NOW
+                </a>
+              </div>
+            </div>
+          </div>
+        <% }) %>
       </div>
-    </div>
-  </section>
+
+      <!-- Controls -->
+      <% if (banners.length > 1) { %>
+        <button onclick="prevSlide()" class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white text-gray-800 shadow-md flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 z-20">
+          <i class="fas fa-chevron-left text-xs"></i>
+        </button>
+        <button onclick="nextSlide()" class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white text-gray-800 shadow-md flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 z-20">
+          <i class="fas fa-chevron-right text-xs"></i>
+        </button>
+
+        <!-- Indicators -->
+        <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+          <% banners.forEach((_, idx) => { %>
+            <button onclick="goToSlide(<%= idx %>)" class="slider-dot w-2.5 h-2.5 rounded-full bg-white/50 hover:bg-white transition-all focus:outline-none <%= idx === 0 ? 'bg-white w-6' : '' %>" data-index="<%= idx %>"></button>
+          <% }) %>
+        </div>
+      <% } %>
+    </section>
+  <% } %>
 
   <%/* ══════════════════════════════════════════════════════════════
        SHOP BY SOFA TYPE
@@ -98,6 +118,64 @@
       window.location.reload();
     }
   };
+
+  // Slider functionality
+  let currentSlide = 0;
+  const sliderWrapper = document.getElementById('sliderWrapper');
+  const dots = document.querySelectorAll('.slider-dot');
+  const slideCount = <%= (locals.banners && banners.length) ? banners.length : 0 %>;
+  let autoSlideInterval;
+
+  function updateSlider() {
+    if (!sliderWrapper) return;
+    sliderWrapper.style.transform = `translateX(-${currentSlide * 100}%)`;
+    
+    // Update dots
+    dots.forEach((dot, idx) => {
+      if (idx === currentSlide) {
+        dot.classList.remove('bg-white/50');
+        dot.classList.add('bg-white', 'w-6');
+      } else {
+        dot.classList.remove('bg-white', 'w-6');
+        dot.classList.add('bg-white/50');
+      }
+    });
+  }
+
+  window.nextSlide = function() {
+    if (slideCount <= 1) return;
+    currentSlide = (currentSlide + 1) % slideCount;
+    updateSlider();
+    resetAutoSlide();
+  };
+
+  window.prevSlide = function() {
+    if (slideCount <= 1) return;
+    currentSlide = (currentSlide - 1 + slideCount) % slideCount;
+    updateSlider();
+    resetAutoSlide();
+  };
+
+  window.goToSlide = function(idx) {
+    currentSlide = idx;
+    updateSlider();
+    resetAutoSlide();
+  };
+
+  function startAutoSlide() {
+    if (slideCount <= 1) return;
+    autoSlideInterval = setInterval(nextSlide, 5000); // Auto slide every 5 seconds
+  }
+
+  function resetAutoSlide() {
+    clearInterval(autoSlideInterval);
+    startAutoSlide();
+  }
+
+  // Initialize auto-sliding
+  if (slideCount > 1) {
+    startAutoSlide();
+  }
 </script>
 
 <%- include('../layout/footer') %>

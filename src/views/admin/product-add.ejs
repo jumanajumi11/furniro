@@ -136,11 +136,6 @@
                         <option value="false">Hidden</option>
                     </select>
                 </div>
-
-                <!-- Hidden Inputs for Pricing & Stock to maintain backend compatibility -->
-                <input type="hidden" id="regularPrice" name="regularPrice" value="0">
-                <input type="hidden" id="salePrice" name="salePrice" value="">
-                <input type="hidden" id="stock" name="stock" value="0">
             </div>
 
             <!-- Colors & Images card -->
@@ -909,6 +904,7 @@ function addVariant(v = {}) {
             <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">Stock</label>
             <input type="number" min="0" placeholder="0" value="${v.stock || 0}" class="var-stock w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#B88E2F]">
         </div>
+       
         <div class="flex items-end justify-center pb-1">
             <button type="button" onclick="removeVariant('${id}')"
                     class="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center font-bold transition-colors mt-5" title="Remove">
@@ -921,35 +917,16 @@ function addVariant(v = {}) {
     if (v.color) {
         row.querySelector('.variant-color').value = v.color;
     }
-    updateStockFromVariants();
+    collectVariants();
 }
 
 function removeVariant(id) {
     const el = $(id);
     if (el) el.remove();
-    updateStockFromVariants();
-}
-
-function updateStockFromVariants() {
     collectVariants();
-    const stockInput = document.getElementById('stock');
-    const regularPriceInput = document.getElementById('regularPrice');
-    
-    // Sum stock from variants
-    const totalStock = variants.reduce((sum, v) => sum + (parseInt(v.stock) || 0), 0);
-    if (stockInput) {
-        stockInput.value = totalStock;
-    }
-
-    // Get min price from variants
-    const prices = variants.map(v => parseFloat(v.price)).filter(p => !isNaN(p) && p >= 0);
-    const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-    if (regularPriceInput) {
-        regularPriceInput.value = minPrice;
-    }
 }
 
-// Event delegation — handle size dropdown toggle + stock recalc
+// Event delegation — handle size dropdown toggle
 document.getElementById('variantRows').addEventListener('change', (e) => {
     if (e.target.classList.contains('var-size-select')) {
         const customInput = e.target.closest('div').querySelector('.var-size-custom');
@@ -965,8 +942,8 @@ document.getElementById('variantRows').addEventListener('change', (e) => {
     }
 });
 document.getElementById('variantRows').addEventListener('input', (e) => {
-    if (e.target.classList.contains('var-stock') || e.target.classList.contains('var-price')) {
-        updateStockFromVariants();
+    if (e.target.classList.contains('var-stock')) {
+        collectVariants();
     }
 });
 
@@ -1059,7 +1036,7 @@ $('category').addEventListener('change', validateCategory);
 // ─── Submit handler ───────────────────────────────────────────────
 $('publishBtn').addEventListener('click', async () => {
     // Make sure latest values are calculated and stored in hidden fields
-    updateStockFromVariants();
+    collectVariants();
 
     // Clear errors
     ['nameError','categoryError','descError','colorsError'].forEach(id => {
@@ -1178,13 +1155,11 @@ $('publishBtn').addEventListener('click', async () => {
         stock: parseInt(v.stock)
     }));
 
+
     const formData = new FormData();
     formData.append('productName',  nameVal);
     formData.append('category',     $('category').value);
     formData.append('description',  $('description').value.trim());
-    formData.append('regularPrice', $('regularPrice').value);
-    formData.append('salePrice',    $('salePrice').value || '');
-    formData.append('stock',        $('stock').value);
     formData.append('isListed',     $('isListed').value);
     formData.append('variants',     JSON.stringify(submittedVariants));
 
@@ -1224,10 +1199,8 @@ $('publishBtn').addEventListener('click', async () => {
             $('globalError').classList.remove('hidden');
             if (data.errors) {
                 Object.entries(data.errors).forEach(([field, msg]) => {
-                    const map = { productName:'nameError', category:'categoryError', description:'descError',
-                                  regularPrice:'priceError', salePrice:'salePriceError', stock:'stockError' };
-                    const inpMap = { productName:'productName', category:'category', description:'description',
-                                     regularPrice:'regularPrice', salePrice:'salePrice', stock:'stock' };
+                    const map = { productName:'nameError', category:'categoryError', description:'descError' };
+                    const inpMap = { productName:'productName', category:'category', description:'description' };
                     if (map[field]) showErr(map[field], msg, inpMap[field]);
                 });
             }

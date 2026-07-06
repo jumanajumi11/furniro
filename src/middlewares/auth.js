@@ -1,4 +1,5 @@
 import User from '../models/user.js';
+import { logger } from '../utils/logger.js';
 
 export const isLogin = async (req, res, next) => {
     try {
@@ -11,9 +12,6 @@ export const isLogin = async (req, res, next) => {
             }
         }
 
-        // Detect fetch/AJAX requests — they must get JSON, not a redirect.
-        // A 302 redirect is followed transparently by fetch, so the caller
-        // receives the login-page HTML and has no idea auth failed.
         const isAjax =
             req.xhr ||
             req.headers['x-requested-with'] === 'XMLHttpRequest' ||
@@ -37,7 +35,7 @@ export const isLogin = async (req, res, next) => {
             res.redirect('/login');
         }
     } catch (error) {
-        console.log("Auth Middleware Error:", error.message);
+        logger.error('Auth Middleware Error:', error.message);
         res.redirect('/login');
     }
 };
@@ -53,7 +51,7 @@ export const isLogout = async (req, res, next) => {
         }
         next();
     } catch (error) {
-        console.log(error.message);
+        logger.error('isLogout middleware error:', error.message);
         next();
     }
 };
@@ -76,7 +74,7 @@ export const isAdmin = async (req, res, next) => {
             res.redirect('/admin/login');
         }
     } catch (error) {
-        console.log("Admin Auth Middleware Error:", error.message);
+        logger.error('Admin Auth Middleware Error:', error.message);
         res.redirect('/admin/login');
     }
 };
@@ -91,15 +89,16 @@ export const isAdminLogout = async (req, res, next) => {
         }
         next();
     } catch (error) {
-        console.log(error.message);
+        logger.error('isAdminLogout middleware error:', error.message);
         next();
     }
 };
 
 export const checkBlockedStatus = async (req, res, next) => {
     try {
-        if (req.session.user && req.session.user._id) {
-            const user = await User.findById(req.session.user._id);
+        const id = req.session.user_id || (req.session.user ? req.session.user._id : null);
+        if (id) {
+            const user = await User.findById(id);
 
             if (user && user.isBlocked) {
                 return req.session.destroy(() => {

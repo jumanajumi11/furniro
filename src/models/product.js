@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 
-// ── Variant sub-schema ──────────────────────────────────────────────
 const variantSchema = new mongoose.Schema({
     size:     { type: String, trim: true, default: '' },
     color:    { type: String, trim: true, default: '' },
@@ -10,7 +9,6 @@ const variantSchema = new mongoose.Schema({
     price:    { type: Number, default: 0, min: 0 }
 }, { _id: true });
 
-// ── Main Product schema ─────────────────────────────────────────────
 const productSchema = new mongoose.Schema({
 
     productName: {
@@ -31,7 +29,7 @@ const productSchema = new mongoose.Schema({
         trim:     true,
         default:  ''
     },
-
+    
     category: {
         type:     mongoose.Schema.Types.ObjectId,
         ref:      'Category',
@@ -77,8 +75,7 @@ const productSchema = new mongoose.Schema({
         default: []
     },
 
-    // isListed = true  → visible on storefront (ACTIVE)
-    // isListed = false → hidden from storefront (HIDDEN)
+
     isListed: {
         type:    Boolean,
         default: true
@@ -87,11 +84,15 @@ const productSchema = new mongoose.Schema({
     isDeleted: {
         type:    Boolean,
         default: false
+    },
+    brand: {
+        type:    String,
+        trim:    true,
+        default: 'Furniro'
     }
 
 }, { timestamps: true });
 
-// ── Auto-generate slug before save ─────────────────────────────────
 productSchema.pre('save', async function () {
     if (this.isModified('productName')) {
         let baseSlug = this.productName
@@ -104,7 +105,6 @@ productSchema.pre('save', async function () {
         let suffix    = 1;
         const Product = this.constructor;
 
-        // Ensure unique slug
         while (await Product.findOne({ slug, _id: { $ne: this._id } })) {
             slug = `${baseSlug}-${suffix++}`;
         }
@@ -112,7 +112,6 @@ productSchema.pre('save', async function () {
     }
 });
 
-// ── Pre-save: Sum variants stock, validate duplicates, and override price ──
 productSchema.pre('save', async function () {
     if (this.variants && this.variants.length > 0) {
         const seen = new Set();
@@ -135,7 +134,6 @@ productSchema.pre('save', async function () {
     }
 });
 
-// ── Virtual: computed stock status ──────────────────────────────────
 productSchema.virtual('stockStatus').get(function () {
     if (this.stock === 0)       return 'out-of-stock';
     if (this.stock <= 5)        return 'low-stock';

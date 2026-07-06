@@ -3,6 +3,9 @@ import otpService from '../../services/user/otp.service.js';
 import bcrypt from 'bcryptjs';
 
 export const loadSignup = (req, res) => {
+    if (req.query.ref) {
+        req.session.referredByCode = req.query.ref.trim();
+    }
     res.render('user/signup', { error: null });
 };
 
@@ -30,7 +33,8 @@ export const signup = async (req, res, next) => {
             email: userEmail,
             password: hashedPassword, // hashed password
             otp: otpData.otp,
-            otpGeneratedAt: otpData.otpGeneratedAt
+            otpGeneratedAt: otpData.otpGeneratedAt,
+            referredByCode: req.session.referredByCode || null
         };
         req.session.otpExpiry = Date.now() + (5 * 60 * 1000);
         req.session.purpose = "signup";

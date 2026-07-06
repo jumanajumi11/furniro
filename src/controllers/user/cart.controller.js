@@ -3,9 +3,7 @@ import Cart from '../../models/cart.js';
 import Product from '../../models/product.js';
 import mongoose from 'mongoose';
 
-/**
- * GET Cart Page
- */
+
 export const loadCart = async (req, res) => {
     try {
         const userId = req.session.user_id || (req.session.user ? req.session.user._id : null);
@@ -13,14 +11,11 @@ export const loadCart = async (req, res) => {
             return res.redirect('/login?error=Please login to view your cart');
         }
 
-        // Real-time cleanup and validation (stock levels, deleted/unlisted items)
         const warnings = await cartService.cleanUnavailableItems(userId);
 
-        // Fetch populated cart
         const cart = await cartService.getCart(userId);
         const items = cart ? cart.items : [];
 
-        // Calculate totals
         const totals = cartService.calculateCartTotals(items);
 
         res.render('user/cart', {
@@ -38,9 +33,7 @@ export const loadCart = async (req, res) => {
     }
 };
 
-/**
- * POST Add To Cart (AJAX)
- */
+
 export const addToCart = async (req, res) => {
     try {
         const userId = req.session.user_id || (req.session.user ? req.session.user._id : null);
@@ -59,9 +52,7 @@ export const addToCart = async (req, res) => {
     }
 };
 
-/**
- * POST Update Quantity (AJAX)
- */
+
 export const updateQuantity = async (req, res) => {
     try {
         const userId = req.session.user_id || (req.session.user ? req.session.user._id : null);
@@ -71,14 +62,11 @@ export const updateQuantity = async (req, res) => {
 
         const { productId, variantId, quantity } = req.body;
 
-        // Perform update in database with validations
         await cartService.updateItemQuantity(userId, productId, variantId, quantity);
 
-        // Retrieve populated cart to compute fresh totals
         const cart = await cartService.getCart(userId);
         const totals = cartService.calculateCartTotals(cart.items);
 
-        // Calculate unit price and subtotal for the updated item
         const updatedItem = cart.items.find(item =>
             item.productId._id.toString() === productId.toString() &&
             (variantId ? item.variantId && item.variantId.toString() === variantId.toString() : !item.variantId)
@@ -91,7 +79,7 @@ export const updateQuantity = async (req, res) => {
             if (prod.variants && prod.variants.length > 0 && updatedItem.variantId) {
                 const variant = prod.variants.id(updatedItem.variantId);
                 if (variant) {
-                    price = variant.price || price;
+                    price = variant.salePrice || variant.price || price;
                 }
             }
             itemSubtotal = price * updatedItem.quantity;
@@ -112,9 +100,7 @@ export const updateQuantity = async (req, res) => {
     }
 };
 
-/**
- * POST Remove Item (AJAX)
- */
+
 export const removeItem = async (req, res) => {
     try {
         const userId = req.session.user_id || (req.session.user ? req.session.user._id : null);
@@ -200,10 +186,12 @@ export const checkoutValidate = async (req, res) => {
     }
 };
 
+
 export default {
     loadCart,
     addToCart,
     updateQuantity,
     removeItem,
     checkoutValidate
+   
 };

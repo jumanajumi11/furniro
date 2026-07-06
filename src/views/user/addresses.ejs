@@ -14,42 +14,7 @@
     </div>
 
     <div class="flex flex-col lg:flex-row gap-8">
-        <aside class="w-full lg:w-72 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden py-6 px-4 h-fit">
-            <nav class="flex flex-col text-sm font-medium">
-    <a href="/profile" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-        <i class="far fa-user text-lg w-5 text-center"></i>
-        Profile Information
-    </a>
-    <a href="/addresses" class="flex items-center gap-4 px-6 py-3.5 bg-[#FCF9F4] text-[#B88E2F] border-l-4 border-[#B88E2F]">
-        <i class="fas fa-map-marker-alt text-lg w-5 text-center"></i>
-        My Addresses
-    </a>
-    <a href="/orders" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-        <i class="fas fa-box text-lg w-5 text-center"></i>
-        My Orders
-    </a>
-    <a href="/wishlist" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-        <i class="far fa-heart text-lg w-5 text-center"></i>
-        My Wishlist
-    </a>
-    <a href="/wallet" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-        <i class="fas fa-wallet text-lg w-5 text-center"></i>
-        My Wallet
-    </a>
-    <a href="/coupons" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-        <i class="fas fa-ticket-alt text-lg w-5 text-center"></i>
-        Coupons
-    </a>
-    <a href="/notifications" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-        <i class="far fa-bell text-lg w-5 text-center"></i>
-        Notifications
-    </a>
-    <a href="/security" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-        <i class="fas fa-shield-alt text-lg w-5 text-center"></i>
-        Security Settings
-    </a>
-</nav>
-        </aside>
+        <%- include('../layout/account-sidebar', { activePage: 'addresses' }) %>
 
         <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
             <% if (locals.user && user.addresses && user.addresses.length > 0) { %>
@@ -400,7 +365,10 @@ inputs.forEach(input => {
 
         // Determine method and URL based on mode (add vs edit)
         const isEdit = form.dataset.mode === 'edit';
-        const url = isEdit ? '/edit-address/' + currentEditAddressId : '/add-address';
+
+        // ✅ FIXED: Use correct backend routes
+        // Backend routes: POST /addresses | PUT /addresses/:id | DELETE /addresses/:id
+        const url = isEdit ? '/addresses/' + currentEditAddressId : '/addresses';
         const method = isEdit ? 'PUT' : 'POST';
 
         const bodyData = {
@@ -410,21 +378,63 @@ inputs.forEach(input => {
             isDefault: form.querySelector('input[name="isDefault"]').checked
         };
 
+        // Debug logs
+        console.log(isEdit ? 'Editing Address ID:' : 'Adding new address:', isEdit ? currentEditAddressId : '');
+        console.log('Payload:', bodyData);
+        console.log('Request URL:', url, '| Method:', method);
+
         try {
             const response = await fetch(url, {
                 method: method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(bodyData)
             });
-            const data = await response.json();
+
+            let data;
+            try {
+                data = await response.json();
+            } catch (parseErr) {
+                console.error('Response parse error (non-JSON response from server):', parseErr);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Server Error',
+                    text: `HTTP ${response.status}: The server returned an unexpected response. Check that the route exists.`,
+                    confirmButtonColor: '#B88E2F'
+                });
+                return;
+            }
+
+            console.log('Server response:', data);
+
             if (data.success) {
-                window.location.reload();
+                Swal.fire({
+                    icon: 'success',
+                    title: isEdit ? 'Address Updated!' : 'Address Added!',
+                    text: data.message || (isEdit ? 'Your address has been updated successfully.' : 'Your new address has been saved.'),
+                    confirmButtonColor: '#B88E2F',
+                    timer: 2000,
+                    timerProgressBar: true
+                }).then(() => {
+                    window.location.reload();
+                });
             } else {
-                alert(data.message || 'Something went wrong. Please try again.');
+                // Show the REAL backend error message
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Failed',
+                    text: data.message || 'Something went wrong. Please try again.',
+                    confirmButtonColor: '#B88E2F'
+                });
             }
         } catch (err) {
-            console.error('Address submit error:', err);
-            alert('Network error. Please try again.');
+            // Network-level error (no response at all)
+            console.error('Address submit error (network):', err);
+            Swal.fire({
+                icon: 'error',
+                title: 'Network Error',
+                text: 'Could not reach the server. Please check your connection and try again.',
+                confirmButtonColor: '#B88E2F'
+            });
         }
     });
 });
@@ -443,14 +453,32 @@ function showDeletePopup(addressId) {
     }).then(async (result) => {
         if (result.isConfirmed) {
             try {
-                const response = await fetch('/delete-address/' + addressId, { method: 'DELETE' });
-                const data = await response.json();
+                // ✅ FIXED: Correct DELETE route is /addresses/:id
+                console.log('Deleting address ID:', addressId);
+                const response = await fetch('/addresses/' + addressId, { method: 'DELETE' });
+
+                let data;
+                try {
+                    data = await response.json();
+                } catch (parseErr) {
+                    Swal.fire('Error', `HTTP ${response.status}: Unexpected server response.`, 'error');
+                    return;
+                }
+
                 if (data.success) {
-                    window.location.reload();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Deleted!',
+                        text: data.message || 'Address has been removed.',
+                        confirmButtonColor: '#B88E2F',
+                        timer: 2000,
+                        timerProgressBar: true
+                    }).then(() => window.location.reload());
                 } else {
                     Swal.fire('Error', data.message || 'Could not delete address.', 'error');
                 }
             } catch (err) {
+                console.error('Delete address error:', err);
                 Swal.fire('Error', 'Network error. Please try again.', 'error');
             }
         }

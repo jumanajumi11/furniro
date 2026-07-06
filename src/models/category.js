@@ -19,8 +19,7 @@ const CategorySchema = new mongoose.Schema({
     default: false
   },
 
-  // isListed = true  → visible on storefront (Listed)
-  // isListed = false → hidden from storefront (Hidden)
+ 
   isListed: {
     type: Boolean,
     default: true
@@ -34,7 +33,6 @@ const CategorySchema = new mongoose.Schema({
 }, { timestamps: true });
 
 
-// Prevent duplicate category names (case-insensitive)
 CategorySchema.pre('save', async function () {
 
   if (this.isModified('name')) {

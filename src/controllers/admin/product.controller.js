@@ -1,5 +1,8 @@
 import * as productService from '../../services/admin/product.service.js';
 import Category  from '../../models/category.js';
+import { logger } from '../../utils/logger.js';
+import fs from 'fs';
+import { uploadToCloudinary, deleteFromCloudinary, getPublicIdFromUrl } from '../../utils/cloudinary.js';
 
 export const listProducts = async (req, res) => {
     try {
@@ -41,14 +44,13 @@ export const showAddProduct = async (req, res) => {
     }
 };
 
-
 export const createProduct = async (req, res) => {
     try {
-        const { productName, description, category, brand, regularPrice, salePrice, stock, isListed } = req.body;
+        const { productName, description, category, brand, isListed } = req.body;
 
-        console.log('[createProduct] Files received:', (req.files || []).length);
-        (req.files || []).forEach(f => console.log(`  ${f.fieldname}: ${f.originalname} (${f.mimetype}, ${f.size} bytes) -> ${f.filename}`));
-        console.log('[createProduct] Colors JSON:', req.body.colors ? req.body.colors.substring(0, 200) : 'EMPTY');
+        logger.debug('[createProduct] Files received:', (req.files || []).length);
+        (req.files || []).forEach(f => logger.debug(`  ${f.fieldname}: ${f.originalname} (${f.mimetype}, ${f.size} bytes) -> ${f.filename}`));
+        logger.debug('[createProduct] Colors JSON:', req.body.colors ? req.body.colors.substring(0, 200) : 'EMPTY');
 
         let colors = []
         try { colors = JSON.parse(req.body.colors || '[]'); } catch (_) {}
@@ -66,15 +68,38 @@ export const createProduct = async (req, res) => {
         if (defaultCount > 1) {
             return res.status(400).json({ success: false, message: 'Only one default color can be set.', errors: { colors: 'Multiple default colors.' } });
         }
-        colors.forEach(color => {
+        // Upload images to Cloudinary and map them
+        for (const color of colors) {
             const fieldName = `colorImages_${color.tempIndex}`;
             const colorFiles = (req.files || []).filter(f => f.fieldname === fieldName);
-            const newColorImages = colorFiles.map(f => f.filename);
+            
+            const uploadedUrls = [];
+            for (const file of colorFiles) {
+                try {
+                    const result = await uploadToCloudinary(file.path, 'products');
+                    uploadedUrls.push(result.secure_url);
+                    // Delete local temp file
+                    await fs.promises.unlink(file.path).catch(() => {});
+                } catch (uploadErr) {
+                    // Clean up successful uploads from this request to avoid orphaned files
+                    for (const url of uploadedUrls) {
+                        const publicId = getPublicIdFromUrl(url);
+                        if (publicId) await deleteFromCloudinary(publicId).catch(() => {});
+                    }
+                    // Clean up any remaining temp files in req.files
+                    if (req.files) {
+                        for (const f of req.files) {
+                            await fs.promises.unlink(f.path).catch(() => {});
+                        }
+                    }
+                    throw uploadErr;
+                }
+            }
             const keptImages = color.existingImages || [];
-            color.images = [...keptImages, ...newColorImages];
+            color.images = [...keptImages, ...uploadedUrls];
             delete color.tempIndex;
             delete color.existingImages;
-        });
+        }
 
         let variants = [];
         try { variants = JSON.parse(req.body.variants || '[]'); } catch (_) {}
@@ -124,7 +149,6 @@ export const createProduct = async (req, res) => {
 
         const product = await productService.createProduct({
             productName, description, category, brand,
-            regularPrice, salePrice, stock,
             images, variants, colors,
             isListed: isListed !== 'false'
         });
@@ -136,7 +160,6 @@ export const createProduct = async (req, res) => {
         return res.status(status).json({ success: false, message: err.message, errors: err.validationErrors || {} });
     }
 };
-
 
 export const showEditProduct = async (req, res) => {
     try {
@@ -154,14 +177,12 @@ export const showEditProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
-        const { productName, description, category, brand, regularPrice, salePrice, stock, isListed } = req.body;
+        const { productName, description, category, brand, isListed } = req.body;
 
-        
-        console.log('[updateProduct] Files received:', (req.files || []).length);
-        (req.files || []).forEach(f => console.log(`  ${f.fieldname}: ${f.originalname} (${f.mimetype}, ${f.size} bytes) -> ${f.filename}`));
-        console.log('[updateProduct] Colors JSON:', req.body.colors ? req.body.colors.substring(0, 200) : 'EMPTY');
+        logger.debug('[updateProduct] Files received:', (req.files || []).length);
+        (req.files || []).forEach(f => logger.debug(`  ${f.fieldname}: ${f.originalname} (${f.mimetype}, ${f.size} bytes) -> ${f.filename}`));
+        logger.debug('[updateProduct] Colors JSON:', req.body.colors ? req.body.colors.substring(0, 200) : 'EMPTY');
 
-        
         let colors = [];
         try { colors = JSON.parse(req.body.colors || '[]'); } catch (_) {}
         
@@ -180,19 +201,70 @@ export const updateProduct = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Only one default color can be set.', errors: { colors: 'Multiple default colors.' } });
         }
         
-        colors.forEach(color => {
+        // Retrieve the old product to find which images are being removed
+        const oldProduct = await productService.getProduct(id).catch(() => null);
+        const oldImages = new Set();
+        if (oldProduct && oldProduct.colors) {
+            oldProduct.colors.forEach(c => {
+                if (c.images) {
+                    c.images.forEach(img => oldImages.add(img));
+                }
+            });
+        }
+
+        // Upload images to Cloudinary and map them
+        for (const color of colors) {
             const fieldName = `colorImages_${color.tempIndex}`;
             const colorFiles = (req.files || []).filter(f => f.fieldname === fieldName);
-            const newColorImages = colorFiles.map(f => f.filename);
+            
+            const uploadedUrls = [];
+            for (const file of colorFiles) {
+                try {
+                    const result = await uploadToCloudinary(file.path, 'products');
+                    uploadedUrls.push(result.secure_url);
+                    // Delete local temp file
+                    await fs.promises.unlink(file.path).catch(() => {});
+                } catch (uploadErr) {
+                    // Clean up successful uploads from this request to avoid orphaned files
+                    for (const url of uploadedUrls) {
+                        const publicId = getPublicIdFromUrl(url);
+                        if (publicId) await deleteFromCloudinary(publicId).catch(() => {});
+                    }
+                    // Clean up any remaining temp files in req.files
+                    if (req.files) {
+                        for (const f of req.files) {
+                            await fs.promises.unlink(f.path).catch(() => {});
+                        }
+                    }
+                    throw uploadErr;
+                }
+            }
             const keptImages = color.existingImages || [];
-            color.images = [...keptImages, ...newColorImages];
+            color.images = [...keptImages, ...uploadedUrls];
             delete color.tempIndex;
             delete color.existingImages;
+        }
+
+        const newImages = new Set();
+        colors.forEach(c => {
+            if (c.images) {
+                c.images.forEach(img => newImages.add(img));
+            }
         });
 
-
-
+        // Find which old images are NOT in the new images set
+        const removedImages = [...oldImages].filter(img => !newImages.has(img));
         
+        // Delete removed images from Cloudinary
+        for (const imgUrl of removedImages) {
+            const publicId = getPublicIdFromUrl(imgUrl);
+            if (publicId) {
+                await deleteFromCloudinary(publicId).catch((err) => {
+                    logger.error(`Failed to delete removed image ${imgUrl} from Cloudinary:`, err);
+                });
+            }
+        }
+
         let variants = [];
         try { variants = JSON.parse(req.body.variants || '[]'); } catch (_) {}
         
@@ -233,7 +305,6 @@ export const updateProduct = async (req, res) => {
             }
         }
 
-        
         let defaultColor = colors.find(c => c.isDefault);
         if (!defaultColor && colors.length > 0) {
             defaultColor = colors[0];
@@ -246,9 +317,6 @@ export const updateProduct = async (req, res) => {
             description, 
             category, 
             brand,
-            regularPrice, 
-            salePrice, 
-            stock,
             images, 
             variants,
             colors,
@@ -263,7 +331,6 @@ export const updateProduct = async (req, res) => {
     }
 };
 
-
 export const toggleProductListing = async (req, res) => {
     try {
         const product = await productService.toggleProductListing(req.params.id);
@@ -274,7 +341,6 @@ export const toggleProductListing = async (req, res) => {
     }
 };
 
-
 export const deleteProduct = async (req, res) => {
     try {
         await productService.softDeleteProduct(req.params.id);
@@ -284,7 +350,6 @@ export const deleteProduct = async (req, res) => {
         return res.status(err.statusCode || 500).json({ success: false, message: err.message });
     }
 };
-
 
 export const checkProductName = async (req, res) => {
     try {

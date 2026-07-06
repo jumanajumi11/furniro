@@ -755,7 +755,7 @@
       currentVariant = product.variants.find(v => v.color === selectedColor && v.size === selectedSize);
 
       if (currentVariant) {
-          updateProductDetailsDisplay(currentVariant.price, null, currentVariant.stock, currentVariant.sku, false);
+          updateProductDetailsDisplay(currentVariant.price, currentVariant.salePrice || null, currentVariant.stock, currentVariant.sku, false);
       } else {
           // No valid matching variant for the selected color & size combination
           updateProductDetailsDisplay(product.regularPrice, product.salePrice, 0, 'SKU-NONE', true);

@@ -8,7 +8,7 @@ export const listCategories = async (req, res) => {
         const page   = parseInt(req.query.page)  || 1;
         const limit  = parseInt(req.query.limit) || 10;
         const sort   = req.query.sort   || 'desc';   
-        const status = req.query.status || 'all';    // all, listed, hidden
+        const status = req.query.status || 'all';    
         const totalActive = await Category.countDocuments({ isListed: true }); 
 
         const result = await categoryService.listCategories({ search, page, limit, sort, status });
@@ -62,7 +62,6 @@ export const toggleStatus = async (req, res) => {
         
         const updatedCategory = await categoryService.toggleCategoryStatus(id);
         
-        
         return res.status(200).json({ 
             success: true, 
             isListed: updatedCategory.isListed 
@@ -95,8 +94,7 @@ export const updateCategory = async (req, res) => {
     }
 };
 
-
- export const checkCategoryName = async (req, res) => {
+export const checkCategoryName = async (req, res) => {
     try {
         const { name } = req.query;
         
@@ -112,6 +110,7 @@ export const updateCategory = async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 };
+
 // =================== DELETE (Soft Delete) ===================
 export const deleteCategory = async (req, res) => {
     try {

@@ -1,5 +1,6 @@
 import otpService from '../../services/user/otp.service.js';
 import { sendOTPEmail } from '../../utils/mail.js';
+import { logger } from '../../utils/logger.js';
 
 export const getForgotPage = (req, res) => {
     res.render('user/forgot-password', { error: null });
@@ -46,6 +47,7 @@ export const getOtpPage = (req, res) => {
     const remainingTime = Math.max(0, Math.floor((generatedAt + expirationLimit - Date.now()) / 1000));
 
     res.render('user/otp', { email: email, error: null, remainingTime: remainingTime });
+
 };
 
 export const verifyOTP = async (req, res, next) => {
@@ -64,7 +66,6 @@ export const verifyOTP = async (req, res, next) => {
             }
             return res.json({ success: true, redirectUrl: result.redirectUrl });
         } else {
-            // SignUp flow
             req.session.user_id = result.savedUser._id;
             req.session.user = {
                 _id: result.savedUser._id,
@@ -102,22 +103,22 @@ export const resetPassword = (req, res) => {
         });
 
     } catch (error) {
-        console.log(error);
+        logger.error('resetPassword catch error:', error);
         res.redirect('/forgot-password');
     }
 };
 
 export const getVerifyEmailPage = (req, res) => {
-    console.log("Session Data at Verify:", req.session.userTempData);
+    logger.debug('Session Data at getVerifyEmailPage:', req.session.userTempData);
 
     if (req.session.userTempData) {
-        res.render('user/otp', { 
-            email: req.session.userTempData.email, 
+        res.render('user/otp', {
+            email: req.session.userTempData.email,
             error: null,
-            message: null 
+            message: null
         });
     } else {
-        console.log("❌ No userTempData found in session, redirecting to signup");
+        logger.debug('No userTempData found in session, redirecting to signup');
         res.redirect('/signup');
     }
 };
@@ -146,8 +147,8 @@ export const resendOTP = async (req, res, next) => {
 
         req.session.save((err) => {
             if (err) {
-                console.error("Session save error:", err);
-                return res.status(500).json({ success: false, message: "Session error" });
+                logger.error('resendOTP — Session save error:', err);
+                return res.status(500).json({ success: false, message: 'Session error' });
             }
             res.json({ success: true, message: "OTP resent successfully." });
         });

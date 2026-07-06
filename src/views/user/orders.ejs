@@ -31,31 +31,7 @@
     <div class="flex flex-col lg:flex-row gap-8">
 
         <!-- ── Sidebar Navigation ── -->
-        <aside class="w-full lg:w-72 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden py-6 px-4 h-fit">
-            <nav class="flex flex-col text-sm font-medium">
-                <a href="/profile" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-                    <i class="far fa-user text-lg w-5 text-center"></i> Profile Information
-                </a>
-                <a href="/addresses" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-                    <i class="fas fa-map-marker-alt text-lg w-5 text-center"></i> My Addresses
-                </a>
-                <a href="/orders" class="flex items-center gap-4 px-6 py-3.5 bg-[#FCF9F4] text-[#B88E2F] border-l-4 border-[#B88E2F]">
-                    <i class="fas fa-box text-lg w-5 text-center"></i> My Orders
-                </a>
-                <a href="/wishlist" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-                    <i class="far fa-heart text-lg w-5 text-center"></i> My Wishlist
-                </a>
-                <a href="/wallet" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-                    <i class="fas fa-wallet text-lg w-5 text-center"></i> My Wallet
-                </a>
-                <a href="/coupons" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-                    <i class="fas fa-ticket-alt text-lg w-5 text-center"></i> Coupons
-                </a>
-                <a href="/security" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-                    <i class="fas fa-shield-alt text-lg w-5 text-center"></i> Security Settings
-                </a>
-            </nav>
-        </aside>
+        <%- include('../layout/account-sidebar', { activePage: 'orders' }) %>
 
         <!-- ═══════════════════════════════════════
              MAIN ORDERS SECTION
@@ -75,8 +51,12 @@
                         'Delivered':           { cls: 'text-green-600',  dot: 'bg-green-500'  },
                         'Cancelled':           { cls: 'text-red-600',    dot: 'bg-red-500'    },
                         'Partially Cancelled': { cls: 'text-orange-600', dot: 'bg-orange-400' },
+                        'Partially Delivered': { cls: 'text-teal-600',   dot: 'bg-teal-500'   },
                         'Return Requested':    { cls: 'text-orange-600', dot: 'bg-orange-500' },
                         'Returned':            { cls: 'text-purple-600', dot: 'bg-purple-500' },
+                        'Return Approved':     { cls: 'text-purple-600', dot: 'bg-purple-500' },
+                        'Return Rejected':     { cls: 'text-red-600',    dot: 'bg-red-500'    },
+                        'Partially Returned':  { cls: 'text-purple-600', dot: 'bg-purple-400' },
                     };
                     const PAY_COLORS = {
                         'Paid':     { cls: 'text-green-600',  dot: 'bg-green-500'  },
@@ -94,6 +74,7 @@
                         'Cancelled':        'bg-red-50    text-red-700',
                         'Return Requested': 'bg-orange-50 text-orange-700',
                         'Returned':         'bg-purple-50 text-purple-700',
+                        'Return Approved':  'bg-purple-50 text-purple-700',
                         'Return Rejected':  'bg-red-50    text-red-700',
                     };
                     const cancellableStatuses = ['Placed', 'Pending', 'Processing', 'Pending Payment'];
@@ -121,8 +102,9 @@
 
                             /* First product image for the table row preview */
                             let previewProd = order.items[0] && order.items[0].productId;
-                            let previewRaw  = previewProd && previewProd.images && previewProd.images.length > 0
-                                ? previewProd.images[0] : null;
+                            let previewRaw  = order.items[0] && order.items[0].image
+                                ? order.items[0].image
+                                : (previewProd && previewProd.images && previewProd.images.length > 0 ? previewProd.images[0] : null);
                             let previewSrc  = previewRaw
                                 ? (previewRaw.startsWith('http') ? previewRaw : '/upload/products/' + previewRaw)
                                 : '/images/placeholder.png';
@@ -212,15 +194,23 @@
                                     <% order.items.forEach(item => { %>
                                         <%
                                             const prod    = item.productId;
-                                            const rawImg  = prod && prod.images && prod.images.length > 0 ? prod.images[0] : null;
+                                            const rawImg  = item.image
+                                                ? item.image
+                                                : (prod && prod.images && prod.images.length > 0 ? prod.images[0] : null);
                                             const imgSrc  = rawImg ? (rawImg.startsWith('http') ? rawImg : '/upload/products/' + rawImg) : '/images/placeholder.png';
                                             const pName   = prod ? prod.productName : 'Product Unavailable';
 
                                             /* Determine item display status: active items always reflect the order status */
-                                            let iStatus;
-                                            if (['Cancelled', 'Returned', 'Return Requested', 'Return Rejected'].includes(item.status)) {
+                                            let iStatus = item.status || 'Pending';
+                                            if (item.status === 'Returned' || item.returnStatus === 'Approved') {
+                                                iStatus = 'Return Approved';
+                                            } else if (item.returnStatus === 'Requested') {
+                                                iStatus = 'Return Requested';
+                                            } else if (item.returnStatus === 'Rejected') {
+                                                iStatus = 'Return Rejected';
+                                            } else if (['Cancelled', 'Return Rejected'].includes(item.status)) {
                                                 iStatus = item.status;
-                                            } else if (['Cancelled', 'Returned', 'Return Requested', 'Return Rejected'].includes(order.status)) {
+                                            } else if (['Cancelled', 'Returned', 'Partially Returned', 'Return Requested', 'Return Rejected'].includes(order.status)) {
                                                 iStatus = order.status;
                                             } else {
                                                 iStatus = order.status || 'Processing';
@@ -228,8 +218,8 @@
                                             const iBadge  = ITEM_BADGE[iStatus] || 'bg-gray-100 text-gray-600';
 
                                             /* Variant info (size / color) */
-                                            let varSize = '', varColor = '';
-                                            if (prod && prod.variants && prod.variants.length > 0 && item.variantId) {
+                                            let varSize = item.size || '', varColor = item.color || '';
+                                            if (!varSize && !varColor && prod && prod.variants && prod.variants.length > 0 && item.variantId) {
                                                 const v = typeof prod.variants.id === 'function' ? prod.variants.id(item.variantId) : null;
                                                 if (v) { varSize = v.size || ''; varColor = v.color || ''; }
                                             }
@@ -530,98 +520,7 @@ async function cancelOrder(orderId) {
     }
 }
 
-async function requestReturnOrder(orderId) {
-    const { value: reason } = await Swal.fire({
-        title: 'Return Order',
-        text: 'Please choose a reason for returning this order:',
-        input: 'select',
-        inputOptions: {
-            'Item damaged on arrival': 'Item damaged on arrival',
-            'Quality not as expected': 'Quality not as expected',
-            'Incorrect item received': 'Incorrect item received',
-            'Changed my mind': 'Changed my mind',
-            'Other': 'Other'
-        },
-        inputPlaceholder: 'Select a reason',
-        showCancelButton: true,
-        confirmButtonColor: '#B88E2F',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Submit Request',
-        customClass: {
-            popup: 'rounded-2xl',
-            confirmButton: 'rounded-xl text-xs font-bold px-6 py-2.5',
-            cancelButton:  'rounded-xl text-xs font-bold px-6 py-2.5'
-        },
-        inputValidator: (value) => { if (!value) return 'You need to select a reason!'; }
-    });
-
-    if (!reason) return;
-
-    let finalReason = reason;
-    if (reason === 'Other') {
-        const { value: customReason } = await Swal.fire({
-            title: 'Specify Return Reason',
-            input: 'textarea',
-            inputPlaceholder: 'Please tell us why you want to return this order...',
-            showCancelButton: true,
-            confirmButtonColor: '#B88E2F',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Submit Request',
-            customClass: {
-                popup: 'rounded-2xl',
-                confirmButton: 'rounded-xl text-xs font-bold px-6 py-2.5',
-                cancelButton:  'rounded-xl text-xs font-bold px-6 py-2.5'
-            },
-            inputValidator: (value) => { if (!value || !value.trim()) return 'You must specify a reason!'; }
-        });
-        if (!customReason) return;
-        finalReason = customReason.trim();
-    }
-
-    Swal.fire({
-        title: 'Submitting Return Request...',
-        html: '<p class="text-xs text-gray-400">Please wait while we submit your return request.</p>',
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        didOpen: () => Swal.showLoading()
-    });
-
-    try {
-        const res = await fetch(`/orders/${orderId}/return`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ reason: finalReason })
-        });
-        const data = await res.json();
-
-        if (data.success) {
-            await Swal.fire({
-                icon: 'success',
-                title: 'Return Requested',
-                text: data.message || 'Your return request has been submitted successfully.',
-                confirmButtonColor: '#B88E2F',
-                customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-xl text-xs font-bold px-6 py-2.5' }
-            });
-            window.location.reload();
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Request Failed',
-                text: data.message || 'Unable to request return.',
-                confirmButtonColor: '#B88E2F',
-                customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-xl text-xs font-bold px-6 py-2.5' }
-            });
-        }
-    } catch (err) {
-        console.error('Return Request Error:', err);
-        Swal.fire({
-            icon: 'error',
-            title: 'Connection Error',
-            text: 'An unexpected error occurred. Please try again.',
-            confirmButtonColor: '#B88E2F'
-        });
-    }
-}
+// requestReturnOrder is removed as order-level returns are no longer supported
 </script>
 
 <%- include('../layout/footer') %>

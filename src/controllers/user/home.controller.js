@@ -1,6 +1,8 @@
 
 import Product  from '../../models/product.js';
 import Category from '../../models/category.js';
+import Banner   from '../../models/banner.js';
+import { applyOffers } from '../../services/user/offer.service.js';
 
 export const loadHome = async (req, res) => {
     try {
@@ -20,7 +22,6 @@ export const loadHome = async (req, res) => {
             }
         ];
 
-        // ── 2. Fetch latest listed, non-deleted products ────────────
         const products = await Product.find({
             isListed:  true,
             isDeleted: false
@@ -30,10 +31,16 @@ export const loadHome = async (req, res) => {
         .limit(9)                       
         .lean();
 
+        await applyOffers(products);
+
+        // Fetch active home banners with images
+        const banners = await Banner.find({ page: 'home', status: 'Active', imageUrl: { $ne: '', $exists: true } }).lean();
+
         res.render('user/home', {
             user:    req.session.user || null,
             category: sofaCategories,   
-            products                    
+            products,
+            banners
         });
 
     } catch (error) {

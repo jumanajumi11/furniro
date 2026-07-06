@@ -1,0 +1,150 @@
+<%- include('../layout/header') %>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="text-sm text-gray-500 mb-8 flex items-center gap-2">
+        <a href="/" class="hover:text-[#B88E2F]">Home</a>
+        <i class="fas fa-chevron-right text-xs"></i>
+        <span class="text-gray-800">My Account</span>
+    </div>
+
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Refer a Friend</h1>
+        <p class="text-gray-500">Invite your friends to shop and earn rewards directly to your wallet.</p>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Sidebar Navigation -->
+        <%- include('../layout/account-sidebar', { activePage: 'referrals' }) %>
+
+        <!-- Referral Content -->
+        <div class="flex-1 space-y-8">
+            <!-- Referral Stats Card -->
+            <div class="bg-gradient-to-br from-[#B88E2F]/10 via-[#B88E2F]/5 to-transparent rounded-3xl border border-[#B88E2F]/10 p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="max-w-md">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2">Spread the Word!</h2>
+                    <p class="text-gray-600 text-sm leading-relaxed">
+                        <% if (settings.referralEnabled) { %>
+                            Share your referral code or link below. When a friend signs up, they get <strong>₹<%= settings.referredReward %></strong> and you get <strong>₹<%= settings.referrerReward %></strong> directly credited to your wallet!
+                        <% } else { %>
+                            Referral program is temporarily deactivated by admin. Check back soon!
+                        <% } %>
+                    </p>
+                </div>
+                <div class="flex flex-col items-center shrink-0 bg-white border border-gray-100 p-6 rounded-2xl shadow-sm text-center">
+                    <span class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Total Earnings</span>
+                    <span class="text-3xl font-extrabold text-[#B88E2F]">₹<%= (history.reduce((sum, h) => sum + h.referrerReward, 0)).toLocaleString('en-IN') %></span>
+                    <span class="text-xs text-gray-400 mt-1 font-semibold"><%= history.length %> Successful Invite<%= history.length !== 1 ? 's' : '' %></span>
+                </div>
+            </div>
+
+            <% if (settings.referralEnabled) { %>
+                <!-- Link Generator Section -->
+                <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8 space-y-6">
+                    <h3 class="text-lg font-bold text-gray-900">Your Invitation Code</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Code Card -->
+                        <div class="bg-gray-50 border border-gray-100 p-5 rounded-2xl flex flex-col justify-between">
+                            <div>
+                                <span class="text-xs text-gray-400 font-bold uppercase tracking-wider">Referral Code</span>
+                                <div class="text-2xl font-extrabold text-gray-800 mt-2 tracking-wider" id="ref-code-text"><%= referralCode %></div>
+                            </div>
+                            <button onclick="copyToClipboard('<%= referralCode %>', 'Code copied!')" class="mt-4 w-full bg-[#B88E2F] hover:bg-[#9d7725] text-white py-2.5 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-sm shadow-[#B88E2F]/15">
+                                <i class="far fa-clone"></i> Copy Referral Code
+                            </button>
+                        </div>
+
+                        <!-- Link Card -->
+                        <div class="bg-gray-50 border border-gray-100 p-5 rounded-2xl flex flex-col justify-between">
+                            <div>
+                                <span class="text-xs text-gray-400 font-bold uppercase tracking-wider">Referral Link</span>
+                                <div class="text-sm font-semibold text-gray-600 mt-2 truncate" id="ref-link-display">Generating...</div>
+                            </div>
+                            <button onclick="copyReferralLink()" class="mt-4 w-full border-2 border-[#B88E2F] text-[#B88E2F] hover:bg-[#B88E2F] hover:text-white py-2.5 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2">
+                                <i class="fas fa-link"></i> Copy Referral Link
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            <% } %>
+
+            <!-- History List Section -->
+            <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8 space-y-6">
+                <h3 class="text-lg font-bold text-gray-900">Referral History</h3>
+                
+                <% if (history && history.length > 0) { %>
+                    <div class="overflow-hidden border border-gray-100 rounded-2xl">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-gray-50 text-gray-500 font-bold border-b border-gray-100">
+                                    <th class="px-6 py-4">Friend</th>
+                                    <th class="px-6 py-4">Email</th>
+                                    <th class="px-6 py-4 text-right">Your Reward</th>
+                                    <th class="px-6 py-4">Joined Date</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50">
+                                <% history.forEach(function(item) { %>
+                                    <% const friend = item.referred || {}; %>
+                                    <tr class="hover:bg-gray-50/50 transition-colors">
+                                        <td class="px-6 py-4 font-bold text-gray-800">
+                                            <%= friend.name || 'Invited Friend' %>
+                                        </td>
+                                        <td class="px-6 py-4 text-gray-500 font-medium">
+                                            <%= friend.email || '—' %>
+                                        </td>
+                                        <td class="px-6 py-4 text-right font-extrabold text-[#B88E2F]">
+                                            +₹<%= item.referrerReward.toLocaleString('en-IN') %>
+                                        </td>
+                                        <td class="px-6 py-4 text-gray-400 font-semibold">
+                                            <%= new Date(item.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) %>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <div class="text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                        <i class="fas fa-user-friends text-gray-300 text-4xl mb-4"></i>
+                        <p class="text-gray-500 text-sm font-semibold">You haven't referred anyone yet.</p>
+                        <p class="text-gray-400 text-xs mt-1">Share your code to get started!</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const linkDisplay = document.getElementById('ref-link-display');
+        if (linkDisplay) {
+            linkDisplay.textContent = window.location.origin + '/signup?ref=<%= referralCode %>';
+        }
+    });
+
+    function copyToClipboard(text, msg) {
+        navigator.clipboard.writeText(text).then(() => {
+            Swal.fire({
+                icon: 'success',
+                title: msg,
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 1500,
+                timerProgressBar: true
+            });
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+        });
+    }
+
+    function copyReferralLink() {
+        const link = window.location.origin + '/signup?ref=<%= referralCode %>';
+        copyToClipboard(link, 'Referral link copied!');
+    }
+</script>
+
+<%- include('../layout/footer') %>

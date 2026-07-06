@@ -1,6 +1,7 @@
 import User from '../../models/user.js';
 import { generateOTP } from '../../utils/generateOTP.js';
 import { sendOTPEmail } from '../../utils/mail.js';
+import { logger } from '../../utils/logger.js';
 
 const formatTimestamp = (ms) => {
     const d = new Date(ms);
@@ -28,13 +29,11 @@ const logOtpToConsole = (email, otp, durationMs) => {
     }
 };
 
-/**
- * Send an OTP to the given email for a specific purpose.
- */
+
 export const sendOtp = async (email, purpose = 'signup') => {
     const cleanEmail = email.toLowerCase().trim();
     
-    // For signup, check if user exists
+    
     if (purpose === 'signup') {
         const existingUser = await User.findOne({ email: cleanEmail });
         if (existingUser) {
@@ -42,7 +41,7 @@ export const sendOtp = async (email, purpose = 'signup') => {
         }
     }
 
-    // For forgot password, check if user exists and is verified
+    
     if (purpose === 'forgot') {
         const user = await User.findOne({ email: cleanEmail });
         if (!user) {
@@ -57,19 +56,11 @@ export const sendOtp = async (email, purpose = 'signup') => {
     }
 
     const otp = generateOTP();
-    // Unconditional logging for debugging (will appear regardless of NODE_ENV)
-    console.log('\n=================================');
-    console.log('OTP GENERATED');
-    console.log('Email:', cleanEmail);
-    console.log('OTP:', otp);
-    console.log('Generated At:', new Date().toISOString());
-    console.log('Expires In: 120 Seconds');
-    console.log('=================================\n');
-    logOtpToConsole(cleanEmail, otp, 120 * 1000); // 2 minutes expiry
+    logOtpToConsole(cleanEmail, otp, 120 * 1000);
     try {
         await sendOTPEmail(cleanEmail, otp);
     } catch (mailError) {
-        console.error("Mail send failed, but continuing OTP flow for local development:", mailError.message);
+        logger.error("Mail send failed, but continuing OTP flow:", mailError.message);
     }
 
     return {
@@ -79,9 +70,7 @@ export const sendOtp = async (email, purpose = 'signup') => {
     };
 };
 
-/**
- * Send OTP for email update flow, ensuring email is not in use by other users.
- */
+
 export const sendEmailUpdateOtp = async (newEmail, currentUserId) => {
     const cleanEmail = newEmail.toLowerCase().trim();
 
@@ -91,19 +80,11 @@ export const sendEmailUpdateOtp = async (newEmail, currentUserId) => {
     }
 
     const otp = generateOTP();
-    // Unconditional logging for debugging (will appear regardless of NODE_ENV)
-    console.log('\n=================================');
-    console.log('OTP GENERATED');
-    console.log('Email:', cleanEmail);
-    console.log('OTP:', otp);
-    console.log('Generated At:', new Date().toISOString());
-    console.log('Expires In: 60 Seconds');
-    console.log('=================================\n');
-    logOtpToConsole(cleanEmail, otp, 60 * 1000); // 1 minute expiry
+    logOtpToConsole(cleanEmail, otp, 60 * 1000);
     try {
         await sendOTPEmail(cleanEmail, otp);
     } catch (mailError) {
-        console.error("Mail send failed, but continuing email update OTP flow for local development:", mailError.message);
+        logger.error("Mail send failed, but continuing email update OTP flow:", mailError.message);
     }
 
     return {
@@ -113,20 +94,16 @@ export const sendEmailUpdateOtp = async (newEmail, currentUserId) => {
     };
 };
 
-/**
- * Verify general OTP (SignUp or Reset Password).
- */
 
 
-       /**
- * Verify general OTP (SignUp or Reset Password).
- */
+
+
 export const verifyOtp = async (otp, tempData, purpose) => {
     if (!tempData || !tempData.otp) {
         throw new Error("Session expired.");
     }
 
-    // Check expiration (2 minutes limit)
+    
     const currentTime = Date.now();
     const otpTime = tempData.otpGeneratedAt;
     const expirationLimit = 2 * 60 * 1000; 
@@ -142,28 +119,84 @@ export const verifyOtp = async (otp, tempData, purpose) => {
     if (purpose === 'forgot') {
         return { allowReset: true, redirectUrl: '/reset-password' };
     } else {
-        // --- DUPLICATE KEY ERROR ഒഴിവാക്കാൻ ഇവിടെ മാറ്റം വരുത്തി ---
         
-        // ആദ്യം ഡാറ്റാബേസിൽ ഈ ഇമെയിൽ ഉണ്ടോ എന്ന് നോക്കുന്നു
+        
+        
         const existingUser = await User.findOne({ email: tempData.email.toLowerCase().trim() });
         
         if (existingUser) {
-            // യൂസർ ഓൾറെഡി ഉണ്ടെങ്കിൽ വീണ്ടും സേവ് ചെയ്യാതെ ഹോമിലേക്ക് വിടുന്നു
+            
             return {
                 savedUser: existingUser,
                 redirectUrl: '/'
             };
         }
 
-        // ഇല്ലെങ്കിൽ മാത്രം പുതിയ യൂസറെ ഉണ്ടാക്കി സേവ് ചെയ്യുന്നു
+        
+        let referredByUser = null;
+        let settings = { referralEnabled: false, referrerReward: 0, referredReward: 0 };
+        if (tempData.referredByCode) {
+            const { getSettings } = await import('../../utils/settings.js');
+            settings = await getSettings();
+            if (settings.referralEnabled) {
+                referredByUser = await User.findOne({ referralCode: tempData.referredByCode, isAdmin: false });
+            }
+        }
+
         const newUser = new User({
             name: tempData.name,
             email: tempData.email,
             password: tempData.password,
-            isVerified: true
+            isVerified: true,
+            referredBy: referredByUser ? referredByUser._id : null
         });
 
         const savedUser = await newUser.save();
+
+        if (referredByUser && settings.referralEnabled) {
+            const referrerReward = settings.referrerReward || 200;
+            const referredReward = settings.referredReward || 100;
+
+         
+            referredByUser.wallet = (referredByUser.wallet || 0) + referrerReward;
+            await referredByUser.save();
+
+           
+            savedUser.wallet = (savedUser.wallet || 0) + referredReward;
+            await savedUser.save();
+
+            const WalletTransaction = (await import('../../models/walletTransaction.js')).default;
+            
+          
+            await WalletTransaction.create({
+                userId: referredByUser._id,
+                amount: referrerReward,
+                type: 'credit',
+                description: `Referral Reward for inviting ${savedUser.email}`,
+                status: 'completed',
+                transactionDate: new Date()
+            });
+
+           
+            await WalletTransaction.create({
+                userId: savedUser._id,
+                amount: referredReward,
+                type: 'credit',
+                description: `Referral Sign-up Bonus (Referred by ${referredByUser.email})`,
+                status: 'completed',
+                transactionDate: new Date()
+            });
+
+            const ReferralHistory = (await import('../../models/referralHistory.js')).default;
+            await ReferralHistory.create({
+                referrer: referredByUser._id,
+                referred: savedUser._id,
+                referrerReward,
+                referredReward,
+                status: 'Completed'
+            });
+        }
+
         return {
             savedUser,
             redirectUrl: '/'
@@ -171,9 +204,7 @@ export const verifyOtp = async (otp, tempData, purpose) => {
     }
 };
 
-/**
- * Verify OTP for general email update step.
- */
+
 export const verifyEmailOtp = async (otp, sessionData) => {
     if (!sessionData) {
         throw new Error("Session expired");
@@ -186,9 +217,7 @@ export const verifyEmailOtp = async (otp, sessionData) => {
     return true;
 };
 
-/**
- * Verify and save new email address to database.
- */
+
 export const verifyAndSaveEmail = async (otp, sessionData, sessionOtpExpiry, userId) => {
     const currentTime = Date.now();
     
@@ -208,9 +237,7 @@ export const verifyAndSaveEmail = async (otp, sessionData, sessionOtpExpiry, use
 
     return updatedUser;
 };
-/**
- * Reset user password
- */
+
 export const resetPassword = async (email, password) => {
 
     const user = await User.findOne({

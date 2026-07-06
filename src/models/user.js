@@ -55,9 +55,24 @@ const userSchema = new mongoose.Schema({
   }],
   wallet: {
     type: Number,
-    default: 5000
+    default: 0
+  },
+  referralCode: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  referredBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   }
 }, { timestamps: true });
+
+userSchema.pre('save', function() {
+  if (!this.referralCode && !this.isAdmin) {
+    this.referralCode = 'REF' + Math.random().toString(36).substring(2, 8).toUpperCase();
+  }
+});
 
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 

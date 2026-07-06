@@ -1,57 +1,29 @@
 import express from 'express';
 
-import * as adminController from '../controllers/admin.controller.js';
+import authRoutes from './admin/auth.routes.js';
+import dashboardRoutes from './admin/dashboard.routes.js';
+import userRoutes from './admin/user.routes.js';
 import categoryRoutes from './admin/category.routes.js';
-import productRoutes  from './admin/product.routes.js';
-import ordersRoutes   from './admin/orders.routes.js';
-import * as auth from '../middlewares/auth.js';
+import productRoutes from './admin/product.routes.js';
+import orderRoutes from './admin/order.routes.js';
+import couponRoutes from './admin/coupon.routes.js';
+import offerRoutes from './admin/offer.routes.js';
+import referralRoutes from './admin/referral.routes.js';
+import salesRoutes from './admin/sales.routes.js';
+import bannerRoutes from './admin/banner.routes.js';
 
 const router = express.Router();
 
-// ================= AUTH =================
-
-router.get('/login',auth.isAdminLogout,adminController.loadLogin);
-
-router.post('/login',adminController.login);
-
-router.get('/logout',adminController.logout);
-
-// ================= DASHBOARD =================
-
-router.get('/dashboard',auth.isAdmin,adminController.loadDashboard);
-
-// ================= FORGOT PASSWORD =================
-
-router.get('/forgot-password',adminController.loadForgotPassword);
-
-router.post('/forgot-password',adminController.sendResetOTP);
-
-router.get('/verify-otp',adminController.loadVerifyOTP);
-
-router.post('/verify-otp',adminController.verifyOTP);
-
-router.post('/resend-otp',adminController.resendAdminOTP);
-
-router.post('/reset-password',adminController.resetPassword);
-
-// ================= CUSTOMERS =================
-
-router.get('/customers',auth.isAdmin,adminController.getUsers);
-
-router.patch('/block-user/:id',auth.isAdmin,adminController.blockUser);
-
-router.patch( '/customers/toggle-block/:id',auth.isAdmin,adminController.toggleBlock);
-
-// ================= CATEGORIES =================
-
+router.use('/', authRoutes);
+router.use('/', dashboardRoutes);
+router.use('/', userRoutes);
 router.use('/', categoryRoutes);
-
-// ================= PRODUCTS =================
-
 router.use('/', productRoutes);
-
-// ================= ORDERS =================
-
-router.use('/', ordersRoutes);
+router.use('/', orderRoutes);
+router.use('/', couponRoutes);
+router.use('/', offerRoutes);
+router.use('/', referralRoutes);
+router.use('/', salesRoutes);
+router.use('/', bannerRoutes);
 
 export default router;

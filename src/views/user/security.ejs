@@ -13,41 +13,7 @@
     </div>
 
     <div class="flex flex-col lg:flex-row gap-8">
-        <aside class="w-full lg:w-72 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden py-6 px-4 h-fit">
-            <nav class="flex flex-col text-sm font-bold space-y-1">
-                <a href="/profile" class="flex items-center gap-4 px-6 py-3.5 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-                    <i class="far fa-user text-lg w-5 text-center text-gray-400"></i> Profile Information
-                </a>
-                <a href="/addresses" class="flex items-center gap-4 px-6 py-3.5 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-                    <i class="fas fa-map-marker-alt text-lg w-5 text-center text-gray-400"></i> My Address
-                </a>
-               
-                    <a href="/orders" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-                        <i class="fas fa-box text-lg w-5 text-center"></i>
-                        My Orders
-                    </a>
-                    <a href="/wishlist" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-                        <i class="far fa-heart text-lg w-5 text-center"></i>
-                        My Wishlist
-                    </a>
-                    <a href="/wallet" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-                        <i class="fas fa-wallet text-lg w-5 text-center"></i>
-                        My Wallet
-                    </a>
-                    <a href="/coupons" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-                        <i class="fas fa-ticket-alt text-lg w-5 text-center"></i>
-                        Coupons
-                    </a>
-                    <a href="/notifications" class="flex items-center gap-4 px-6 py-3.5 text-gray-600 hover:bg-gray-50 hover:text-[#B88E2F] border-l-4 border-transparent transition-colors">
-                        <i class="far fa-bell text-lg w-5 text-center"></i>
-                        Notifications
-                    </a>
-                    <a href="/security" class="flex items-center gap-4 px-4 py-3.5 bg-[#F1F1F1] rounded-lg text-gray-800">
-                    <i class="fas fa-shield-alt text-lg w-5 text-center text-gray-800"></i> Security Settings
-                </a>
-                    
-                 </nav>
-                 </aside>
+        <%- include('../layout/account-sidebar', { activePage: 'security' }) %>
 
         <div class="flex-1">
             <div class="max-w-md mx-auto bg-white p-8 rounded-3xl shadow-sm border border-gray-100">

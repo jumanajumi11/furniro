@@ -5,23 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Furniro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #F9FAFB;
-        }
-        .sidebar-scroll::-webkit-scrollbar {
-            width: 4px;
-        }
-        .sidebar-scroll::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .sidebar-scroll::-webkit-scrollbar-thumb {
-            background: #E5E7EB;
-            border-radius: 4px;
-        }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F9FAFB; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-gray-800 bg-[#F9FAFB]">
@@ -32,344 +20,302 @@
     <!-- Main Content -->
     <main class="flex-1 flex flex-col h-full overflow-hidden relative">
         
-        <!-- Mobile Header -->
-        <header class="lg:hidden flex items-center justify-between bg-white border-b border-gray-200 p-4 shrink-0 z-20">
-            <div class="flex items-center gap-2">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 22L2 12L12 2L22 12L12 22Z" stroke="#B88E2F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M2 12H22" stroke="#B88E2F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M12 2V22" stroke="#B88E2F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span class="text-xl font-bold text-gray-900">Furniro</span>
+        <!-- Header -->
+        <header class="bg-white border-b border-gray-100 px-6 lg:px-8 h-16 flex items-center justify-between shrink-0 z-20 shadow-sm">
+            <div>
+                <h1 class="text-xl font-extrabold text-gray-900 tracking-tight">DASHBOARD</h1>
             </div>
-            <button class="text-gray-500 hover:text-gray-900 focus:outline-none">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-            </button>
+            
+            <div class="flex items-center gap-3">
+                <div class="text-right">
+                    <p class="text-xs font-black text-[#B88E2F] uppercase tracking-widest leading-none">System Admin</p>
+                    <p class="text-xs font-bold text-gray-800 mt-1">Jumana</p>
+                </div>
+                <div class="w-9 h-9 rounded-xl bg-[#B88E2F] flex items-center justify-center text-white font-black text-sm shadow">
+                    JU
+                </div>
+            </div>
         </header>
 
         <!-- Content Area -->
-        <div class="flex-1 overflow-y-auto p-4 md:p-8">
+        <div class="flex-1 overflow-y-auto p-6 lg:p-8 space-y-8">
             <div class="max-w-[1400px] mx-auto w-full">
                 
-                <!-- Breadcrumb & Header -->
-                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-                    <div>
-                        <div class="flex items-center gap-2 text-sm text-gray-500 mb-3">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
-                            <span>Home</span>
-                            <span class="text-gray-400">></span>
-                            <span class="font-medium text-gray-900">Dashboard</span>
-                        </div>
-                        <h1 class="text-3xl font-bold text-gray-900 mb-2">Dashboard Overview</h1>
-                        <p class="text-gray-500 text-sm">Welcome back, here's what's happening with your furniture store today.</p>
-                    </div>
-                    
-                    <div class="flex items-center gap-3">
-                        <button class="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2.5 rounded-lg hover:bg-gray-50 transition-colors shadow-sm font-medium text-sm">
-                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                            Oct 24, 2023
-                        </button>
-                        <button class="flex items-center gap-2 bg-[#65E4A3] text-[#0A4D2E] hover:bg-[#52D492] px-4 py-2.5 rounded-lg transition-colors shadow-sm font-semibold text-sm">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                            Export Report
-                        </button>
-                    </div>
-                </div>
-
                 <!-- Stat Cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <!-- Revenue Card -->
-                    <div class="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm relative overflow-hidden">
+                    <div class="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm">
                         <div class="flex justify-between items-start mb-4">
                             <div>
-                                <p class="text-sm font-semibold text-gray-600 mb-1">Total Revenue</p>
-                                <h3 class="text-[32px] font-bold text-gray-900 tracking-tight">$45,231</h3>
+                                <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Total Revenue</p>
+                                <h3 class="text-2xl font-black text-gray-900 tracking-tight">₹<%= totalRevenue.toLocaleString('en-IN') %></h3>
                             </div>
-                            <div class="w-[52px] h-[52px] rounded-2xl bg-[#E8F8F0] flex items-center justify-center text-[#21A366]">
-                                <span class="font-bold text-xl">$</span>
+                            <div class="w-12 h-12 rounded-2xl bg-[#E8F8F0] flex items-center justify-center text-[#21A366]">
+                                <i class="fas fa-wallet text-lg"></i>
                             </div>
                         </div>
-                        <div class="flex items-center text-sm mt-6">
-                            <span class="flex items-center text-[#21A366] bg-[#E8F8F0] px-2 py-0.5 rounded-md font-bold text-xs">
-                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
-                                +20%
-                            </span>
-                            <span class="text-gray-500 ml-2 font-medium">from last month</span>
-                        </div>
+                        <span class="block text-[10px] text-gray-400 font-semibold">Net earnings from orders</span>
                     </div>
 
                     <!-- Orders Card -->
-                    <div class="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm relative overflow-hidden">
+                    <div class="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm">
                         <div class="flex justify-between items-start mb-4">
                             <div>
-                                <p class="text-sm font-semibold text-gray-600 mb-1">Total Orders</p>
-                                <h3 class="text-[32px] font-bold text-gray-900 tracking-tight">+2,350</h3>
+                                <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Total Orders</p>
+                                <h3 class="text-2xl font-black text-gray-900 tracking-tight"><%= totalOrders %></h3>
                             </div>
-                            <div class="w-[52px] h-[52px] rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
-                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19 6h-2c0-2.8-2.2-5-5-5S7 3.2 7 6H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-7-3c1.7 0 3 1.3 3 3H9c0-1.7 1.3-3 3-3z"></path></svg>
+                            <div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
+                                <i class="fas fa-shopping-bag text-lg"></i>
                             </div>
                         </div>
-                        <div class="flex items-center text-sm mt-6">
-                            <span class="flex items-center text-[#21A366] bg-[#E8F8F0] px-2 py-0.5 rounded-md font-bold text-xs">
-                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
-                                +15%
-                            </span>
-                            <span class="text-gray-500 ml-2 font-medium">from last month</span>
-                        </div>
+                        <span class="block text-[10px] text-gray-400 font-semibold">Total checkout sales</span>
                     </div>
 
-                    <!-- Customers Card -->
-                    <div class="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm relative overflow-hidden">
+                    <!-- Users Card -->
+                    <div class="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm">
                         <div class="flex justify-between items-start mb-4">
                             <div>
-                                <p class="text-sm font-semibold text-gray-600 mb-1">Active Customers</p>
-                                <h3 class="text-[32px] font-bold text-gray-900 tracking-tight">12,234</h3>
+                                <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Total Users</p>
+                                <h3 class="text-2xl font-black text-gray-900 tracking-tight"><%= totalUsers %></h3>
                             </div>
-                            <div class="w-[52px] h-[52px] rounded-2xl bg-orange-50 flex items-center justify-center text-orange-500">
-                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"></path></svg>
+                            <div class="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-500">
+                                <i class="fas fa-users text-lg"></i>
                             </div>
                         </div>
-                        <div class="flex items-center text-sm mt-6">
-                            <span class="flex items-center text-[#21A366] bg-[#E8F8F0] px-2 py-0.5 rounded-md font-bold text-xs">
-                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
-                                +4%
-                            </span>
-                            <span class="text-gray-500 ml-2 font-medium">from last month</span>
-                        </div>
+                        <span class="block text-[10px] text-gray-400 font-semibold">Registered customers</span>
                     </div>
 
                     <!-- Products Card -->
-                    <div class="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm relative overflow-hidden">
+                    <div class="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm">
                         <div class="flex justify-between items-start mb-4">
                             <div>
-                                <p class="text-sm font-semibold text-gray-600 mb-1">Total Products</p>
-                                <h3 class="text-[32px] font-bold text-gray-900 tracking-tight">573</h3>
+                                <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Total Products</p>
+                                <h3 class="text-2xl font-black text-gray-900 tracking-tight"><%= totalProducts %></h3>
                             </div>
-                            <div class="w-[52px] h-[52px] rounded-2xl bg-purple-50 flex items-center justify-center text-purple-600">
-                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l-5.5 9h11zM21.1 12.5l-4.1 4.1 1.4 1.4 5.5-5.5zM3.9 12.5L2.5 13.9l5.5 5.5 1.4-1.4zM10.8 14.5l-1.4 1.4 2.6 2.6 2.6-2.6-1.4-1.4-1.2 1.2z"></path></svg>
+                            <div class="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center text-purple-600">
+                                <i class="fas fa-chair text-lg"></i>
                             </div>
                         </div>
-                        <div class="flex items-center text-sm mt-6">
-                            <span class="flex items-center text-[#21A366] bg-[#E8F8F0] px-2 py-0.5 rounded-md font-bold text-xs">
-                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                                +12
-                            </span>
-                            <span class="text-gray-500 ml-2 font-medium">new added</span>
-                        </div>
+                        <span class="block text-[10px] text-gray-400 font-semibold">Inventory item listings</span>
                     </div>
                 </div>
 
                 <!-- Main Grid Layout -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
                     
                     <!-- Sales Chart (Spans 2 columns) -->
-                    <div class="lg:col-span-2 bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-                        <div class="flex justify-between items-center mb-6">
+                    <div class="lg:col-span-2 bg-white border border-gray-100 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                             <div>
-                                <h2 class="text-[17px] font-bold text-gray-900">Sales Overview</h2>
-                                <p class="text-sm text-gray-500 mt-1">Monthly furniture sales performance</p>
+                                <h2 class="text-base font-extrabold text-gray-900">Performance Trends</h2>
+                                <p class="text-xs text-gray-400 font-medium">Select chart type and filter to plot database trends.</p>
                             </div>
-                            <select class="bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block py-2 px-3 shadow-sm outline-none">
-                                <option>Last 3 months</option>
-                                <option>Last 6 months</option>
-                                <option>This Year</option>
-                            </select>
+                            
+                            <div class="flex items-center gap-2 self-end sm:self-auto">
+                                <select id="chartMetric" onchange="renderChart()"
+                                        class="bg-gray-50 border border-gray-100 text-gray-700 text-xs font-bold rounded-xl block py-2 px-3 outline-none cursor-pointer">
+                                    <option value="revenue" selected>Revenue Trend (₹)</option>
+                                    <option value="sales">Sales Trend (Qty Sold)</option>
+                                    <option value="orders">Orders Trend (Count)</option>
+                                </select>
+                                
+                                <select id="chartFilter" onchange="fetchChartData()"
+                                        class="bg-gray-50 border border-gray-100 text-gray-700 text-xs font-bold rounded-xl block py-2 px-3 outline-none cursor-pointer">
+                                    <option value="Daily">Daily</option>
+                                    <option value="Weekly">Weekly</option>
+                                    <option value="Monthly" selected>Monthly</option>
+                                    <option value="Yearly">Yearly</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="h-[280px] w-full relative">
-                            <canvas id="salesChart"></canvas>
+                        <div class="h-[300px] w-full relative">
+                            <canvas id="dashboardChart"></canvas>
                         </div>
                     </div>
 
-                    <!-- Order Status -->
-                    <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm flex flex-col">
-                        <h2 class="text-[17px] font-bold text-gray-900 mb-1">Order Status</h2>
-                        <p class="text-sm text-gray-500 mb-8">Current order fulfillment progress</p>
+                    <!-- Order Fulfillment Status -->
+                    <div class="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <h2 class="text-base font-extrabold text-gray-900 mb-1">Fulfillment Status</h2>
+                            <p class="text-xs text-gray-400 font-medium mb-8">Summary of order fulfillment counts</p>
+                        </div>
 
                         <div class="space-y-6 flex-1">
                             <!-- Delivered -->
                             <div>
+                                <% const delPercent = Math.round((statusCounts.delivered / (statusCounts.total || 1)) * 100); %>
                                 <div class="flex justify-between items-center mb-2">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-2.5 h-2.5 rounded-full bg-[#4ADE80]"></div>
-                                        <span class="text-sm font-bold text-gray-900">Delivered</span>
-                                    </div>
-                                    <span class="text-sm font-semibold text-gray-900">85%</span>
+                                    <span class="text-xs font-black text-gray-900">Delivered</span>
+                                    <span class="text-xs font-black text-green-600"><%= delPercent %>%</span>
                                 </div>
-                                <div class="w-full bg-gray-100 rounded-full h-[6px] mb-2">
-                                    <div class="bg-[#4ADE80] h-[6px] rounded-full" style="width: 85%"></div>
+                                <div class="w-full bg-gray-100 rounded-full h-[6px] mb-1">
+                                    <div class="bg-green-500 h-[6px] rounded-full" data-pct="<%= delPercent %>"></div>
                                 </div>
-                                <div class="text-right text-xs text-gray-500 font-medium">342 Orders</div>
+                                <div class="text-right text-[10px] text-gray-400 font-bold"><%= statusCounts.delivered %> Orders</div>
                             </div>
 
                             <!-- Pending -->
                             <div>
+                                <% const penPercent = Math.round((statusCounts.pending / (statusCounts.total || 1)) * 100); %>
                                 <div class="flex justify-between items-center mb-2">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-2.5 h-2.5 rounded-full bg-[#FBBF24]"></div>
-                                        <span class="text-sm font-bold text-gray-900">Pending</span>
-                                    </div>
-                                    <span class="text-sm font-semibold text-gray-900">12%</span>
+                                    <span class="text-xs font-black text-gray-900">Pending</span>
+                                    <span class="text-xs font-black text-amber-500"><%= penPercent %>%</span>
                                 </div>
-                                <div class="w-full bg-gray-100 rounded-full h-[6px] mb-2">
-                                    <div class="bg-[#FDE68A] h-[6px] rounded-full" style="width: 12%"></div>
+                                <div class="w-full bg-gray-100 rounded-full h-[6px] mb-1">
+                                    <div class="bg-amber-500 h-[6px] rounded-full" data-pct="<%= penPercent %>"></div>
                                 </div>
-                                <div class="text-right text-xs text-gray-500 font-medium">48 Orders</div>
+                                <div class="text-right text-[10px] text-gray-400 font-bold"><%= statusCounts.pending %> Orders</div>
                             </div>
 
                             <!-- Cancelled -->
                             <div>
+                                <% const canPercent = Math.round((statusCounts.cancelled / (statusCounts.total || 1)) * 100); %>
                                 <div class="flex justify-between items-center mb-2">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-2.5 h-2.5 rounded-full bg-[#F87171]"></div>
-                                        <span class="text-sm font-bold text-gray-900">Cancelled</span>
-                                    </div>
-                                    <span class="text-sm font-semibold text-gray-900">3%</span>
+                                    <span class="text-xs font-black text-gray-900">Cancelled</span>
+                                    <span class="text-xs font-black text-red-500"><%= canPercent %>%</span>
                                 </div>
-                                <div class="w-full bg-gray-100 rounded-full h-[6px] mb-2">
-                                    <div class="bg-[#FECACA] h-[6px] rounded-full" style="width: 3%"></div>
+                                <div class="w-full bg-gray-100 rounded-full h-[6px] mb-1">
+                                    <div class="bg-red-500 h-[6px] rounded-full" data-pct="<%= canPercent %>"></div>
                                 </div>
-                                <div class="text-right text-xs text-gray-500 font-medium">12 Orders</div>
+                                <div class="text-right text-[10px] text-gray-400 font-bold"><%= statusCounts.cancelled %> Orders</div>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <!-- Insight Box -->
-                        <div class="mt-6 bg-[#F8FAFC] rounded-xl p-4 flex gap-3 border border-gray-100">
-                            <div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-                                <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            </div>
-                            <div>
-                                <h4 class="text-sm font-bold text-gray-900 mb-1">Insight</h4>
-                                <p class="text-[13px] text-gray-600 leading-relaxed font-medium">Pending orders have decreased by 5% compared to last week due to faster processing.</p>
-                            </div>
+                <!-- TOP SELLING ANALYTICS (Products, Categories, Brands) -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+                    <!-- Top Products -->
+                    <div class="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
+                        <h3 class="text-sm font-black text-gray-400 uppercase tracking-widest mb-4">Top 10 Products</h3>
+                        <div class="space-y-4">
+                            <% if (topProducts && topProducts.length > 0) { %>
+                                <% topProducts.forEach((item, idx) => { %>
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xs font-black text-gray-400 w-5"><%= idx + 1 %>.</span>
+                                            <span class="text-xs font-bold text-gray-800 truncate max-w-[150px]">
+                                                <%= item.product ? item.product.productName : 'Product ID ' + item._id %>
+                                            </span>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="text-[10px] font-black text-[#B88E2F] block"><%= item.quantitySold %> Sold</span>
+                                            <span class="text-[9px] text-gray-400 font-semibold">₹<%= item.revenue.toLocaleString('en-IN') %></span>
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            <% } else { %>
+                                <p class="text-xs text-gray-400 italic">No sales recorded.</p>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Top Categories -->
+                    <div class="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
+                        <h3 class="text-sm font-black text-gray-400 uppercase tracking-widest mb-4">Top 10 Categories</h3>
+                        <div class="space-y-4">
+                            <% if (topCategories && topCategories.length > 0) { %>
+                                <% topCategories.forEach((item, idx) => { %>
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xs font-black text-gray-400 w-5"><%= idx + 1 %>.</span>
+                                            <span class="text-xs font-bold text-gray-800">
+                                                <%= item.category ? item.category.name : 'Category ID ' + item._id %>
+                                            </span>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="text-[10px] font-black text-[#B88E2F] block"><%= item.quantitySold %> Sold</span>
+                                            <span class="text-[9px] text-gray-400 font-semibold">₹<%= item.revenue.toLocaleString('en-IN') %></span>
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            <% } else { %>
+                                <p class="text-xs text-gray-400 italic">No sales recorded.</p>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Top Brands -->
+                    <div class="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
+                        <h3 class="text-sm font-black text-gray-400 uppercase tracking-widest mb-4">Top 10 Brands</h3>
+                        <div class="space-y-4">
+                            <% if (topBrands && topBrands.length > 0) { %>
+                                <% topBrands.forEach((item, idx) => { %>
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xs font-black text-gray-400 w-5"><%= idx + 1 %>.</span>
+                                            <span class="text-xs font-bold text-gray-800"><%= item._id %></span>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="text-[10px] font-black text-[#B88E2F] block"><%= item.quantitySold %> Sold</span>
+                                            <span class="text-[9px] text-gray-400 font-semibold">₹<%= item.revenue.toLocaleString('en-IN') %></span>
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            <% } else { %>
+                                <p class="text-xs text-gray-400 italic">No sales recorded.</p>
+                            <% } %>
                         </div>
                     </div>
                 </div>
 
                 <!-- Recent Orders Table -->
-                <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden mb-8">
+                <div class="bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden mt-8 mb-4">
                     <div class="p-6 border-b border-gray-100 flex justify-between items-center">
                         <div>
-                            <h2 class="text-[17px] font-bold text-gray-900">Recent Orders</h2>
-                            <p class="text-sm text-gray-500 mt-1">Manage and track recent purchases</p>
+                            <h2 class="text-base font-extrabold text-gray-900">Recent Orders</h2>
+                            <p class="text-xs text-gray-400 font-medium mt-1">Manage and track recent purchases</p>
                         </div>
-                        <a href="/admin/orders" class="text-sm font-semibold text-gray-600 hover:text-gray-900 flex items-center gap-1">
-                            View All
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        <a href="/admin/orders" class="text-xs font-bold text-gray-500 hover:text-gray-900 flex items-center gap-1">
+                            View All <i class="fas fa-chevron-right text-[10px]"></i>
                         </a>
                     </div>
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto w-full">
                         <table class="w-full text-sm text-left">
                             <thead class="text-xs text-gray-700 bg-white uppercase border-b border-gray-100">
                                 <tr>
                                     <th scope="col" class="px-6 py-4 font-bold tracking-wider">Order ID</th>
                                     <th scope="col" class="px-6 py-4 font-bold tracking-wider">Customer</th>
-                                    <th scope="col" class="px-6 py-4 font-bold tracking-wider">Product</th>
+                                    <th scope="col" class="px-6 py-4 font-bold tracking-wider">Product Info</th>
                                     <th scope="col" class="px-6 py-4 font-bold tracking-wider">Amount</th>
-                                    <th scope="col" class="px-6 py-4 font-bold tracking-wider">Status</th>
-                                    <th scope="col" class="px-6 py-4 font-bold tracking-wider text-center">Actions</th>
+                                    <th scope="col" class="px-6 py-4 class text-center">Status</th>
+                                    <th scope="col" class="px-6 py-4 text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100">
-                                <!-- Row 1 -->
-                                <tr class="hover:bg-gray-50/50 transition-colors">
-                                    <td class="px-6 py-4 font-semibold text-gray-600">#ORD-3291</td>
-                                    <td class="px-6 py-4">
-                                        <div class="flex items-center gap-3">
-                                            <img src="https://ui-avatars.com/api/?name=Jane+Doe&background=f3f4f6" alt="Jane Doe" class="w-8 h-8 rounded-full object-cover">
-                                            <span class="font-bold text-gray-900">Jane Doe</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 font-medium text-gray-600">Wooden Dining Table</td>
-                                    <td class="px-6 py-4 font-bold text-gray-900">$299.00</td>
-                                    <td class="px-6 py-4">
-                                        <span class="bg-[#E8F8F0] text-[#21A366] py-1 px-3 rounded text-[11px] font-bold">Delivered</span>
-                                    </td>
-                                    <td class="px-6 py-4 text-center">
-                                        <button class="text-gray-400 hover:text-gray-600">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <!-- Row 2 -->
-                                <tr class="hover:bg-gray-50/50 transition-colors">
-                                    <td class="px-6 py-4 font-semibold text-gray-600">#ORD-3290</td>
-                                    <td class="px-6 py-4">
-                                        <div class="flex items-center gap-3">
-                                            <img src="https://ui-avatars.com/api/?name=Michael+Smith&background=f3f4f6" alt="Michael Smith" class="w-8 h-8 rounded-full object-cover">
-                                            <span class="font-bold text-gray-900">Michael Smith</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 font-medium text-gray-600">Modern Sofa</td>
-                                    <td class="px-6 py-4 font-bold text-gray-900">$899.00</td>
-                                    <td class="px-6 py-4">
-                                        <span class="bg-orange-50 text-orange-500 py-1 px-3 rounded text-[11px] font-bold">Pending</span>
-                                    </td>
-                                    <td class="px-6 py-4 text-center">
-                                        <button class="text-gray-400 hover:text-gray-600">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <!-- Row 3 -->
-                                <tr class="hover:bg-gray-50/50 transition-colors">
-                                    <td class="px-6 py-4 font-semibold text-gray-600">#ORD-3289</td>
-                                    <td class="px-6 py-4">
-                                        <div class="flex items-center gap-3">
-                                            <img src="https://ui-avatars.com/api/?name=Sarah+Johnson&background=f3f4f6" alt="Sarah Johnson" class="w-8 h-8 rounded-full object-cover">
-                                            <span class="font-bold text-gray-900">Sarah Johnson</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 font-medium text-gray-600">Coffee Table</td>
-                                    <td class="px-6 py-4 font-bold text-gray-900">$159.00</td>
-                                    <td class="px-6 py-4">
-                                        <span class="bg-[#E8F8F0] text-[#21A366] py-1 px-3 rounded text-[11px] font-bold">Delivered</span>
-                                    </td>
-                                    <td class="px-6 py-4 text-center">
-                                        <button class="text-gray-400 hover:text-gray-600">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <!-- Row 4 -->
-                                <tr class="hover:bg-gray-50/50 transition-colors">
-                                    <td class="px-6 py-4 font-semibold text-gray-600">#ORD-3288</td>
-                                    <td class="px-6 py-4">
-                                        <div class="flex items-center gap-3">
-                                            <img src="https://ui-avatars.com/api/?name=Robert+Brown&background=f3f4f6" alt="Robert Brown" class="w-8 h-8 rounded-full object-cover">
-                                            <span class="font-bold text-gray-900">Robert Brown</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 font-medium text-gray-600">Wooden Chair Set</td>
-                                    <td class="px-6 py-4 font-bold text-gray-900">$220.00</td>
-                                    <td class="px-6 py-4">
-                                        <span class="bg-red-50 text-red-500 py-1 px-3 rounded text-[11px] font-bold">Cancelled</span>
-                                    </td>
-                                    <td class="px-6 py-4 text-center">
-                                        <button class="text-gray-400 hover:text-gray-600">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>
-                                        </button>
-                                    </td>
-                                </tr>
-                                 <!-- Row 5 -->
-                                 <tr class="hover:bg-gray-50/50 transition-colors">
-                                    <td class="px-6 py-4 font-semibold text-gray-600">#ORD-3287</td>
-                                    <td class="px-6 py-4">
-                                        <div class="flex items-center gap-3">
-                                            <img src="https://ui-avatars.com/api/?name=Emily+Lewis&background=f3f4f6" alt="Emily Lewis" class="w-8 h-8 rounded-full object-cover">
-                                            <span class="font-bold text-gray-900">Emily Lewis</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 font-medium text-gray-600">Bookshelf</td>
-                                    <td class="px-6 py-4 font-bold text-gray-900">$180.00</td>
-                                    <td class="px-6 py-4">
-                                        <span class="bg-[#E8F8F0] text-[#21A366] py-1 px-3 rounded text-[11px] font-bold">Delivered</span>
-                                    </td>
-                                    <td class="px-6 py-4 text-center">
-                                        <button class="text-gray-400 hover:text-gray-600">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>
-                                        </button>
-                                    </td>
-                                </tr>
+                                <% if (recentOrders && recentOrders.length > 0) { %>
+                                    <% recentOrders.forEach(order => { %>
+                                        <tr class="hover:bg-gray-50/50 transition-colors">
+                                            <td class="px-6 py-4 font-semibold text-gray-600 text-xs">
+                                                <%= order.orderNumber || order._id %>
+                                            </td>
+                                            <td class="px-6 py-4 font-bold text-gray-900 text-xs">
+                                                <%= order.userId ? order.userId.name : (order.shippingAddress ? order.shippingAddress.name : 'Guest User') %>
+                                            </td>
+                                            <td class="px-6 py-4 font-medium text-gray-600 text-xs">
+                                                <%= order.items && order.items.length > 0 && order.items[0].productId ? order.items[0].productId.productName : 'Furniture Item' %>
+                                                <%= order.items && order.items.length > 1 ? ` (+${order.items.length - 1} more)` : '' %>
+                                            </td>
+                                            <td class="px-6 py-4 font-bold text-gray-900 text-xs">
+                                                ₹<%= order.grandTotal.toLocaleString('en-IN') %>
+                                            </td>
+                                            <td class="px-6 py-4 text-center">
+                                                <span class="py-1 px-3 rounded text-[10px] font-bold bg-[#E8F8F0] text-[#21A366]">
+                                                    <%= order.status %>
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 text-center">
+                                                <a href="/admin/orders/<%= order._id %>" class="text-gray-400 hover:text-gray-600">
+                                                    <i class="fas fa-eye text-xs"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="6" class="py-10 text-center text-gray-400 italic">No orders logged.</td>
+                                    </tr>
+                                <% } %>
                             </tbody>
                         </table>
                     </div>
@@ -378,91 +324,104 @@
         </div>
     </main>
 
-    <!-- Chart.js Initialization -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const ctx = document.getElementById('salesChart').getContext('2d');
-            
-            let gradient = ctx.createLinearGradient(0, 0, 0, 300);
-            gradient.addColorStop(0, 'rgba(74, 222, 128, 0.2)'); 
-            gradient.addColorStop(1, 'rgba(74, 222, 128, 0)');
+        let myChart = null;
+        let chartData = null;
 
-            new Chart(ctx, {
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchChartData();
+        });
+
+        async function fetchChartData() {
+            const filter = document.getElementById('chartFilter').value;
+            try {
+                const response = await fetch(`/admin/api/dashboard-stats?filter=${filter}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    chartData = data;
+                    renderChart();
+                }
+            } catch (err) {
+                console.error('Error fetching dashboard stats:', err);
+            }
+        }
+
+        function renderChart() {
+            if (!chartData) return;
+
+            const metric = document.getElementById('chartMetric').value;
+            const ctx = document.getElementById('dashboardChart').getContext('2d');
+
+            let datasetLabel = '';
+            let dataPoints = [];
+            let borderCol = '#4ADE80';
+            let bgCol = 'rgba(74, 222, 128, 0.2)';
+
+            if (metric === 'revenue') {
+                datasetLabel = 'Revenue (₹)';
+                dataPoints = chartData.revenueTrend;
+                borderCol = '#B88E2F';
+                bgCol = 'rgba(184, 142, 47, 0.1)';
+            } else if (metric === 'sales') {
+                datasetLabel = 'Sales Count (Qty Sold)';
+                dataPoints = chartData.salesTrend;
+                borderCol = '#3B82F6';
+                bgCol = 'rgba(59, 130, 246, 0.1)';
+            } else {
+                datasetLabel = 'Orders Count';
+                dataPoints = chartData.orderTrend;
+                borderCol = '#A855F7';
+                bgCol = 'rgba(168, 85, 247, 0.1)';
+            }
+
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            let gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, bgCol);
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+            myChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+                    labels: chartData.labels,
                     datasets: [{
-                        label: 'Sales',
-                        data: [800, 700, 1100, 950, 1200, 1500, 1650],
-                        borderColor: '#4ADE80', 
+                        label: datasetLabel,
+                        data: dataPoints,
+                        borderColor: borderCol,
                         backgroundColor: gradient,
                         borderWidth: 3,
                         pointBackgroundColor: '#ffffff',
-                        pointBorderColor: '#4ADE80',
+                        pointBorderColor: borderCol,
                         pointBorderWidth: 2,
                         pointRadius: 4,
                         pointHoverRadius: 6,
                         fill: true,
-                        tension: 0.4 
+                        tension: 0.4
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: '#1F2937',
-                            padding: 12,
-                            titleFont: { size: 13, family: 'Inter' },
-                            bodyFont: { size: 13, family: 'Inter' },
-                            displayColors: false,
-                            callbacks: {
-                                label: function(context) {
-                                    return '$' + context.parsed.y;
-                                }
-                            }
-                        }
+                        legend: { display: false }
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            max: 2000,
-                            ticks: {
-                                stepSize: 500,
-                                color: '#9CA3AF',
-                                font: { family: 'Inter', size: 12, weight: '500' },
-                                padding: 10
-                            },
-                            border: { display: false },
-                            grid: {
-                                color: '#F3F4F6',
-                                drawBorder: false,
-                                drawTicks: false,
-                                borderDash: [5, 5]
-                            }
+                            grid: { color: '#F3F4F6', drawBorder: false }
                         },
                         x: {
-                            ticks: {
-                                color: '#9CA3AF',
-                                font: { family: 'Inter', size: 12, weight: '500' },
-                                padding: 10
-                            },
-                            border: { display: false },
-                            grid: {
-                                display: false,
-                                drawBorder: false,
-                            }
+                            grid: { display: false }
                         }
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index',
-                    },
+                    }
                 }
             });
+        }
+        document.querySelectorAll('[data-pct]').forEach(function(el) {
+            el.style.width = el.getAttribute('data-pct') + '%';
         });
     </script>
 </body>

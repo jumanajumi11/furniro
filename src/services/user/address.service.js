@@ -1,8 +1,6 @@
 import User from '../../models/user.js';
 
-/**
- * Validates address fields.
- */
+
 function validateAddress(name, phone, pincode) {
     const phoneRegex = /^\d{10}$/;
     const pinRegex = /^\d{6}$/;
@@ -18,9 +16,7 @@ function validateAddress(name, phone, pincode) {
     }
 }
 
-/**
- * Add a new address to user profile.
- */
+
 export const addAddress = async (userId, addressData) => {
     const { name, phone, pincode, state, city, locality, house, area, isDefault } = addressData;
     
@@ -41,7 +37,6 @@ export const addAddress = async (userId, addressData) => {
     };
 
     if (newAddress.isDefault) {
-        // Mark all existing addresses as not default
         await User.updateOne(
             { _id: userId },
             { $set: { "addresses.$[].isDefault": false } }
@@ -57,9 +52,7 @@ export const addAddress = async (userId, addressData) => {
     return updatedUser;
 };
 
-/**
- * Edit an existing address.
- */
+
 export const editAddress = async (userId, addressId, addressData) => {
     const { name, phone, pincode, state, city, locality, house, area, isDefault } = addressData;
 
@@ -68,7 +61,6 @@ export const editAddress = async (userId, addressId, addressData) => {
     const isDefaultBool = isDefault === 'on' || isDefault === true;
 
     if (isDefaultBool) {
-        // Mark all existing addresses as not default
         await User.updateOne(
             { _id: userId },
             { $set: { "addresses.$[].isDefault": false } }
@@ -100,9 +92,7 @@ export const editAddress = async (userId, addressId, addressData) => {
     return updatedUser;
 };
 
-/**
- * Delete an address.
- */
+
 export const deleteAddress = async (userId, addressId) => {
     const updatedUser = await User.findByIdAndUpdate(
         userId,
@@ -112,9 +102,7 @@ export const deleteAddress = async (userId, addressId) => {
     return updatedUser;
 };
 
-/**
- * Get specific address for a user.
- */
+
 export const getUserAddress = async (userId, addressId) => {
     const user = await User.findById(userId);
     if (!user) throw new Error("User not found");

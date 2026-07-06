@@ -2,13 +2,12 @@ import express  from 'express';
 import multer   from 'multer';
 import path     from 'path';
 import { fileURLToPath } from 'url';
-import * as productController from '../../controllers/admin/productController.js';
+import * as productController from '../../controllers/admin/product.controller.js';
 import * as auth from '../../middlewares/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
 
-// ── Multer storage for product images ──────────────────────────────
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, 'public/upload/products/'),
     filename:    (req, file, cb) => {
@@ -44,32 +43,16 @@ const uploadImages = (req, res, next) => {
     });
 };
 
-// ── Router ─────────────────────────────────────────────────────────
 const router = express.Router();
 
-// List / dashboard
 router.get('/products',auth.isAdmin, productController.listProducts);
-
-// Name duplicate check (must come BEFORE /:id routes)
 router.get('/products/check-name',auth.isAdmin, productController.checkProductName);
 router.get('/products/check-product-name',auth.isAdmin, productController.checkProductName);
-
-// Add product page
 router.get('/products/add',auth.isAdmin, productController.showAddProduct);
-
-// Create product
 router.post('/products',auth.isAdmin, uploadImages, productController.createProduct);
-
-// Edit product page
 router.get('/products/:id/edit',auth.isAdmin, productController.showEditProduct);
-
-// Update product
 router.put('/products/:id',auth.isAdmin, uploadImages, productController.updateProduct);
-
-// Toggle  isListed  (Hide ↔ Show)
 router.patch('/products/:id/toggle', auth.isAdmin, productController.toggleProductListing);
-
-// Soft delete
 router.delete('/products/:id',auth.isAdmin, productController.deleteProduct);
 
 export default router;

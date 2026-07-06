@@ -23,7 +23,7 @@ export const updateProfile = async (userId, profileData) => {
         throw new Error("User not found");
     }
 
-    // Handle email changes
+    
     if (email && email.toLowerCase().trim() !== user.email.toLowerCase().trim()) {
         if (user.googleId) {
             throw new Error("Google account email cannot be modified.");

@@ -2,12 +2,15 @@
 import mongoose from 'mongoose';
 import shopService from '../../services/user/shop.service.js';
 import Product from '../../models/product.js';
+import { applyOffers } from '../../services/user/offer.service.js';
 import Category from '../../models/category.js';
 import Cart from '../../models/cart.js';
 import Wishlist from '../../models/wishlist.js';
 import Review from '../../models/review.js';
 import Order from '../../models/order.js';
 import Coupon from '../../models/coupon.js';
+import { logger } from '../../utils/logger.js';
+import Banner from '../../models/banner.js';
 
 export const loadHome = async (req, res) => {
     try {
@@ -26,6 +29,7 @@ export const loadHome = async (req, res) => {
 export const loadShop = async (req, res) => {
     try {
         const shopData = await shopService.getShopProducts(req.query);
+        const shopBanner = await Banner.findOne({ page: 'shop', status: 'Active', imageUrl: { $ne: '', $exists: true } }).lean();
 
         res.render('user/shop', {
             user:             req.session.user || null,
@@ -41,7 +45,8 @@ export const loadShop = async (req, res) => {
             minPrice:         shopData.minPrice,
             maxPrice:         shopData.maxPrice,
             sortParam:        shopData.sortParam,
-            limit:            shopData.limit
+            limit:            shopData.limit,
+            shopBanner
         });
     } catch (error) {
         console.error('Shop Page Error:', error.message);
@@ -49,9 +54,7 @@ export const loadShop = async (req, res) => {
     }
 };
 
-/**
- * GET Product Details page
- */
+
 export const loadProductDetails = async (req, res) => {
     try {
         const { id } = req.params;
@@ -61,6 +64,7 @@ export const loadProductDetails = async (req, res) => {
         }
 
         const product = await Product.findById(id).populate('category').lean();
+        await applyOffers(product);
         
         
         if (!product || product.isDeleted) {
@@ -106,7 +110,7 @@ export const loadProductDetails = async (req, res) => {
             }
         }
 
-        // Active Coupons
+        
         const coupons = await Coupon.find({
             isActive: true,
             expiryDate: { $gt: new Date() }
@@ -125,6 +129,7 @@ export const loadProductDetails = async (req, res) => {
             isListed: true,
             isDeleted: false
         }).populate('category').limit(4).lean();
+        await applyOffers(relatedProducts);
 
         let recentlyViewedIds = [];
         if (req.cookies.recentlyViewed) {
@@ -143,6 +148,7 @@ export const loadProductDetails = async (req, res) => {
             isListed: true,
             isDeleted: false
         }).populate('category').limit(4).lean();
+        await applyOffers(recentlyViewedProducts);
 
         let isInWishlist = false;
         if (userId) {
@@ -240,90 +246,74 @@ export const addReview = async (req, res) => {
 
 export const addToCart = async (req, res) => {
     try {
-        // ── STEP 1: Log incoming request ──────────────────────────────────
-        console.log('\n──────────── [addToCart] START ────────────');
-        console.log('[1] BODY received    :', req.body);
+        logger.debug('\n──────────── [addToCart] START ────────────');
+        logger.debug('[1] BODY received    :', req.body);
 
         const { productId, variantId: rawVariantId, quantity } = req.body;
 
-        
         const variantId = (rawVariantId === 'null' || rawVariantId === '' || !rawVariantId)
             ? null
             : rawVariantId;
 
         const qty = Math.max(1, parseInt(quantity) || 1);
 
-        // ── STEP 2: Resolve userId from session ───────────────────────────
         const userId = req.session.user_id
             || (req.session.user ? req.session.user._id : null);
 
-        console.log('[2] userId resolved  :', userId);
+        logger.debug('[2] userId resolved  :', userId);
 
         if (!userId) {
-            console.log('[2] ✗ No userId in session → 401');
+            logger.debug('[2] ✗ No userId in session → 401');
             return res.status(401).json({ success: false, message: 'Please login to add items to cart' });
         }
 
-        // ── STEP 3: Validate productId ObjectId ───────────────────────────
-        console.log('[3] productId        :', productId);
-        console.log('[3] variantId        :', variantId);
-        console.log('[3] qty              :', qty);
+        logger.debug('[3] productId:', productId, '| variantId:', variantId, '| qty:', qty);
 
         if (!mongoose.Types.ObjectId.isValid(productId)) {
-            console.log('[3] ✗ Invalid ObjectId → 400');
+            logger.debug('[3] ✗ Invalid ObjectId → 400');
             return res.status(400).json({ success: false, message: 'Invalid Product ID' });
         }
 
-        // ── STEP 4: Fetch product from DB ─────────────────────────────────
         const product = await Product.findById(productId);
 
-        console.log('[4] product found    :', product ? product.productName : 'NULL – not in DB');
-        console.log('[4] isDeleted        :', product?.isDeleted);
-        console.log('[4] isListed         :', product?.isListed);
+        logger.debug('[4] product found:', product ? product.productName : 'NULL', '| isDeleted:', product?.isDeleted, '| isListed:', product?.isListed);
 
         if (!product) {
-            console.log('[4] ✗ Product not found in DB → 404');
             return res.status(404).json({ success: false, message: 'Product not found in database' });
         }
         if (product.isDeleted) {
-            console.log('[4] ✗ Product is deleted → 404');
             return res.status(404).json({ success: false, message: 'This product has been removed' });
         }
         if (!product.isListed) {
-            console.log('[4] ✗ Product is not listed → 404');
             return res.status(404).json({ success: false, message: 'This product is not available' });
         }
 
-        // ── STEP 5: Variant resolution & stock check ──────────────────────
         let selectedVariant = null;
 
-        console.log('[5] variants count   :', product.variants?.length || 0);
-        console.log('[5] product.stock    :', product.stock);
+        logger.debug('[5] variants count:', product.variants?.length || 0, '| product.stock:', product.stock);
 
         if (product.variants && product.variants.length > 0) {
             if (variantId) {
                 selectedVariant = product.variants.id(variantId);
                 if (!selectedVariant) {
-                    console.log('[5] ✗ Supplied variantId not found in product.variants → 400');
+                    logger.debug('[5] ✗ Supplied variantId not found → 400');
                     return res.status(400).json({ success: false, message: 'Selected variant is invalid' });
                 }
             } else {
-               
                 selectedVariant = product.variants.find(v => v.stock > 0) || product.variants[0];
-                console.log('[5] Auto-selected variant:', selectedVariant?._id, '| stock:', selectedVariant?.stock);
+                logger.debug('[5] Auto-selected variant:', selectedVariant?._id, '| stock:', selectedVariant?.stock);
             }
 
             if (selectedVariant.stock < qty) {
-                console.log(`[5] ✗ Variant stock (${selectedVariant.stock}) < qty (${qty}) → 400`);
+                logger.debug(`[5] ✗ Variant stock (${selectedVariant.stock}) < qty (${qty}) → 400`);
                 return res.status(400).json({
                     success: false,
                     message: `Insufficient stock. Only ${selectedVariant.stock} item(s) left.`
                 });
             }
         } else {
-            
             if (product.stock < qty) {
-                console.log(`[5] ✗ Product stock (${product.stock}) < qty (${qty}) → 400`);
+                logger.debug(`[5] ✗ Product stock (${product.stock}) < qty (${qty}) → 400`);
                 return res.status(400).json({
                     success: false,
                     message: `Insufficient stock. Only ${product.stock} item(s) left.`
@@ -331,13 +321,12 @@ export const addToCart = async (req, res) => {
             }
         }
 
-        // ── STEP 6: Find or create cart, upsert item ──────────────────────
         let cart = await Cart.findOne({ userId });
         if (!cart) {
             cart = new Cart({ userId, items: [] });
-            console.log('[6] Created new cart for user');
+            logger.debug('[6] Created new cart for user');
         } else {
-            console.log('[6] Found existing cart with', cart.items.length, 'item(s)');
+            logger.debug('[6] Found existing cart with', cart.items.length, 'item(s)');
         }
 
         const finalVariantId = selectedVariant ? selectedVariant._id : null;
@@ -351,20 +340,20 @@ export const addToCart = async (req, res) => {
 
         if (existingItemIndex > -1) {
             cart.items[existingItemIndex].quantity += qty;
-            console.log(`[6] Updated existing cart item quantity to ${cart.items[existingItemIndex].quantity}`);
+            logger.debug(`[6] Updated existing cart item quantity to ${cart.items[existingItemIndex].quantity}`);
         } else {
             cart.items.push({ productId, variantId: finalVariantId || null, quantity: qty });
-            console.log('[6] Added new item to cart');
+            logger.debug('[6] Added new item to cart');
         }
 
         await cart.save();
-        console.log('[6] ✓ cart.save() succeeded. Total items:', cart.items.length);
-        console.log('──────────── [addToCart] END ──────────────\n');
+        logger.debug('[6] ✓ cart.save() succeeded. Total items:', cart.items.length);
+        logger.debug('──────────── [addToCart] END ──────────────\n');
 
         return res.json({ success: true, message: 'Product added to cart successfully!' });
 
     } catch (error) {
-        console.error('[addToCart] ✗ CAUGHT ERROR:', error.message, error.stack);
+        logger.error('[addToCart] CAUGHT ERROR:', error.message);
         return res.status(500).json({ success: false, message: 'Internal server error' });
     }
 };

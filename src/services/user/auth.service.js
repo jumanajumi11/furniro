@@ -2,7 +2,7 @@ import User from '../../models/user.js';
 import bcrypt from 'bcryptjs';
 
 /**
- * Create a new user (signup stage).
+ * 
  * @param {string} email 
  * @param {string} password 
  * @param {string} name 
@@ -18,12 +18,11 @@ export const createUser = async (email, password, name) => {
         isVerified: true
     });
     const savedUser = await user.save();
-    console.log("✅ Hash saved in DB:", savedUser.password);
     return savedUser;
 };
 
 /**
- * Login user (email/password verification).
+ * 
  * @param {string} email 
  * @param {string} password 
  * @returns {Promise<object>} User document

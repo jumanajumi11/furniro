@@ -1,9 +1,10 @@
 import googleAuthService from '../../services/user/googleAuth.service.js';
+import { logger } from '../../utils/logger.js';
 
 export const googleCallback = async (req, res, next) => {
     try {
         if (!req.user) {
-            console.log("Google user data not found");
+            logger.debug('Google user data not found in request');
             return res.redirect('/login');
         }
 
@@ -24,14 +25,14 @@ export const googleCallback = async (req, res, next) => {
 
         req.session.save((err) => {
             if (err) {
-                console.error("Session Save Error:", err);
+                logger.error('Google Login — Session Save Error:', err);
                 return res.redirect('/login');
             }
-            console.log("Google Login Success, Session ID:", req.session.user_id);
+            logger.debug('Google Login Success, Session ID:', req.session.user_id);
             return res.redirect('/');
         });
     } catch (error) {
-        console.error("Google Callback Error:", error.message);
+        logger.error('Google Callback Error:', error.message);
         res.redirect('/login');
     }
 };

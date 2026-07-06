@@ -1,15 +1,13 @@
-// src/services/product/seed.service.js
+
 import Product  from '../../models/product.js';
 import Category from '../../models/category.js';
 import Coupon   from '../../models/coupon.js';
 import Review   from '../../models/review.js';
 import Order    from '../../models/order.js';
 import User     from '../../models/user.js';
+import { logger } from '../../utils/logger.js';
 
-/**
- * Seed the required categories, products, coupons, default reviews,
- * and a mock order if the database is empty or requires setup.
- */
+
 export const seedProductsIfEmpty = async () => {
     try {
         const requiredCategories = [
@@ -18,21 +16,19 @@ export const seedProductsIfEmpty = async () => {
             { name: 'Recliner Sofa',  description: 'Comfortable dynamic recliners'   }
         ];
 
-        // 1. Ensure each required category exists
+        
         for (const cat of requiredCategories) {
             const exists = await Category.findOne({
                 name: { $regex: `^${cat.name}$`, $options: 'i' }
             });
             if (!exists) {
-                console.log(`Seeding category: ${cat.name}`);
+                logger.debug(`Seeding category: ${cat.name}`);
                 await Category.create({ name: cat.name, description: cat.description, isListed: true, isDeleted: false });
             }
         }
 
-        // 2. Only seed sample products if there are NO products at all
         const productCount = await Product.countDocuments();
         if (productCount === 0) {
-            // Get category ObjectIds
             const dbCategories = await Category.find({ isDeleted: false }).lean();
             const catMap = {};
             dbCategories.forEach(c => { catMap[c.name.toLowerCase()] = c._id; });
@@ -140,18 +136,18 @@ export const seedProductsIfEmpty = async () => {
 
             for (const prod of sampleProducts) {
                 if (prod.category) {
-                    console.log(`Seeding product: ${prod.productName}`);
+                    logger.debug(`Seeding product: ${prod.productName}`);
                     await Product.create(prod);
                 }
             }
         }
 
-        // 3. Seed Coupons if empty
+        
         const couponCount = await Coupon.countDocuments();
         if (couponCount === 0) {
-            console.log('Seeding discount coupons...');
+            logger.debug('Seeding discount coupons...');
             const expiry = new Date();
-            expiry.setFullYear(expiry.getFullYear() + 1); // 1 year from now
+            expiry.setFullYear(expiry.getFullYear() + 1); 
 
             await Coupon.insertMany([
                 { code: 'WELCOME10', discountType: 'percentage', discountValue: 10, minPurchase: 10000, expiryDate: expiry, isActive: true },
@@ -160,13 +156,13 @@ export const seedProductsIfEmpty = async () => {
             ]);
         }
 
-        // 4. Seed Default Reviews if empty
+        
         const reviewCount = await Review.countDocuments();
         const firstProduct = await Product.findOne().lean();
         const firstUser = await User.findOne().lean();
 
         if (reviewCount === 0 && firstProduct && firstUser) {
-            console.log('Seeding default reviews for the first product...');
+            logger.debug('Seeding default reviews for the first product...');
             await Review.insertMany([
                 {
                     productId: firstProduct._id,
@@ -191,12 +187,12 @@ export const seedProductsIfEmpty = async () => {
             ]);
         }
 
-        // 5. Seed a mock Delivered Order for the first user to allow verified purchaser review testing
+        
         if (firstUser && firstProduct) {
             const orderExists = await Order.findOne({ userId: firstUser._id, status: 'Delivered' });
             if (!orderExists) {
-                console.log(`Seeding delivered order for user ${firstUser.email} to enable review testing...`);
-                // Let's grab the default variant
+                logger.debug(`Seeding delivered order for user ${firstUser.email} to enable review testing...`);
+                
                 const variantId = firstProduct.variants && firstProduct.variants.length > 0
                     ? firstProduct.variants[0]._id
                     : new mongoose.Types.ObjectId();
@@ -238,9 +234,9 @@ export const seedProductsIfEmpty = async () => {
             }
         }
 
-        console.log('Seeding process completed ✅');
+        logger.debug('Seeding process completed ✅');
     } catch (err) {
-        console.error('Seeding failed:', err.message);
+        logger.error('Seeding failed:', err.message);
     }
 };
 

@@ -5,21 +5,6 @@
 
 <main class="bg-white min-h-screen">
 
-  <%/* ── Top Hero Banner ─────────────────────────────────────────── */%>
-  <section class="relative w-full h-[250px] flex items-center justify-center overflow-hidden bg-cover bg-center"
-           style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.7)), url('https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=1920&q=80');">
-    <div class="text-center relative z-10">
-      <div class="flex justify-center mb-3">
-        <img src="https://res.cloudinary.com/dp9odkfmd/image/upload/v1777118568/Meubel_House_Logos-05_uklcwh.png" alt="Logo" class="h-10 w-10 object-contain">
-      </div>
-      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-2">Cart</h1>
-      <p class="text-sm font-semibold tracking-wider text-gray-600 uppercase">
-        <a href="/" class="hover:text-[#B88E2F] transition-colors">Home</a>
-        <span class="mx-2 text-gray-400">&gt;</span>
-        <span class="text-[#B88E2F]">Cart</span>
-      </p>
-    </div>
-  </section>
 
   <%/* ── Warnings/Alert Banners ───────────────────────────────────── */%>
   <% if (warnings && warnings.length > 0) { %>
@@ -93,6 +78,7 @@
                   let size = '';
                   let color = '';
                   let variantPrice = null;
+                  let variantOrigPrice = null;
                   let stock = product.stock || 0;
                   
                   if (product.variants && product.variants.length > 0 && item.variantId) {
@@ -100,21 +86,38 @@
                       if (variant) {
                           size = variant.size;
                           color = variant.color;
-                          variantPrice = variant.price;
+                          variantPrice = variant.salePrice || variant.price;
+                          variantOrigPrice = variant.salePrice ? variant.price : null;
                           stock = variant.stock;
                       }
                   }
 
                   const price = variantPrice || product.salePrice || product.regularPrice || 0;
+                  const originalPrice = variantOrigPrice || (product.salePrice ? product.regularPrice : null);
                   const itemSubtotal = price * item.quantity;
                   
                   let image = 'https://placehold.co/150x150?text=No+Image';
-                  if (product.images && product.images.length > 0) {
-                      image = '/upload/products/' + product.images[0];
-                  } else if (product.colors && product.colors.length > 0) {
-                      const defaultColor = product.colors.find(c => c.isDefault) || product.colors[0];
-                      if (defaultColor && defaultColor.images && defaultColor.images.length > 0) {
-                          image = '/upload/products/' + defaultColor.images[0];
+
+                  // Priority 1: Use the selected color variant's images
+                  if (color && product.colors && product.colors.length > 0) {
+                      const selectedColor = product.colors.find(c => c.name.toLowerCase() === color.toLowerCase());
+                      if (selectedColor && selectedColor.images && selectedColor.images.length > 0) {
+                          const firstImg = selectedColor.images[0];
+                          image = firstImg.startsWith('http') ? firstImg : '/upload/products/' + firstImg;
+                      }
+                  }
+
+                  // Priority 2: Fall back to default product images
+                  if (image === 'https://placehold.co/150x150?text=No+Image') {
+                      if (product.images && product.images.length > 0) {
+                          const firstImg = product.images[0];
+                          image = firstImg.startsWith('http') ? firstImg : '/upload/products/' + firstImg;
+                      } else if (product.colors && product.colors.length > 0) {
+                          const defaultColor = product.colors.find(c => c.isDefault) || product.colors[0];
+                          if (defaultColor && defaultColor.images && defaultColor.images.length > 0) {
+                              const defaultImg = defaultColor.images[0];
+                              image = defaultImg.startsWith('http') ? defaultImg : '/upload/products/' + defaultImg;
+                          }
                       }
                   }
                 %>
@@ -149,8 +152,19 @@
                   </td>
 
                   <!-- Unit Price -->
-                  <td class="py-6 px-4 font-semibold text-gray-600 text-sm">
-                    <%= formatCurrency(price) %>
+                  <td class="py-6 px-4">
+                    <div class="flex flex-col gap-0.5">
+                      <span class="font-bold text-gray-800 text-sm"><%= formatCurrency(price) %></span>
+                      <% if (originalPrice && originalPrice > price) { %>
+                        <span class="text-gray-400 line-through text-[11px] font-semibold"><%= formatCurrency(originalPrice) %></span>
+                        <span class="text-[9px] font-black text-[#E97171] tracking-tight">
+                          <%= Math.round((1 - price / originalPrice) * 100) %>% OFF
+                        </span>
+                        <span class="text-green-650 text-[9px] font-bold">
+                          Save <%= formatCurrency(originalPrice - price) %>
+                        </span>
+                      <% } %>
+                    </div>
                   </td>
 
                   <!-- Quantity Controls -->

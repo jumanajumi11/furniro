@@ -6,7 +6,6 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon --ignore 'public/upload/*' app.js",
-    "seed": "node scripts/run-seed.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -31,6 +30,7 @@
     "nocache": "^4.0.0",
     "nodemailer": "^8.0.7",
     "passport": "^0.7.0",
-    "passport-google-oauth20": "^2.0.0"
+    "passport-google-oauth20": "^2.0.0",
+    "razorpay": "^2.9.6"
   }
 }

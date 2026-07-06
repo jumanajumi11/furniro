@@ -43,7 +43,7 @@
                 if (variant) {
                     size = variant.size;
                     color = variant.color;
-                    price = variant.price || price;
+                    price = variant.salePrice || variant.price || price;
                 }
             }
           %>

@@ -1,6 +1,4 @@
-/**
- * General helper functions for the ecommerce app.
- */
+
 
 /**
  * Format string to lowercase and trim it.

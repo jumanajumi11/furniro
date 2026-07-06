@@ -73,13 +73,15 @@
         'Delivered':         { bg:'bg-emerald-100', text:'text-emerald-700', dot:'bg-emerald-500' },
         'Cancelled':         { bg:'bg-red-100',     text:'text-red-700',     dot:'bg-red-500'     },
         'Partially Cancelled':{ bg:'bg-orange-100', text:'text-orange-700',  dot:'bg-orange-400'  },
+        'Partially Delivered':{ bg:'bg-teal-100',   text:'text-teal-700',    dot:'bg-teal-500'    },
         'Return Requested':  { bg:'bg-fuchsia-100', text:'text-fuchsia-700', dot:'bg-fuchsia-500' },
         'Returned':          { bg:'bg-violet-100',  text:'text-violet-700',  dot:'bg-violet-500'  },
+        'Partially Returned':{ bg:'bg-violet-100',  text:'text-violet-700',  dot:'bg-violet-500'  },
         'Return Rejected':   { bg:'bg-red-100',     text:'text-red-700',     dot:'bg-red-500'     },
     };
     const sm         = STATUS_META[s] || { bg:'bg-gray-100', text:'text-gray-700', dot:'bg-gray-400' };
-    const isImmutable = ['Delivered','Cancelled'].includes(s);
-    const isActive    = !['Cancelled','Returned','Delivered'].includes(s);
+    const isImmutable = ['Delivered','Cancelled','Returned','Partially Returned','Return Rejected'].includes(s);
+    const isActive    = !['Cancelled','Returned','Partially Returned','Delivered','Return Rejected'].includes(s);
 
     /* ── Payment colours ─────────────────────────────────────────── */
     const PS_COLOR = {
@@ -115,10 +117,10 @@
         <div class="flex items-center gap-3">
             <div class="text-right hidden sm:block">
                 <p class="text-[10px] font-black text-[#B88E2F] uppercase tracking-widest leading-none">System Admin</p>
-                <p class="text-xs font-bold text-gray-800 mt-0.5"><%= user.name || 'Admin' %></p>
+                <p class="text-xs font-bold text-gray-800 mt-0.5">Jumana</p>
             </div>
             <div class="w-9 h-9 rounded-xl bg-[#B88E2F] flex items-center justify-center text-white font-black text-sm shadow">
-                <%= (user.name || 'A').charAt(0).toUpperCase() %>
+                JU
             </div>
         </div>
     </header>
@@ -143,43 +145,7 @@
                 <%= s %>
             </span>
 
-            <!-- Change Status dropdown -->
-            <%
-                const isTerminal = ['Delivered', 'Cancelled', 'Returned', 'Return Rejected', 'Payment Failed'].includes(s);
-                const nextStatusMap = {
-                    'Pending': 'Processing',
-                    'Pending Payment': 'Processing',
-                    'Processing': 'Shipped',
-                    'Shipped': 'Out For Delivery',
-                    'Out For Delivery': 'Delivered'
-                };
-                const allowedNextStatus = nextStatusMap[s] || null;
-            %>
-            <% if (s === 'Return Requested') { %>
-            <div class="flex items-center gap-2">
-                <button onclick="handleStatusChange('Returned')"
-                        class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-bold text-xs rounded-xl shadow transition cursor-pointer">
-                    Approve Return
-                </button>
-                <button onclick="handleStatusChange('Return Rejected')"
-                        class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow transition cursor-pointer">
-                    Reject Return
-                </button>
-            </div>
-            <% } else if (!isTerminal && allowedNextStatus) { %>
-            <div class="relative">
-                <select id="statusChangeSelect"
-                        onchange="handleStatusChange(this.value)"
-                        class="status-select pl-4 pr-10 py-2 rounded-xl text-sm font-bold bg-gray-900 text-white cursor-pointer outline-none border-0 shadow-md hover:bg-gray-800 transition">
-                    <option value="" disabled selected>Change Status</option>
-                    <option value="<%= allowedNextStatus %>"><%= allowedNextStatus %></option>
-                </select>
-            </div>
-            <% } else { %>
-            <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-gray-100 text-gray-400 cursor-not-allowed select-none">
-                <i class="fas fa-lock text-[10px]"></i> Locked
-            </span>
-            <% } %>
+            <!-- Item-level status updates are handled in the table below -->
         </div>
     </div>
 
@@ -240,17 +206,21 @@
                             </thead>
                             <tbody class="divide-y divide-gray-50">
                                 <% (order.items || []).forEach(function(item, idx) {
-                                    const prod     = item.productId || {};
-                                    const imgRaw   = prod.images && prod.images.length > 0 ? prod.images[0] : '';
-                                    const imgSrc   = imgRaw
-                                        ? (imgRaw.startsWith('http') ? imgRaw : '/upload/products/' + imgRaw)
-                                        : '/images/placeholder.png';
-                                    const unitPrice  = item.price   || 0;
-                                    const lineTotal  = unitPrice * (item.quantity || 1);
+                                     const prod     = item.productId || {};
+                                     const imgRaw   = item.image
+                                         ? item.image
+                                         : (prod.images && prod.images.length > 0 ? prod.images[0] : '');
+                                     const imgSrc   = imgRaw
+                                         ? (imgRaw.startsWith('http') ? imgRaw : '/upload/products/' + imgRaw)
+                                         : '/images/placeholder.png';
+                                     const unitPrice  = item.price   || 0;
+                                     const lineTotal  = unitPrice * (item.quantity || 1);
 
                                     /* Variant label */
                                     let variantParts = [];
-                                    if (item.variantId && prod.variants && prod.variants.length > 0) {
+                                     if (item.size) variantParts.push('Size: ' + item.size);
+                                     if (item.color) variantParts.push('Color: ' + item.color);
+                                     if (variantParts.length === 0 && item.variantId && prod.variants && prod.variants.length > 0) {
                                         const v = prod.variants.find(v => String(v._id) === String(item.variantId));
                                         if (v) {
                                             if (v.size)  variantParts.push('Size: ' + v.size);
@@ -258,9 +228,8 @@
                                         }
                                     }
 
-                                    /* Item status badge - use order status for consistency */
                                     const IBADGE = {
-                                        'Placed':          'bg-gray-100 text-gray-600',
+                                        'Pending':          'bg-gray-100 text-gray-600',
                                         'Processing':      'bg-blue-100 text-blue-700',
                                         'Shipped':         'bg-indigo-100 text-indigo-700',
                                         'Out For Delivery':'bg-purple-100 text-purple-700',
@@ -268,19 +237,19 @@
                                         'Cancelled':       'bg-red-100 text-red-700',
                                         'Return Requested':'bg-fuchsia-100 text-fuchsia-700',
                                         'Returned':        'bg-violet-100 text-violet-700',
+                                        'Return Approved':  'bg-violet-100 text-violet-700',
                                         'Return Rejected': 'bg-red-100 text-red-700',
                                     };
-                                    /* Determine item display status: active items always reflect the order status */
-                                    let displayItemStatus;
-                                    if (['Cancelled', 'Returned', 'Return Requested', 'Return Rejected'].includes(item.status)) {
-                                        displayItemStatus = item.status;
-                                    } else if (['Cancelled', 'Returned', 'Return Requested', 'Return Rejected'].includes(s)) {
-                                        displayItemStatus = s;
-                                    } else {
-                                        displayItemStatus = s || 'Placed';
-                                    }
-                                    const iBadge = IBADGE[displayItemStatus] || 'bg-gray-100 text-gray-600';
-                                    const isCancelled = displayItemStatus === 'Cancelled' || displayItemStatus === 'Returned';
+                                    let displayItemStatus = item.status || 'Pending';
+                                     if (item.status === 'Returned' || item.returnStatus === 'Approved') {
+                                         displayItemStatus = 'Return Approved';
+                                     } else if (item.returnStatus === 'Requested') {
+                                         displayItemStatus = 'Return Requested';
+                                     } else if (item.returnStatus === 'Rejected') {
+                                         displayItemStatus = 'Return Rejected';
+                                     }
+                                     const iBadge = IBADGE[displayItemStatus] || 'bg-gray-100 text-gray-600';
+                                     const isCancelled = displayItemStatus === 'Cancelled' || displayItemStatus === 'Returned' || displayItemStatus === 'Return Approved';
                                 %>
                                 <tr class="item-row transition-colors <%= isCancelled ? 'opacity-50' : '' %>">
                                     <!-- Product cell -->
@@ -319,18 +288,46 @@
                                     <td class="px-4 py-4 text-right font-black text-[#B88E2F] text-sm">
                                         ₹<%= lineTotal.toLocaleString('en-IN') %>
                                     </td>
-                                    <!-- Status badge -->
+                                    <!-- Status badge / Dropdown -->
                                     <td class="px-4 py-4 text-center">
-                                        <span class="inline-block text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full <%= iBadge %>">
-                                            <%= displayItemStatus %>
-                                        </span>
+                                        <% if (['Cancelled', 'Returned', 'Return Requested', 'Return Rejected', 'Delivered'].includes(displayItemStatus)) { %>
+                                            <span class="inline-block text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full <%= iBadge %>">
+                                                <%= displayItemStatus %>
+                                            </span>
+                                        <% } else { %>
+                                            <select onchange="handleItemStatusChange('<%= order._id %>', '<%= item._id %>', this.value)"
+                                                    class="status-select pl-3 pr-8 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider <%= iBadge %> border border-gray-200 outline-none cursor-pointer hover:opacity-90 transition">
+                                                <% if (displayItemStatus === 'Pending') { %>
+                                                    <option value="Pending" selected>Pending</option>
+                                                    <option value="Processing">Processing</option>
+                                                <% } else if (displayItemStatus === 'Processing') { %>
+                                                    <option value="Processing" selected>Processing</option>
+                                                    <option value="Shipped">Shipped</option>
+                                                <% } else if (displayItemStatus === 'Shipped') { %>
+                                                    <option value="Shipped" selected>Shipped</option>
+                                                    <option value="Out For Delivery">Out For Delivery</option>
+                                                <% } else if (displayItemStatus === 'Out For Delivery') { %>
+                                                    <option value="Out For Delivery" selected>Out For Delivery</option>
+                                                    <option value="Delivered">Delivered</option>
+                                                <% } %>
+                                            </select>
+                                        <% } %>
                                     </td>
                                     <!-- Action -->
                                     <td class="px-6 py-4 text-center">
-                                        <% if (isCancelled) { %>
-                                        <span class="text-[10px] font-semibold text-gray-300 italic">Voided</span>
+                                        <% if (displayItemStatus === 'Return Requested') { %>
+                                            <a href="/admin/returns" class="text-[10px] font-bold text-orange-600 hover:underline">
+                                                Action Return
+                                            </a>
+                                        <% } else if (['Cancelled', 'Returned', 'Return Rejected'].includes(displayItemStatus)) { %>
+                                            <span class="text-[10px] font-semibold text-gray-300 italic">Voided</span>
+                                        <% } else if (['Pending', 'Processing', 'Shipped'].includes(displayItemStatus)) { %>
+                                            <button onclick="cancelItem('<%= order._id %>', '<%= item._id %>')"
+                                                    class="px-3 py-1 rounded-lg bg-red-50 border border-red-200 text-red-600 text-[10px] font-bold hover:bg-red-100 transition cursor-pointer">
+                                                <i class="fas fa-times-circle mr-1"></i>Cancel
+                                            </button>
                                         <% } else { %>
-                                        <span class="text-[10px] font-semibold text-gray-300">—</span>
+                                            <span class="text-[10px] font-semibold text-gray-300">—</span>
                                         <% } %>
                                     </td>
                                 </tr>
@@ -367,9 +364,24 @@
                         <div class="sm:border-l sm:border-gray-100 sm:pl-6">
                             <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Account</p>
                             <div class="flex items-center gap-2.5 mb-4">
-                                <div class="w-10 h-10 rounded-xl bg-[#B88E2F]/10 border border-[#B88E2F]/20 flex items-center justify-center font-black text-[#B88E2F] text-base">
-                                    <%= (user.name || addr.name || 'G').charAt(0).toUpperCase() %>
-                                </div>
+                                <% if (user && user.image) { %>
+                                    <img
+                                        src="<%= user.image.startsWith('http') || user.image.startsWith('/') ? user.image : '/upload/' + user.image %>"
+                                        alt="Avatar"
+                                        class="w-10 h-10 rounded-xl object-cover"
+                                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                    >
+                                    <div
+                                        style="display:none"
+                                        class="w-10 h-10 rounded-xl bg-[#B88E2F]/10 border border-[#B88E2F]/20 flex items-center justify-center font-black text-[#B88E2F] text-base"
+                                    >
+                                        <%= (user.name || addr.name || 'G').charAt(0).toUpperCase() %>
+                                    </div>
+                                <% } else { %>
+                                    <div class="w-10 h-10 rounded-xl bg-[#B88E2F]/10 border border-[#B88E2F]/20 flex items-center justify-center font-black text-[#B88E2F] text-base">
+                                        <%= (user.name || addr.name || 'G').charAt(0).toUpperCase() %>
+                                    </div>
+                                <% } %>
                                 <div>
                                     <p class="font-bold text-gray-800 text-sm leading-snug"><%= user.name || addr.name || 'Guest' %></p>
                                     <p class="text-[11px] text-gray-400 font-medium truncate"><%= user.email || '—' %></p>
@@ -377,7 +389,7 @@
                             </div>
                             <div class="flex items-center gap-2 text-xs text-gray-500 font-semibold">
                                 <i class="fas fa-wallet text-[#B88E2F]"></i>
-                                Wallet Balance: <span class="font-black text-gray-700 ml-1">₹5,000</span>
+                                Wallet Balance: <span class="font-black text-gray-700 ml-1">₹<%= (user.wallet || 0).toLocaleString('en-IN') %></span>
                             </div>
                         </div>
                     </div>
@@ -512,9 +524,24 @@
                 <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 card">
                     <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Customer</p>
                     <div class="flex items-center gap-3 mb-4">
-                        <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-black text-gray-600 text-base flex-shrink-0">
-                            <%= (user.name || addr.name || 'G').charAt(0).toUpperCase() %>
-                        </div>
+                        <% if (user && user.image) { %>
+                            <img
+                                src="<%= user.image.startsWith('http') || user.image.startsWith('/') ? user.image : '/upload/' + user.image %>"
+                                alt="Avatar"
+                                class="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                            >
+                            <div
+                                style="display:none"
+                                class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-black text-gray-600 text-base flex-shrink-0"
+                            >
+                                <%= (user.name || addr.name || 'G').charAt(0).toUpperCase() %>
+                            </div>
+                        <% } else { %>
+                            <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-black text-gray-600 text-base flex-shrink-0">
+                                <%= (user.name || addr.name || 'G').charAt(0).toUpperCase() %>
+                            </div>
+                        <% } %>
                         <div>
                             <p class="font-bold text-gray-800 text-sm"><%= user.name || addr.name || 'Guest User' %></p>
                             <p class="text-[11px] text-gray-400 font-medium truncate"><%= user.email || '—' %></p>
@@ -705,9 +732,90 @@
         });
         if (!isConfirmed) return;
 
-        const sel = document.getElementById('statusChangeSelect');
-        if (sel) sel.value = 'Cancelled';
-        await handleStatusChange('Cancelled');
+        Swal.fire({ title: 'Cancelling…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+        try {
+            const r = await fetch('/admin/orders/update-status', {
+                method:  'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ orderId: ORDER_ID, status: 'Cancelled' }),
+            });
+            const data = await r.json();
+
+            if (data.success) {
+                await Swal.fire({
+                    icon: 'success', title: 'Cancelled!', text: data.message,
+                    timer: 1500, showConfirmButton: false,
+                    customClass: { popup: 'rounded-2xl' }
+                });
+                window.location.reload();
+            } else {
+                Swal.fire({
+                    icon: 'error', title: 'Failed', text: data.message,
+                    confirmButtonColor: '#B88E2F',
+                    customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-xl font-bold' }
+                });
+            }
+        } catch (e) {
+            Swal.fire({
+                icon: 'error', title: 'Network Error', text: 'Could not reach the server.',
+                confirmButtonColor: '#B88E2F',
+                customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-xl font-bold' }
+            });
+        }
+    }
+
+    /* ─── Change Item Status (dropdown) ────────────────────────────── */
+    async function handleItemStatusChange(orderId, itemId, newStatus) {
+        if (!newStatus) return;
+
+        const { isConfirmed } = await Swal.fire({
+            title: 'Update Item Status?',
+            html:  `Change this item to <strong>"${newStatus}"</strong>?`,
+            icon:  'warning',
+            showCancelButton:   true,
+            confirmButtonColor: '#B88E2F',
+            cancelButtonColor:  '#9CA3AF',
+            confirmButtonText:  'Yes, Update',
+            cancelButtonText:   'Cancel',
+            customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-xl font-bold', cancelButton: 'rounded-xl font-bold' }
+        });
+
+        if (!isConfirmed) { window.location.reload(); return; }
+
+        Swal.fire({ title: 'Updating…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+        try {
+            const r    = await fetch(`/admin/orders/${orderId}/items/${itemId}/status`, {
+                method:  'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ orderId, itemId, newStatus }),
+            });
+            const data = await r.json();
+
+            if (data.success) {
+                await Swal.fire({
+                    icon: 'success', title: 'Updated!', text: data.message,
+                    timer: 1500, showConfirmButton: false,
+                    customClass: { popup: 'rounded-2xl' }
+                });
+                window.location.reload();
+            } else {
+                Swal.fire({
+                    icon: 'error', title: 'Failed', text: data.message,
+                    confirmButtonColor: '#B88E2F',
+                    customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-xl font-bold' }
+                });
+                window.location.reload();
+            }
+        } catch (e) {
+            Swal.fire({
+                icon: 'error', title: 'Network Error', text: 'Could not reach the server.',
+                confirmButtonColor: '#B88E2F',
+                customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-xl font-bold' }
+            });
+            window.location.reload();
+        }
     }
 </script>
 

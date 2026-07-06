@@ -1,7 +1,9 @@
-// src/services/user/shop.service.js
 import mongoose from 'mongoose';
 import Product  from '../../models/product.js';
 import Category from '../../models/category.js';
+import ProductOffer from '../../models/productOffer.js';
+import CategoryOffer from '../../models/categoryOffer.js';
+import { applyOffers } from './offer.service.js';
 
 
 export const getHomeProducts = async () => {
@@ -17,16 +19,51 @@ export const getHomeProducts = async () => {
         .limit(9)
         .lean();
 
+    await applyOffers(products);
+
     return { products, categories: sofaCategories };
 };
 
-/**
- * Get filtered, sorted, paginated list of products for the shop page.
- */
+
 export const getShopProducts = async (queryObj) => {
     const baseFilter = { isDeleted: false };
 
-    // ── Search ──────────────────────────────────────────────────────
+    // Brand filter
+    if (queryObj.brand) {
+        baseFilter.brand = new RegExp(`^${queryObj.brand.trim()}$`, 'i');
+    }
+
+    // Offers filter
+    if (queryObj.offers === 'true') {
+        const now = new Date();
+        const [activeProductOffers, activeCategoryOffers] = await Promise.all([
+            ProductOffer.find({
+                isActive: true,
+                startDate: { $lte: now },
+                expiryDate: { $gte: now }
+            }).select('product').lean(),
+            CategoryOffer.find({
+                isActive: true,
+                startDate: { $lte: now },
+                expiryDate: { $gte: now }
+            }).select('category').lean()
+        ]);
+
+        const prodIds = activeProductOffers.map(o => o.product);
+        const catIds = activeCategoryOffers.map(o => o.category);
+
+        if (prodIds.length > 0 || catIds.length > 0) {
+            baseFilter.$or = baseFilter.$or || [];
+            baseFilter.$or.push(
+                { _id: { $in: prodIds } },
+                { category: { $in: catIds } }
+            );
+        } else {
+            // Force no match if no active offers
+            baseFilter._id = new mongoose.Types.ObjectId();
+        }
+    }
+
     let searchQuery = '';
     if (queryObj.search) {
         searchQuery = queryObj.search.trim();
@@ -37,8 +74,6 @@ export const getShopProducts = async (queryObj) => {
         ];
     }
 
-    // ── Category filter ─────────────────────────────────────────────
-    // The user passes the category name string; we look up the ObjectId first
     let selectedCategory = '';
     if (queryObj.category) {
         selectedCategory = queryObj.category.trim();
@@ -50,12 +85,10 @@ export const getShopProducts = async (queryObj) => {
         if (catDoc) {
             baseFilter.category = catDoc._id;
         } else {
-            // Category is inactive, blocked or does not exist: force zero results
             baseFilter.category = new mongoose.Types.ObjectId();
         }
     }
 
-    // ── Price range ─────────────────────────────────────────────────
     let minPrice = '';
     let maxPrice = '';
     if (queryObj.minPrice || queryObj.maxPrice) {
@@ -70,7 +103,7 @@ export const getShopProducts = async (queryObj) => {
         }
     }
 
-    // ── Sizes filter ────────────────────────────────────────────────
+    
     let selectedSizes = [];
     if (queryObj.sizes) {
         selectedSizes = Array.isArray(queryObj.sizes)
@@ -83,16 +116,14 @@ export const getShopProducts = async (queryObj) => {
 
 
 
-    // ── Sorting ─────────────────────────────────────────────────────
     const sortParam = queryObj.sort || '';
     let sortOptions = {};
     if      (sortParam === 'priceLow')  sortOptions = { regularPrice:  1 };
     else if (sortParam === 'priceHigh') sortOptions = { regularPrice: -1 };
     else if (sortParam === 'aToZ')      sortOptions = { productName:   1 };
     else if (sortParam === 'zToA')      sortOptions = { productName:  -1 };
-    else                                sortOptions = { createdAt:    -1 }; // newest first (default)
+    else                                sortOptions = { createdAt:    -1 }; 
 
-    // ── Pagination ──────────────────────────────────────────────────
     const limit = 6;
     const page  = Math.max(1, Number(queryObj.page) || 1);
     const skip  = (page - 1) * limit;
@@ -105,12 +136,14 @@ export const getShopProducts = async (queryObj) => {
             .skip(skip)
             .limit(limit)
             .lean(),
-        // Distinct category names for sidebar filter
+        
         Category.find({ isDeleted: false, isListed: true })
             .sort({ name: 1 })
             .lean(),
         Product.distinct('variants.size', { isDeleted: false })
     ]);
+
+    await applyOffers(products);
 
     const categories  = categoryDocs.map(c => c.name);
     const totalPages  = Math.ceil(totalProducts / limit);

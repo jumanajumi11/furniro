@@ -1,9 +1,7 @@
 import User from '../../models/user.js';
 import bcrypt from 'bcryptjs';
 
-/**
- * Change user password from settings page.
- */
+
 export const changePassword = async (userId, { oldPassword, newPassword }) => {
     const user = await User.findById(userId);
     if (!user) {
@@ -20,9 +18,7 @@ export const changePassword = async (userId, { oldPassword, newPassword }) => {
     return user;
 };
 
-/**
- * Create a password for social auth users.
- */
+
 export const createPassword = async (userId, { newPassword }) => {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     const updatedUser = await User.findByIdAndUpdate(
@@ -38,9 +34,6 @@ export const createPassword = async (userId, { newPassword }) => {
     return updatedUser;
 };
 
-/**
- * Reset user password by email (forgot password reset phase).
- */
 export const resetPasswordByEmail = async (email, password) => {
     const user = await User.findOne({ email: email.toLowerCase().trim() });
     if (!user) {

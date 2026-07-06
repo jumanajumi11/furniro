@@ -2,7 +2,7 @@ import User from '../../models/user.js';
 
 /**
  * Handle custom operations post Google OAuth authentication.
- * @param {object} googleUser Passport profile / authenticated user
+ * @param {object} googleUser Passport profile / authenticated 
  * @returns {Promise<object>} User database record
  */
 export const handleGoogleLogin = async (googleUser) => {

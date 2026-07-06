@@ -55,13 +55,13 @@
                     <% order.items.forEach(item => { %>
                         <%
                             const product = item.productId;
-                            let size = '';
-                            let color = '';
+                            let size = item.size || '';
+                            let color = item.color || '';
                             let productName = 'Unavailable Product';
 
                             if (product) {
                                 productName = product.productName;
-                                if (product.variants && product.variants.length > 0 && item.variantId) {
+                                if (!size && !color && product.variants && product.variants.length > 0 && item.variantId) {
                                     const variant = product.variants.id(item.variantId);
                                     if (variant) {
                                         size = variant.size;
@@ -73,7 +73,17 @@
                         <div class="flex items-center gap-4 bg-gray-50/50 rounded-2xl p-3 border border-gray-100">
                             <!-- Product Image -->
                             <div class="w-14 h-14 rounded-xl overflow-hidden bg-white border border-gray-100 flex-shrink-0">
-                                <img src="<%= (product && product.images && product.images.length > 0) ? (product.images[0].startsWith('http') ? product.images[0] : '/upload/products/' + product.images[0]) : '/images/default-placeholder.svg' %>" 
+                                <%
+                                    let imgRaw = item.image;
+                                    if (!imgRaw && product && product.images && product.images.length > 0) {
+                                        imgRaw = product.images[0];
+                                    }
+                                    let itemImgSrc = '/images/default-placeholder.svg';
+                                    if (imgRaw) {
+                                        itemImgSrc = imgRaw.startsWith('http') ? imgRaw : '/upload/products/' + imgRaw;
+                                    }
+                                %>
+                                <img src="<%= itemImgSrc %>" 
                                      onerror="this.onerror=null; this.src='/images/default-placeholder.svg';" 
                                      alt="<%= productName %>" 
                                      class="w-full h-full object-cover">

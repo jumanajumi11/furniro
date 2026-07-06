@@ -21,8 +21,11 @@
         'Delivered':           { bg: 'bg-green-50',   text: 'text-green-700',  border: 'border-green-200',  dot: 'bg-green-500'  },
         'Cancelled':           { bg: 'bg-red-50',     text: 'text-red-700',    border: 'border-red-200',    dot: 'bg-red-500'    },
         'Partially Cancelled': { bg: 'bg-orange-50',  text: 'text-orange-700', border: 'border-orange-200', dot: 'bg-orange-400' },
+        'Partially Delivered': { bg: 'bg-teal-50',    text: 'text-teal-700',   border: 'border-teal-200',   dot: 'bg-teal-500'   },
         'Return Requested':    { bg: 'bg-orange-50',  text: 'text-orange-700', border: 'border-orange-200', dot: 'bg-orange-500' },
         'Returned':            { bg: 'bg-purple-50',  text: 'text-purple-700', border: 'border-purple-200', dot: 'bg-purple-500' },
+        'Return Approved':     { bg: 'bg-purple-50',  text: 'text-purple-700', border: 'border-purple-200', dot: 'bg-purple-500' },
+        'Partially Returned':  { bg: 'bg-purple-50',  text: 'text-purple-700', border: 'border-purple-200', dot: 'bg-purple-400' },
         'Return Rejected':     { bg: 'bg-red-50',     text: 'text-red-700',    border: 'border-red-200',    dot: 'bg-red-500'    },
     };
     /* Safe fallback — if order has an unexpected/legacy status value */
@@ -45,27 +48,44 @@
     /* ACTIVE ITEM COUNT & REFUND MATH */
     const activeItemCount = order.items.filter(item => {
         const s = item.status || 'Placed';
-        return s !== 'Cancelled';
+        return s !== 'Cancelled' && s !== 'Returned' && s !== 'Return Requested';
     }).length;
 
-    let totalCancelledRefund = 0;
+    let totalRefunded = 0;
     const orderSubtotal = order.subtotal || order.items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
     order.items.forEach(item => {
-        if ((item.status || 'Placed') === 'Cancelled') {
+        if ((item.status || 'Placed') === 'Cancelled' || item.status === 'Returned' || item.returnStatus === 'Approved') {
             if (item.refundAmount !== undefined && item.refundAmount !== null) {
-                totalCancelledRefund += item.refundAmount;
+                totalRefunded += item.refundAmount;
             } else {
                 const itemTotal = item.price * item.quantity;
                 const ratio = orderSubtotal > 0 ? (itemTotal / orderSubtotal) : 0;
                 const couponShare = Math.round((order.couponDiscount || 0) * ratio);
                 const taxShare   = Math.round((order.tax || 0) * ratio);
-                totalCancelledRefund += Math.max(0, itemTotal - couponShare + taxShare);
+                totalRefunded += Math.max(0, itemTotal - couponShare + taxShare);
             }
         }
     });
-    const netRetained = (order.status === 'Cancelled' || activeItemCount === 0)
+    const netRetained = (order.status === 'Cancelled' || order.status === 'Returned' || activeItemCount === 0)
         ? 0
-        : Math.max(0, order.grandTotal - totalCancelledRefund);
+        : Math.max(0, order.grandTotal - totalRefunded);
+
+    /* BULK RETURN ELIGIBILITY */
+    const totalDeliveredCount = order.items.filter(item => 
+        ['Delivered', 'Return Requested', 'Returned', 'Return Rejected'].includes(item.status)
+    ).length;
+
+    const eligibleRemainingItems = order.items.filter(item => {
+        if (item.status !== 'Delivered') return false;
+        if (['Return Requested', 'Returned', 'Return Rejected'].includes(item.status)) return false;
+        if (['Requested', 'Approved', 'Rejected', 'Returned'].includes(item.returnStatus)) return false;
+
+        const deliveryDate = item.deliveredAt || order.updatedAt || new Date();
+        const now = new Date();
+        const daysSinceDelivery = Math.floor((now - deliveryDate) / (1000 * 60 * 60 * 24));
+        return daysSinceDelivery <= 10;
+    });
+    const showReturnRemainingBtn = (totalDeliveredCount > 1) && (eligibleRemainingItems.length > 0);
 
     /*
      * ORDER TIMELINE LOGIC
@@ -84,11 +104,12 @@
         'Cancelled':           -1,
         'Return Requested':    4,
         'Returned':            5,
+        'Partially Returned':  5,
         'Return Rejected':     -1,
     };
     const currentRank = STATUS_RANK[order.status] !== undefined ? STATUS_RANK[order.status] : 1;
     const isCancelled  = order.status === 'Cancelled';
-    const isReturned   = order.status === 'Returned' || order.status === 'Return Requested' || order.status === 'Return Rejected';
+    const isReturned   = order.status === 'Returned' || order.status === 'Return Requested' || order.status === 'Return Rejected' || order.status === 'Partially Returned';
     const isFailedPay  = order.status === 'Payment Failed' || order.status === 'Pending Payment';
 %>
 
@@ -269,12 +290,12 @@
                     <!-- Extra row for return steps -->
                     <div class="mt-4 pt-4 border-t border-gray-100 flex items-center gap-3">
                         <div class="w-9 h-9 rounded-full flex items-center justify-center
-                            <%= order.status === 'Returned' ? 'bg-purple-500' : (order.status === 'Return Rejected' ? 'bg-red-500' : 'bg-orange-400') %>">
+                            <%= (order.status === 'Returned' || order.status === 'Partially Returned') ? 'bg-purple-500' : (order.status === 'Return Rejected' ? 'bg-red-500' : 'bg-orange-400') %>">
                             <i class="fas <%= order.status === 'Return Rejected' ? 'fa-times' : 'fa-undo' %> text-white text-sm"></i>
                         </div>
                         <div>
                             <p class="font-bold text-sm
-                                <%= order.status === 'Returned' ? 'text-purple-700' : (order.status === 'Return Rejected' ? 'text-red-700' : 'text-orange-700') %>">
+                                <%= (order.status === 'Returned' || order.status === 'Partially Returned') ? 'text-purple-700' : (order.status === 'Return Rejected' ? 'text-red-700' : 'text-orange-700') %>">
                                 <%= order.status %>
                             </p>
                             <p class="text-xs text-gray-400 mt-0.5">
@@ -282,6 +303,8 @@
                                     Your return request is being reviewed.
                                 <% } else if (order.status === 'Return Rejected') { %>
                                     Your return request was rejected. Rejection Reason: <span class="font-semibold text-gray-700"><%= returnRequest ? returnRequest.rejectionReason : 'No reason specified' %></span>
+                                <% } else if (order.status === 'Partially Returned') { %>
+                                    Some items returned successfully. Refund processed.
                                 <% } else { %>
                                     Item returned successfully. Refund processed.
                                 <% } %>
@@ -341,14 +364,20 @@
                                         ? item.productId.description.substring(0, 60)
                                         : '';
 
-                                    if (item.productId.images && item.productId.images.length > 0) {
-                                        const rawImg = item.productId.images[0];
+                                    let rawImg = item.image;
+                                    if (!rawImg && item.productId.images && item.productId.images.length > 0) {
+                                        rawImg = item.productId.images[0];
+                                    }
+                                    if (rawImg) {
                                         itemImgSrc = rawImg.startsWith('http')
                                             ? rawImg
                                             : '/upload/products/' + rawImg;
                                     }
 
-                                    if (item.productId.variants && item.productId.variants.length > 0 && item.variantId) {
+                                    itemSize  = item.size  || '';
+                                    itemColor = item.color || '';
+
+                                    if (!itemSize && !itemColor && item.productId.variants && item.productId.variants.length > 0 && item.variantId) {
                                         const variant = item.productId.variants.id(item.variantId);
                                         if (variant) {
                                             itemSize  = variant.size  || '';
@@ -357,34 +386,34 @@
                                     }
                                 }
 
-                                /* Determine item display status: active items always reflect the order status */
-                                let itemStatus;
-                                if (['Cancelled', 'Returned', 'Return Requested', 'Return Rejected'].includes(item.status)) {
-                                    /* Item has its own terminal/return status */
-                                    itemStatus = item.status;
-                                } else if (['Cancelled', 'Returned', 'Return Requested', 'Return Rejected'].includes(order.status)) {
-                                    /* If the whole order is terminal/returned/cancelled, all active items display the order status */
-                                    itemStatus = order.status;
-                                } else {
-                                    /* Active items reflect the current order progress status */
-                                    itemStatus = order.status || 'Processing';
+                                /* Determine item display status: active items always reflect their own status */
+                                let itemStatus = item.status || 'Pending';
+                                if (item.status === 'Returned' || item.returnStatus === 'Approved') {
+                                    itemStatus = 'Return Approved';
+                                } else if (item.returnStatus === 'Requested') {
+                                    itemStatus = 'Return Requested';
+                                } else if (item.returnStatus === 'Rejected') {
+                                    itemStatus = 'Return Rejected';
                                 }
-                                const itemSC = statusColors[itemStatus] || statusColors['Processing'];
+
+                                const itemSC = statusColors[itemStatus] || statusColors['Pending'] || { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200', dot: 'bg-gray-500' };
 
                                 /* Price math */
                                 let itemTotal   = item.price * item.quantity;
                                 let itemTaxRate = 0.18;
                                 let itemTax     = Math.round(itemTotal * itemTaxRate);
 
-                                /* Cancel eligibility */
-                                const canCancelItem = (
-                                    itemStatus !== 'Cancelled' &&
-                                    itemStatus !== 'Delivered' &&
-                                    itemStatus !== 'Shipped'   &&
-                                    itemStatus !== 'Returned'  &&
-                                    order.status !== 'Cancelled' &&
-                                    order.status !== 'Delivered'
-                                );
+                                /* Cancel eligibility (Pending, Processing, Shipped, or Out For Delivery status only) */
+                                const canCancelItem = ['Pending', 'Processing', 'Shipped', 'Out For Delivery'].includes(itemStatus) && !['Cancelled', 'Returned', 'Return Requested', 'Return Rejected', 'Delivered'].includes(order.status);
+
+                                /* Return window eligibility */
+                                let isWithinReturnWindow = false;
+                                if (itemStatus === 'Delivered') {
+                                    const deliveryDate = item.deliveredAt || order.updatedAt || new Date();
+                                    const now = new Date();
+                                    const daysSinceDelivery = Math.floor((now - deliveryDate) / (1000 * 60 * 60 * 24));
+                                    isWithinReturnWindow = daysSinceDelivery <= 10;
+                                }
                             %>
                             <div class="px-6 py-5 hover:bg-gray-50/50 transition-colors">
                                 <div class="flex gap-4">
@@ -434,7 +463,7 @@
                                             <% } %>
                                         </div>
 
-                                        <!-- Item-level Status + Cancel Button -->
+                                        <!-- Item-level Status + Cancel/Return Buttons -->
                                         <div class="flex items-center gap-3 mt-3 flex-wrap">
                                             <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border <%= itemSC.bg %> <%= itemSC.text %> <%= itemSC.border %>">
                                                 <span class="w-1.5 h-1.5 rounded-full <%= itemSC.dot %>"></span>
@@ -449,9 +478,25 @@
                                                 </button>
                                             <% } %>
 
+                                            <% if (itemStatus === 'Delivered' && isWithinReturnWindow) { %>
+                                                <button
+                                                    onclick="requestReturnItem('<%= item._id %>')"
+                                                    class="text-[10px] font-bold text-purple-600 hover:text-purple-800 hover:underline transition-colors cursor-pointer">
+                                                    Return Item
+                                                </button>
+                                            <% } else if (itemStatus === 'Delivered' && !isWithinReturnWindow) { %>
+                                                <span class="text-[10px] text-gray-400 italic">Return window closed</span>
+                                            <% } %>
+
                                             <% if (itemStatus === 'Cancelled' && item.cancellationReason) { %>
                                                 <span class="text-[10px] text-gray-400 italic">
                                                     Reason: <%= item.cancellationReason %>
+                                                </span>
+                                            <% } %>
+
+                                            <% if (['Return Requested', 'Returned', 'Return Approved', 'Return Rejected'].includes(itemStatus) && item.returnReason) { %>
+                                                <span class="text-[10px] text-gray-400 italic">
+                                                    Return Reason: <%= item.returnReason %>
                                                 </span>
                                             <% } %>
                                         </div>
@@ -466,9 +511,13 @@
                                         <p class="text-[10px] text-gray-400 font-medium mt-0.5">
                                             Qty: <%= item.quantity %> × ₹<%= item.price.toLocaleString('en-IN') %>
                                         </p>
-                                        <% if (itemStatus === 'Cancelled' && item.refundAmount != null) { %>
+                                        <% if ((itemStatus === 'Cancelled' || itemStatus === 'Return Approved' || itemStatus === 'Returned') && item.refundAmount != null) { %>
                                             <p class="text-[10px] text-green-600 font-bold mt-1">
                                                 Refunded: ₹<%= item.refundAmount.toLocaleString('en-IN') %>
+                                            </p>
+                                        <% } else if (itemStatus === 'Return Requested') { %>
+                                            <p class="text-[10px] text-amber-600 font-bold mt-1">
+                                                Refund Pending Approval
                                             </p>
                                         <% } %>
                                     </div>
@@ -614,13 +663,27 @@
                         <p class="text-3xl font-extrabold text-[#B88E2F] tracking-tight">
                             ₹<%= netRetained.toLocaleString('en-IN') %>
                         </p>
-                        <p class="text-[10px] text-gray-400 mt-2 font-medium">Amount after any item cancellations</p>
+                        <p class="text-[10px] text-gray-400 mt-2 font-medium">Amount after any cancellations & returns</p>
+                        <% if (totalRefunded > 0) { %>
+                            <div class="mt-4 pt-3 border-t border-[#B88E2F]/10 flex justify-between items-center text-xs font-semibold text-gray-600">
+                                <span>Total Refunded:</span>
+                                <span class="text-rose-600 font-bold">₹<%= totalRefunded.toLocaleString('en-IN') %></span>
+                            </div>
+                        <% } %>
                     </div>
                 </div>
 
 
                 <!-- ── Cancel / Status Card ── -->
-                <% if (order.status !== 'Cancelled' && order.status !== 'Delivered' && order.status !== 'Returned' && order.status !== 'Pending Payment' && order.status !== 'Payment Failed') { %>
+                <% 
+                    const hasCancellableItems = order.items.some(item => 
+                        ['Pending', 'Processing', 'Shipped', 'Out For Delivery'].includes(item.status || 'Pending')
+                    );
+                    const hasReturnStatus = ['Returned', 'Return Requested', 'Return Rejected'].includes(order.status) || order.items.some(item => 
+                        ['Returned', 'Return Requested', 'Return Rejected'].includes(item.status)
+                    );
+                %>
+                <% if (hasCancellableItems && order.status !== 'Cancelled' && order.status !== 'Delivered' && order.status !== 'Returned' && order.status !== 'Pending Payment' && order.status !== 'Payment Failed') { %>
                     <div class="anim-slide-r anim-delay-3 bg-white rounded-2xl border border-red-100 shadow-sm overflow-hidden card-lift">
                         <div class="px-6 py-6 text-center">
                             <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-red-50 flex items-center justify-center">
@@ -654,7 +717,40 @@
                         </div>
                     </div>
 
-                <% } else if (order.status === 'Delivered') { %>
+                <% } else if (hasReturnStatus) { %>
+                    <% 
+                        let returnDispStatus = 'Returned';
+                        if (order.status === 'Return Requested' || order.items.some(i => i.status === 'Return Requested')) {
+                            returnDispStatus = 'Return Requested';
+                        } else if (order.status === 'Return Rejected' || order.items.every(i => i.status === 'Return Rejected')) {
+                            returnDispStatus = 'Return Rejected';
+                        }
+                    %>
+                    <div class="anim-slide-r anim-delay-3 rounded-2xl border shadow-sm overflow-hidden
+                        <%= returnDispStatus === 'Returned' ? 'bg-purple-50 border-purple-200' : (returnDispStatus === 'Return Rejected' ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200') %>">
+                        <div class="px-6 py-6 text-center">
+                            <div class="w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center
+                                <%= returnDispStatus === 'Returned' ? 'bg-purple-100' : (returnDispStatus === 'Return Rejected' ? 'bg-red-100' : 'bg-orange-100') %>">
+                                <i class="fas <%= returnDispStatus === 'Return Rejected' ? 'fa-times-circle text-red-500' : 'fa-undo text-purple-500' %> text-xl"></i>
+                            </div>
+                            <h3 class="text-base font-extrabold mb-1
+                                <%= returnDispStatus === 'Returned' ? 'text-purple-700' : (returnDispStatus === 'Return Rejected' ? 'text-red-700' : 'text-orange-700') %>">
+                                <%= returnDispStatus %>
+                            </h3>
+                            <p class="text-xs font-medium leading-relaxed
+                                <%= returnDispStatus === 'Returned' ? 'text-purple-600' : (returnDispStatus === 'Return Rejected' ? 'text-red-600' : 'text-orange-600') %>">
+                                <% if (returnDispStatus === 'Return Requested') { %>
+                                    Your return request is under review.
+                                <% } else if (returnDispStatus === 'Return Rejected') { %>
+                                    Your return request was rejected.
+                                <% } else { %>
+                                    Your items have been returned and refund processed.
+                                <% } %>
+                            </p>
+                        </div>
+                    </div>
+
+                <% } else if (order.status === 'Delivered' || (!hasCancellableItems && order.items.some(i => i.status === 'Delivered'))) { %>
                     <div class="anim-slide-r anim-delay-3 bg-green-50 rounded-2xl border border-green-200 shadow-sm overflow-hidden">
                         <div class="px-6 py-6 text-center">
                             <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-green-100 flex items-center justify-center">
@@ -663,38 +759,6 @@
                             <h3 class="text-base font-extrabold text-green-700 mb-1">Order Delivered</h3>
                             <p class="text-xs text-green-600 font-medium leading-relaxed mb-4">
                                 Your order has been delivered successfully. Thank you for shopping with us!
-                            </p>
-                            <% if (!returnRequest) { %>
-                                <button onclick="requestReturnOrder('<%= order._id %>')"
-                                        class="w-full py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer">
-                                    <i class="fas fa-undo"></i>
-                                    Return Order
-                                </button>
-                            <% } %>
-                        </div>
-                    </div>
-
-                <% } else if (order.status === 'Returned' || order.status === 'Return Requested' || order.status === 'Return Rejected') { %>
-                    <div class="anim-slide-r anim-delay-3 rounded-2xl border shadow-sm overflow-hidden
-                        <%= order.status === 'Returned' ? 'bg-purple-50 border-purple-200' : (order.status === 'Return Rejected' ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200') %>">
-                        <div class="px-6 py-6 text-center">
-                            <div class="w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center
-                                <%= order.status === 'Returned' ? 'bg-purple-100' : (order.status === 'Return Rejected' ? 'bg-red-100' : 'bg-orange-100') %>">
-                                <i class="fas <%= order.status === 'Return Rejected' ? 'fa-times-circle text-red-500' : 'fa-undo text-purple-500' %> text-xl"></i>
-                            </div>
-                            <h3 class="text-base font-extrabold mb-1
-                                <%= order.status === 'Returned' ? 'text-purple-700' : (order.status === 'Return Rejected' ? 'text-red-700' : 'text-orange-700') %>">
-                                <%= order.status %>
-                            </h3>
-                            <p class="text-xs font-medium leading-relaxed
-                                <%= order.status === 'Returned' ? 'text-purple-600' : (order.status === 'Return Rejected' ? 'text-red-600' : 'text-orange-600') %>">
-                                <% if (order.status === 'Return Requested') { %>
-                                    Your return request has been submitted and is under review.
-                                <% } else if (order.status === 'Return Rejected') { %>
-                                    Your return request was rejected. Reason: <%= returnRequest ? returnRequest.rejectionReason : 'No reason specified' %>
-                                <% } else { %>
-                                    Your item has been returned and refund is processed.
-                                <% } %>
                             </p>
                         </div>
                     </div>
@@ -710,6 +774,25 @@
                             <p class="text-xs text-yellow-600 font-medium leading-relaxed">
                                 Please complete your payment to confirm this order.
                             </p>
+                        </div>
+                    </div>
+                <% } %>
+
+                <% if (showReturnRemainingBtn) { %>
+                    <div class="anim-slide-r anim-delay-3 bg-white rounded-2xl border border-purple-100 shadow-sm overflow-hidden card-lift mt-6">
+                        <div class="px-6 py-6 text-center">
+                            <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
+                                <i class="fas fa-undo-alt text-lg"></i>
+                            </div>
+                            <h3 class="text-base font-extrabold text-gray-900 mb-2">Return Delivered Items?</h3>
+                            <p class="text-xs text-gray-400 leading-relaxed mb-5 max-w-[240px] mx-auto">
+                                You can request a return for all remaining eligible delivered items at once.
+                            </p>
+                            <button onclick="requestReturnRemaining()"
+                                    class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer">
+                                <i class="fas fa-undo"></i>
+                                Return Remaining Delivered Items
+                            </button>
                         </div>
                     </div>
                 <% } %>
@@ -971,10 +1054,10 @@ async function requestCancelItem(itemId) {
     }
 }
 
-async function requestReturnOrder(orderId) {
+async function requestReturnItem(itemId) {
     const { value: reason } = await Swal.fire({
-        title: 'Return Order',
-        text: 'Please choose a reason for returning this order:',
+        title: 'Return Item',
+        text: 'Please choose a reason for returning this item:',
         input: 'select',
         inputOptions: {
             'Damaged Product': 'Damaged Product',
@@ -1002,7 +1085,7 @@ async function requestReturnOrder(orderId) {
         const { value: customReason } = await Swal.fire({
             title: 'Specify Return Reason',
             input: 'textarea',
-            inputPlaceholder: 'Please tell us why you want to return this order...',
+            inputPlaceholder: 'Please tell us why you want to return this item...',
             showCancelButton: true,
             confirmButtonColor: '#B88E2F',
             cancelButtonColor: '#d33',
@@ -1027,7 +1110,99 @@ async function requestReturnOrder(orderId) {
     });
 
     try {
-        const res = await fetch(`/orders/${orderId}/return`, {
+        const res = await fetch(`/orders/<%= order._id %>/items/${itemId}/return`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason: finalReason })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            await Swal.fire({
+                icon: 'success',
+                title: 'Return Requested',
+                text: data.message || 'Your return request has been submitted successfully.',
+                confirmButtonColor: '#B88E2F',
+                customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-xl text-xs font-bold px-6 py-2.5' }
+            });
+            window.location.reload();
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Request Failed',
+                text: data.message || 'Unable to request return.',
+                confirmButtonColor: '#B88E2F',
+                customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-xl text-xs font-bold px-6 py-2.5' }
+            });
+        }
+    } catch (err) {
+        console.error('Return Request Error:', err);
+        Swal.fire({
+            icon: 'error',
+            title: 'Connection Error',
+            text: 'An unexpected error occurred. Please try again.',
+            confirmButtonColor: '#B88E2F'
+        });
+    }
+}
+
+async function requestReturnRemaining() {
+    const { value: reason } = await Swal.fire({
+        title: 'Return Remaining Delivered Items',
+        text: 'Please choose a reason for returning these items:',
+        input: 'select',
+        inputOptions: {
+            'Damaged Product': 'Damaged Product',
+            'Wrong Product Delivered': 'Wrong Product Delivered',
+            'Quality Issue': 'Quality Issue',
+            'Other': 'Other'
+        },
+        inputPlaceholder: 'Select a reason',
+        showCancelButton: true,
+        confirmButtonColor: '#B88E2F',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Submit Request',
+        customClass: {
+            popup: 'rounded-2xl',
+            confirmButton: 'rounded-xl text-xs font-bold px-6 py-2.5',
+            cancelButton:  'rounded-xl text-xs font-bold px-6 py-2.5'
+        },
+        inputValidator: (value) => { if (!value) return 'You need to select a reason!'; }
+    });
+
+    if (!reason) return;
+
+    let finalReason = reason;
+    if (reason === 'Other') {
+        const { value: customReason } = await Swal.fire({
+            title: 'Specify Return Reason',
+            input: 'textarea',
+            inputPlaceholder: 'Please tell us why you want to return these items...',
+            showCancelButton: true,
+            confirmButtonColor: '#B88E2F',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Submit Request',
+            customClass: {
+                popup: 'rounded-2xl',
+                confirmButton: 'rounded-xl text-xs font-bold px-6 py-2.5',
+                cancelButton:  'rounded-xl text-xs font-bold px-6 py-2.5'
+            },
+            inputValidator: (value) => { if (!value || !value.trim()) return 'You must specify a reason!'; }
+        });
+        if (!customReason) return;
+        finalReason = customReason.trim();
+    }
+
+    Swal.fire({
+        title: 'Submitting Return Request...',
+        html: '<p class="text-xs text-gray-400">Please wait while we submit your return request.</p>',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => Swal.showLoading()
+    });
+
+    try {
+        const res = await fetch(`/orders/<%= order._id %>/return`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ reason: finalReason })

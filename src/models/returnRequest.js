@@ -4,17 +4,21 @@ const returnRequestItemSchema = new mongoose.Schema({
     productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
     variantId: { type: mongoose.Schema.Types.ObjectId },
     quantity:  { type: Number, required: true },
-    price:     { type: Number, required: true }
+    price:     { type: Number, required: true },
+    color:     { type: String }, 
+    size:      { type: String }, 
+    image:     { type: String }  
 });
 
 const returnRequestSchema = new mongoose.Schema({
     orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', required: true },
     userId:  { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    itemId:  { type: mongoose.Schema.Types.ObjectId },
     reason:  { type: String, required: true },
     status:  { 
         type: String, 
         default: 'Requested', 
-        enum: ['Requested', 'Approved', 'Rejected'] 
+        enum: ['Requested', 'Return Requested', 'Pending', 'Approved', 'Rejected'] 
     },
     items: [returnRequestItemSchema],
     rejectionReason: { type: String },

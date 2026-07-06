@@ -1,7 +1,5 @@
-import dotenv from 'dotenv';
-dotenv.config();
-
 import nodemailer from 'nodemailer';
+import { logger } from './logger.js';
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -10,30 +8,30 @@ const transporter = nodemailer.createTransport({
     secure: true,
     auth: {
         user: "furniro75@gmail.com",
-        pass: "kcokeejbghngqnre" 
+        pass: "kcokeejbghngqnre"
     },
     tls: {
-        rejectUnauthorized: false 
+        rejectUnauthorized: false
     }
 });
 
 /**
  * Send OTP code via email.
- * @param {string} email 
- * @param {string} otp 
+ * @param {string} email
+ * @param {string} otp
  */
 export const sendOTPEmail = async (email, otp) => {
     try {
         const mailOptions = {
-            from: "furniro75@gmail.com", 
+            from: "furniro75@gmail.com",
             to: email,
             subject: 'Verification Code',
             text: `Your OTP is: ${otp}`
         };
         await transporter.sendMail(mailOptions);
-        console.log("Email sent successfully");
+        logger.debug("Email sent successfully to:", email);
     } catch (error) {
-        console.error("Mail Error:", error);
+        logger.error("Mail Error:", error);
         throw error;
     }
 };

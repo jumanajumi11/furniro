@@ -1,10 +1,9 @@
 
-
 import User from '../../models/user.js';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
+import { logger } from '../../utils/logger.js';
 
-// Setup transporter
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
@@ -18,7 +17,6 @@ const transporter = nodemailer.createTransport({
 const generateOTP = () =>
     Math.floor(100000 + Math.random() * 900000).toString();
 
-// ---------- Admin Auth ----------
 
 export const loadLogin = async (req, res) => {
     try {
@@ -29,7 +27,7 @@ export const loadLogin = async (req, res) => {
         res.render('admin/login', { error: null });
 
     } catch (error) {
-        console.log(error);
+        logger.error('[Admin] loadLogin error:', error);
     }
 };
 
@@ -87,7 +85,6 @@ export const login = async (req, res) => {
     }
 };
 
-// ---------- Password Reset ----------
 
 export const loadForgotPassword = async (req, res) => {
     try {
@@ -98,7 +95,7 @@ export const loadForgotPassword = async (req, res) => {
         });
 
     } catch (error) {
-        console.log(error);
+        logger.error('[Admin] loadForgotPassword error:', error);
     }
 };
 export const loadVerifyOTP = async (req, res) => {
@@ -111,9 +108,7 @@ export const loadVerifyOTP = async (req, res) => {
         });
 
     } catch (error) {
-
-        console.log(error);
-
+        logger.error('[Admin] loadVerifyOTP error:', error);
         res.redirect('/admin/forgot-password');
     }
 };
@@ -135,14 +130,14 @@ export const sendResetOTP = async (req, res) => {
         }
 
         const otp = generateOTP();
-        // Unconditional logging for debugging (will appear regardless of NODE_ENV)
-        console.log('\n=================================');
-        console.log('OTP GENERATED');
-        console.log('Email:', email);
-        console.log('OTP:', otp);
-        console.log('Generated At:', new Date().toISOString());
-        console.log('Expires In: 60 Seconds');
-        console.log('=================================\n');
+        
+        logger.debug('\n=================================');
+        logger.debug('OTP GENERATED');
+        logger.debug('Email:', email);
+        logger.debug('OTP:', otp);
+        logger.debug('Generated At:', new Date().toISOString());
+        logger.debug('Expires In: 60 Seconds');
+        logger.debug('=================================\n');
 
         req.session.resetOTP = otp;
         req.session.resetEmail = email;
@@ -159,7 +154,7 @@ export const sendResetOTP = async (req, res) => {
         transporter.sendMail(mailOptions, (err) => {
 
             if (err) {
-                console.log(err);
+                logger.error('[Admin] sendMail error:', err);
 
                 return res.render('admin/forgot-password', {
                     error: 'Failed to send OTP',
@@ -283,7 +278,7 @@ export const resendAdminOTP = async (req, res) => {
         transporter.sendMail(mailOptions, error => {
 
             if (error) {
-                console.log(error);
+                logger.error('[Admin] resendAdminOTP sendMail error:', error);
 
                 return res.status(500).json({
                     success: false
@@ -303,7 +298,6 @@ export const resendAdminOTP = async (req, res) => {
     }
 };
 
-// ---------- Session ----------
 
 export const logout = async (req, res) => {
     try {
@@ -316,45 +310,22 @@ export const logout = async (req, res) => {
         });
 
     } catch (error) {
-
-        console.log(error);
-
+        logger.error('[Admin] logout error:', error);
         res.redirect('/admin/dashboard');
     }
 };
 
-// ---------- User Management ----------
 
 export const getUsers = async (req, res) => {
     try {
-
         const search = req.query.search || '';
         const status = req.query.status || '';
         const sort = req.query.sort || 'desc';
-
         const page = parseInt(req.query.page) || 1;
-
         const limit = 10;
 
         let query = {
-            isAdmin: false,
-            isBlocked:true,
-            name: { $regex: '^f', $options: 'i' },
-
-            $or: [
-                {
-                    name: {
-                        $regex: search,
-                        $options: 'i'
-                    }
-                },
-                {
-                    email: {
-                        $regex: search,
-                        $options: 'i'
-                    }
-                }
-            ]
+            isAdmin: false
         };
 
         if (status === 'active') {
@@ -363,14 +334,38 @@ export const getUsers = async (req, res) => {
             query.isBlocked = true;
         }
 
-        const users = await User.find(query)
-            .sort({
-                createdAt: sort === 'desc' ? -1 : 1
-            })
-            .skip((page - 1) * limit)
-            .limit(limit);
+        if (search) {
+            query.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } },
+                { phone: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+       
+        let sortOption = { createdAt: -1 };
+        if (sort === 'asc' || sort === 'oldest') {
+            sortOption = { createdAt: 1 };
+        } else if (sort === 'name_az' || sort === 'az') {
+            sortOption = { name: 1 };
+        } else if (sort === 'name_za' || sort === 'za') {
+            sortOption = { name: -1 };
+        }
+
+       
+        logger.debug('--- ADMIN CUSTOMER MANAGEMENT QUERY AUDIT ---');
+        logger.debug('Final MongoDB Query:', JSON.stringify(query));
+        const totalNonAdmins = await User.countDocuments({ isAdmin: false });
+        logger.debug('Total non-admin users in Database:', totalNonAdmins);
 
         const totalUsers = await User.countDocuments(query);
+        logger.debug('Total users matching filters (Displayed Count):', totalUsers);
+        logger.debug('---------------------------------------------');
+
+        const users = await User.find(query)
+            .sort(sortOption)
+            .skip((page - 1) * limit)
+            .limit(limit);
 
         const totalPages = Math.ceil(totalUsers / limit);
 
@@ -380,22 +375,21 @@ export const getUsers = async (req, res) => {
             status,
             sort,
             currentPage: page,
-            totalPages
+            totalPages,
+            totalUsers,
+            totalNonAdmins,
+            limit
         });
 
     } catch (error) {
-
-        console.error(error);
-
+        console.error("getUsers Error:", error);
         res.status(500).send('Server Error');
     }
 };
 
 export const toggleBlock = async (req, res) => {
     try {
-
         const userId = req.params.id;
-
         const user = await User.findById(userId);
 
         if (!user) {
@@ -405,8 +399,14 @@ export const toggleBlock = async (req, res) => {
             });
         }
 
-        user.isBlocked = !user.isBlocked;
+        if (user.isAdmin) {
+            return res.status(403).json({
+                success: false,
+                message: 'Admin accounts cannot be blocked.'
+            });
+        }
 
+        user.isBlocked = !user.isBlocked;
         await user.save();
 
         res.json({
@@ -415,9 +415,7 @@ export const toggleBlock = async (req, res) => {
         });
 
     } catch (error) {
-
-        console.error(error);
-
+        console.error("toggleBlock Error:", error);
         res.status(500).json({
             success: false,
             message: 'Internal server error'
@@ -427,9 +425,7 @@ export const toggleBlock = async (req, res) => {
 
 export const blockUser = async (req, res) => {
     try {
-
         const userId = req.params.id;
-
         const user = await User.findById(userId);
 
         if (!user) {
@@ -439,8 +435,14 @@ export const blockUser = async (req, res) => {
             });
         }
 
-        user.isBlocked = !user.isBlocked;
+        if (user.isAdmin) {
+            return res.status(403).json({
+                success: false,
+                message: 'Admin accounts cannot be blocked.'
+            });
+        }
 
+        user.isBlocked = !user.isBlocked;
         await user.save();
 
         res.json({
@@ -449,21 +451,10 @@ export const blockUser = async (req, res) => {
         });
 
     } catch (error) {
-
+        console.error("blockUser Error:", error);
         res.status(500).json({
             success: false,
             message: 'Error updating user status'
         });
-    }
-};
-
-
-// ---------- Dashboard ----------
-export const loadDashboard = async (req, res) => {
-    try {
-        res.render('admin/dashboard');
-    } catch (error) {
-        console.error("Load Dashboard Error:", error);
-        res.status(500).send("Server Error");
     }
 };

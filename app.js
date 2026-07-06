@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-console.log("CLIENT ID:", process.env.GOOGLE_CLIENT_ID);
+console.log("GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID);
 
 import express from 'express';
 import path from 'path';
@@ -13,28 +13,29 @@ import cookieParser from 'cookie-parser';
 import MongoStore from 'connect-mongo';
 import { fileURLToPath } from 'url';
 
-import './src/config/passport.js';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+await import('./src/config/passport.js');
 
 import connectDB from './src/config/db.js';
+import { migrateOrders } from './src/utils/migrate-orders.js';
 
 import adminRoutes from './src/routes/admin.js';
 import userRoutes from './src/routes/user.js';
+import { checkBlockedStatus } from './src/middlewares/auth.js';
 import { seedProductsIfEmpty } from './src/services/product/seed.service.js';
 import Cart from './src/models/cart.js';
 import Category from './src/models/category.js';
 import wishlistService from './src/services/user/wishlist.service.js';
 import { formatCurrency } from './src/utils/helpers.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 const app = express();
 
-console.log("EMAIL:", process.env.EMAIL_USER);
-console.log("PASS:", process.env.EMAIL_PASS);
 
 connectDB().then(() => {
     seedProductsIfEmpty();
+    migrateOrders();
 });
 
 app.use(nocache());
@@ -66,9 +67,10 @@ const adminSession = session({
 
     store: MongoStore.create({
         mongoUrl:
+            process.env.MONGO_URI ||
             process.env.MONGODB_URI ||
             'mongodb://localhost:27017/furniture_db',
-
+        dbName: 'furnitureDB',
         collectionName: 'admin_sessions'
     }),
 
@@ -89,9 +91,10 @@ const userSession = session({
 
     store: MongoStore.create({
         mongoUrl:
+            process.env.MONGO_URI ||
             process.env.MONGODB_URI ||
             'mongodb://localhost:27017/furniture_db',
-
+        dbName: 'furnitureDB',
         collectionName: 'user_sessions'
     }),
 
@@ -113,6 +116,7 @@ app.use(
     userSession,
     passport.initialize(),
     passport.session(),
+    checkBlockedStatus,
     async (req, res, next) => {
         res.locals.formatCurrency = formatCurrency;
         res.locals.cartCount = 0;

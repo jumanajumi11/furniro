@@ -1,0 +1,133 @@
+<%- include('../layout/header') %>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<main class="bg-[#FDFBF7] min-h-screen py-16 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+    <div class="max-w-xl w-full bg-white p-8 md:p-12 rounded-3xl shadow-xl text-center border border-red-100">
+        
+        <!-- Failure Icon -->
+        <div class="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+            <i class="fas fa-times text-4xl text-red-500"></i>
+        </div>
+
+        <h1 class="text-3xl font-black text-gray-900 mb-2">Payment Failed</h1>
+        <p class="text-gray-500 font-medium mb-8">Payment could not be completed.</p>
+
+        <!-- Order Info Box -->
+        <div class="bg-gray-50 rounded-2xl p-6 text-left mb-8 border border-gray-100/60 shadow-sm">
+            <div class="space-y-4">
+                <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+                    <span class="text-gray-500 font-semibold text-sm">Order ID</span>
+                    <span class="font-bold text-gray-900"><%= order.orderNumber %></span>
+                </div>
+                <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+                    <span class="text-gray-500 font-semibold text-sm">Amount</span>
+                    <span class="font-bold text-[#B88E2F] text-lg">₹<%= order.grandTotal.toLocaleString('en-IN') %></span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-500 font-semibold text-sm">Status</span>
+                    <span class="bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded">Failed</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button onclick="retryPayment('<%= order._id %>')" class="w-full sm:w-auto bg-[#B88E2F] text-white px-8 py-3.5 rounded-xl font-bold hover:bg-[#967325] transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2">
+                <i class="fas fa-redo-alt"></i> Retry Payment
+            </button>
+            <a href="/orders" class="w-full sm:w-auto bg-gray-100 text-gray-800 px-8 py-3.5 rounded-xl font-bold hover:bg-gray-200 transition-all shadow-sm flex items-center justify-center gap-2">
+                <i class="fas fa-box"></i> Go to Orders
+            </a>
+        </div>
+        
+        <div class="mt-6">
+            <a href="/shop" class="text-[#B88E2F] font-semibold hover:underline text-sm flex items-center justify-center gap-1">
+                <i class="fas fa-arrow-left text-xs"></i> Continue Shopping
+            </a>
+        </div>
+
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    async function retryPayment(orderId) {
+        try {
+            Swal.fire({
+                title: 'Initializing Payment...',
+                text: 'Please wait...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            const res = await fetch('/checkout/retry-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId })
+            });
+
+            const data = await res.json();
+            
+            if (!data.success || !data.razorpayOrder) {
+                Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'Failed to initialize payment retry.', confirmButtonColor: '#B88E2F' });
+                return;
+            }
+
+            Swal.close();
+
+            const options = {
+                key: data.razorpayOrder.key,
+                amount: data.razorpayOrder.amount,
+                currency: data.razorpayOrder.currency,
+                name: data.razorpayOrder.name,
+                description: data.razorpayOrder.description,
+                order_id: data.razorpayOrder.id,
+                handler: async function (response) {
+                    try {
+                        Swal.fire({
+                            title: 'Verifying Payment...',
+                            allowOutsideClick: false,
+                            didOpen: () => { Swal.showLoading(); }
+                        });
+
+                        const verifyRes = await fetch('/checkout/verify-payment', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                orderId: orderId,
+                                razorpayPaymentId: response.razorpay_payment_id,
+                                razorpayOrderId: response.razorpay_order_id,
+                                razorpaySignature: response.razorpay_signature
+                            })
+                        });
+                        
+                        const verifyData = await verifyRes.json();
+                        
+                        if (verifyData.success) {
+                            window.location.href = `/checkout/success/${orderId}`;
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'Verification Failed', text: verifyData.message });
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'Payment verification error.' });
+                    }
+                },
+                prefill: data.razorpayOrder.prefill,
+                theme: { color: "#B88E2F" }
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.on('payment.failed', function (response){
+                Swal.fire({ icon: 'error', title: 'Payment Failed', text: 'Transaction could not be completed.' });
+            });
+            rzp.open();
+
+        } catch (err) {
+            console.error(err);
+            Swal.fire({ icon: 'error', title: 'Error', text: 'An unexpected connection error occurred.', confirmButtonColor: '#B88E2F' });
+        }
+    }
+</script>
+
+<%- include('../layout/footer') %>

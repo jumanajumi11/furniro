@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category Offers - Furniro Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F9FAFB; }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+<%- include('./adminPartials/adminSidebar.ejs', { activePage: 'offers-categories' }) %>
+
+<main class="flex-1 p-6 lg:p-10 overflow-y-auto max-w-7xl mx-auto w-full">
+    
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">CATEGORY OFFERS</h1>
+            <p class="text-gray-500 mt-1 text-sm font-medium">Manage category-wide discounts and collection promotions.</p>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <button onclick="openCreateModal()" class="px-6 py-3 bg-[#B88E2F] hover:bg-[#9c7524] text-white font-bold text-sm rounded-2xl flex items-center gap-2 shadow-md shadow-[#B88E2F]/15 transition">
+                <i class="fas fa-plus"></i> Add Category Offer
+            </button>
+            
+            <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm">
+                <div class="text-right">
+                    <p class="text-xs font-black text-[#B88E2F] uppercase tracking-widest">System Admin</p>
+                    <p class="text-sm font-bold text-gray-900 leading-none mt-0.5">Jumana</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-[#B88E2F] flex items-center justify-center text-white font-extrabold text-sm shadow-inner">
+                    JU
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="flex flex-wrap gap-2 mb-6 border-b border-gray-100 pb-4">
+        <a href="/admin/offers/products" 
+           class="px-4 py-2 text-xs font-bold rounded-2xl border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50">
+            Product Offers
+        </a>
+        <a href="/admin/offers/categories" 
+           class="px-4 py-2 text-xs font-bold rounded-2xl border transition-all bg-[#B88E2F] text-white border-[#B88E2F] shadow-md shadow-[#B88E2F]/10">
+            Category Offers
+        </a>
+    </div>
+
+    <!-- Filtering UI Tabs -->
+    <div class="flex flex-wrap gap-2 mb-6 border-b border-gray-100 pb-4">
+        <a href="/admin/offers/categories?status=All&search=<%= encodeURIComponent(search) %>" 
+           class="px-4 py-2 text-xs font-bold rounded-2xl border transition-all <%= status === 'All' || !status ? 'bg-[#B88E2F] text-white border-[#B88E2F] shadow-md shadow-[#B88E2F]/10' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50' %>">
+            All Offers
+        </a>
+        <a href="/admin/offers/categories?status=Active&search=<%= encodeURIComponent(search) %>" 
+           class="px-4 py-2 text-xs font-bold rounded-2xl border transition-all <%= status === 'Active' ? 'bg-[#B88E2F] text-white border-[#B88E2F] shadow-md shadow-[#B88E2F]/10' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50' %>">
+            Active
+        </a>
+        <a href="/admin/offers/categories?status=Inactive&search=<%= encodeURIComponent(search) %>" 
+           class="px-4 py-2 text-xs font-bold rounded-2xl border transition-all <%= status === 'Inactive' ? 'bg-[#B88E2F] text-white border-[#B88E2F] shadow-md shadow-[#B88E2F]/10' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50' %>">
+            Inactive
+        </a>
+        <a href="/admin/offers/categories?status=Expired&search=<%= encodeURIComponent(search) %>" 
+           class="px-4 py-2 text-xs font-bold rounded-2xl border transition-all <%= status === 'Expired' ? 'bg-[#B88E2F] text-white border-[#B88E2F] shadow-md shadow-[#B88E2F]/10' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50' %>">
+            Expired
+        </a>
+    </div>
+
+    <!-- Filters & Search -->
+    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-5 mb-6">
+        <form method="GET" action="/admin/offers/categories" class="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
+            <input type="hidden" name="page" value="1">
+            <input type="hidden" name="status" value="<%= status %>">
+            
+            <div class="flex-1 flex flex-col sm:flex-row gap-3">
+                <div class="relative flex-1 min-w-[240px]">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                        <i class="fas fa-search text-sm"></i>
+                    </span>
+                    <input type="text" name="search" placeholder="Search by Offer Name..." value="<%= search || '' %>"
+                           class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl pl-10 pr-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <button type="submit" class="px-6 py-3 bg-[#B88E2F] text-white font-bold text-sm rounded-2xl hover:bg-[#9c7524] shadow-md shadow-[#B88E2F]/10 transition">
+                    Apply
+                </button>
+                <a href="/admin/offers/categories" class="px-5 py-3 bg-gray-100 text-gray-600 font-bold text-sm rounded-2xl hover:bg-gray-200 transition text-center flex items-center justify-center">
+                    Clear
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Category Offers Table -->
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto w-full">
+            <table class="w-full text-left min-w-[950px]">
+                <thead class="bg-gray-50/75 border-b border-gray-100 sticky top-0 backdrop-blur-md">
+                    <tr>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Offer Name</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Category</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Discount</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Start Date</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Expiry Date</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider text-center">Status</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    <% if (categoryOffers && categoryOffers.length > 0) { %>
+                        <% categoryOffers.forEach(offer => { %>
+                            <% 
+                                const isExpired = new Date(offer.expiryDate) <= new Date(); 
+                                const isFuture = new Date(offer.startDate) > new Date();
+                                const displayStatus = offer.isActive && !isExpired && !isFuture;
+                                const cat = offer.category || {};
+                            %>
+                            <tr class="hover:bg-gray-50/30 transition-colors">
+                                <td class="px-6 py-5.5">
+                                    <span class="font-extrabold text-gray-900 bg-gray-100 px-3 py-1.5 rounded-xl text-xs tracking-wider border border-gray-200">
+                                        <%= offer.offerName %>
+                                    </span>
+                                </td>
+                                
+                                <td class="px-6 py-5.5">
+                                    <p class="font-bold text-gray-900 text-xs tracking-wider"><%= cat.name || 'Deleted Category' %></p>
+                                </td>
+                                
+                                <td class="px-6 py-5.5 text-sm font-black text-red-500">
+                                    <%= offer.offerPercentage %>% OFF
+                                </td>
+
+                                <td class="px-6 py-5.5 text-xs text-gray-500 font-semibold">
+                                    <%= new Date(offer.startDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) %>
+                                </td>
+
+                                <td class="px-6 py-5.5 text-xs font-semibold <%= isExpired ? 'text-red-500' : 'text-gray-500' %>">
+                                    <%= new Date(offer.expiryDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) %>
+                                    <% if (isExpired) { %>
+                                        <span class="block text-[9px] uppercase font-black text-red-500/80 mt-0.5">Expired</span>
+                                    <% } else if (isFuture) { %>
+                                        <span class="block text-[9px] uppercase font-black text-amber-500/80 mt-0.5">Scheduled</span>
+                                    <% } %>
+                                </td>
+                                
+                                <td class="px-6 py-5.5 text-center">
+                                    <% if (isExpired) { %>
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider shadow-sm bg-red-50 border-red-200 text-red-700 opacity-60 cursor-not-allowed" title="Expired offers cannot be activated again.">
+                                            <span class="w-1.5 h-1.5 rounded-full inline-block bg-red-500"></span>
+                                            Expired
+                                        </span>
+                                    <% } else { %>
+                                        <button onclick="toggleOffer('<%= offer._id %>')" 
+                                                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider shadow-sm transition <%= displayStatus ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700' %>">
+                                            <span class="w-1.5 h-1.5 rounded-full inline-block <%= displayStatus ? 'bg-green-500' : 'bg-red-500' %>"></span>
+                                            <%= offer.isActive ? 'Active' : 'Inactive' %>
+                                        </button>
+                                    <% } %>
+                                </td>
+                                
+                                <td class="px-6 py-5.5 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <% if (isExpired) { %>
+                                            <button disabled title="Expired coupons/offers cannot be modified."
+                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed text-[10px] font-bold shadow-sm">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                        <% } else { %>
+                                            <button onclick="openEditModal('<%= offer._id %>', '<%= offer.offerName.replace(/\x27/g, `\\x27`) %>', '<%= offer.category ? offer.category._id : (offer.category || ``) %>', '<%= offer.offerPercentage %>', '<%= new Date(offer.startDate).toISOString().split('T')[0] %>', '<%= new Date(offer.expiryDate).toISOString().split('T')[0] %>')"
+                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-100 text-gray-500 hover:bg-[#B88E2F] hover:text-white hover:border-[#B88E2F] transition text-[10px] font-bold shadow-sm">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                        <% } %>
+                                        <button onclick="deleteOffer('<%= offer._id %>')"
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 border border-red-100 text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 transition text-[10px] font-bold shadow-sm">
+                                            <i class="fas fa-trash-alt"></i> Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="7" class="py-14 text-center text-gray-400 font-bold italic">
+                                <i class="fas fa-percent text-3xl text-gray-200 mb-3 block"></i>
+                                No category offers found.
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Footer -->
+        <% if (totalPages > 1) { %>
+            <div class="px-6 py-5 bg-gray-50/50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <span class="text-xs text-gray-500 font-medium">
+                    Showing Page <%= currentPage %> of <%= totalPages %>
+                </span>
+                
+                <div class="flex items-center gap-1.5">
+                    <% if (currentPage > 1) { %>
+                        <a href="/admin/offers/categories?page=<%= currentPage - 1 %>&search=<%= encodeURIComponent(search) %>&status=<%= status %>" 
+                           class="w-9 h-9 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-100 transition flex items-center justify-center text-xs font-bold shadow-sm">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    <% } %>
+
+                    <% for (let i = 1; i <= totalPages; i++) { %>
+                        <% if (i === currentPage) { %>
+                            <span class="w-9 h-9 bg-[#B88E2F] text-white rounded-xl flex items-center justify-center text-xs font-black shadow-md">
+                                <%= i %>
+                            </span>
+                        <% } else { %>
+                            <a href="/admin/offers/categories?page=<%= i %>&search=<%= encodeURIComponent(search) %>&status=<%= status %>"
+                               class="w-9 h-9 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-100 transition flex items-center justify-center text-xs font-bold shadow-sm">
+                                <%= i %>
+                            </a>
+                        <% } %>
+                    <% } %>
+
+                    <% if (currentPage < totalPages) { %>
+                        <a href="/admin/offers/categories?page=<%= currentPage + 1 %>&search=<%= encodeURIComponent(search) %>&status=<%= status %>" 
+                           class="w-9 h-9 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-100 transition flex items-center justify-center text-xs font-bold shadow-sm">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    <% } %>
+                </div>
+            </div>
+        <% } %>
+    </div>
+</main>
+
+<!-- Create Offer Modal -->
+<div id="createModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden border border-gray-100 animate-slide-in">
+        <div class="px-6 py-5 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+            <h2 class="text-lg font-extrabold text-gray-900 tracking-tight">Add Category Offer</h2>
+            <button onclick="closeCreateModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+        
+        <form id="createOfferForm" class="p-6 space-y-4">
+            <div>
+                <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Offer Name *</label>
+                <input type="text" name="offerName" placeholder="e.g. Living Room Sale" required
+                       class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+            </div>
+
+            <div>
+                <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Select Category *</label>
+                <select name="category" required
+                        class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all cursor-pointer">
+                    <option value="" disabled selected>Choose category...</option>
+                    <% categories.forEach(c => { %>
+                        <option value="<%= c._id %>"><%= c.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Offer Percentage * (1-90%)</label>
+                <input type="number" name="offerPercentage" min="1" max="90" placeholder="e.g. 20" required
+                       class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Start Date *</label>
+                    <input type="date" name="startDate" required
+                           class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Expiry Date *</label>
+                    <input type="date" name="expiryDate" required
+                           class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                </div>
+            </div>
+
+            <div class="pt-4 flex gap-3 border-t border-gray-100 mt-4">
+                <button type="button" onclick="closeCreateModal()" class="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold text-xs rounded-2xl transition">
+                    Cancel
+                </button>
+                <button type="submit" class="flex-1 py-3 bg-[#B88E2F] hover:bg-[#9c7524] text-white font-bold text-xs rounded-2xl transition shadow-md shadow-[#B88E2F]/15">
+                    Create Offer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Offer Modal -->
+<div id="editModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden border border-gray-100 animate-slide-in">
+        <div class="px-6 py-5 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+            <h2 class="text-lg font-extrabold text-gray-900 tracking-tight">Edit Category Offer</h2>
+            <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+        
+        <form id="editOfferForm" class="p-6 space-y-4">
+            <input type="hidden" id="editOfferId">
+            <div>
+                <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Offer Name *</label>
+                <input type="text" id="editOfferName" name="offerName" placeholder="e.g. Living Room Sale" required
+                       class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+            </div>
+
+            <div>
+                <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Select Category *</label>
+                <select id="editCategory" name="category" required
+                        class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all cursor-pointer">
+                    <option value="" disabled>Choose category...</option>
+                    <% categories.forEach(c => { %>
+                        <option value="<%= c._id %>"><%= c.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Offer Percentage * (1-90%)</label>
+                <input type="number" id="editOfferPercentage" name="offerPercentage" min="1" max="90" required
+                       class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Start Date *</label>
+                    <input type="date" id="editStartDate" name="startDate" required
+                           class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Expiry Date *</label>
+                    <input type="date" id="editExpiryDate" name="expiryDate" required
+                           class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                </div>
+            </div>
+
+            <div class="pt-4 flex gap-3 border-t border-gray-100 mt-4">
+                <button type="button" onclick="closeEditModal()" class="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold text-xs rounded-2xl transition">
+                    Cancel
+                </button>
+                <button type="submit" class="flex-1 py-3 bg-[#B88E2F] hover:bg-[#9c7524] text-white font-bold text-xs rounded-2xl transition shadow-md shadow-[#B88E2F]/15">
+                    Update Offer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const defaultColor = '#B88E2F';
+
+    function openCreateModal() {
+        document.getElementById('createModal').classList.replace('hidden', 'flex');
+    }
+
+    function closeCreateModal() {
+        document.getElementById('createModal').classList.replace('flex', 'hidden');
+        document.getElementById('createOfferForm').reset();
+    }
+
+    function openEditModal(id, name, categoryId, percentage, start, expiry) {
+        document.getElementById('editOfferId').value = id;
+        document.getElementById('editOfferName').value = name;
+        document.getElementById('editCategory').value = categoryId;
+        document.getElementById('editOfferPercentage').value = percentage;
+        document.getElementById('editStartDate').value = start;
+        document.getElementById('editExpiryDate').value = expiry;
+        document.getElementById('editModal').classList.replace('hidden', 'flex');
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').classList.replace('flex', 'hidden');
+        document.getElementById('editOfferForm').reset();
+    }
+
+    // Ajax create category offer
+    document.getElementById('createOfferForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const body = Object.fromEntries(formData.entries());
+
+        Swal.fire({
+            title: 'Saving...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        try {
+            const response = await fetch('/admin/offers/categories/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Created!',
+                    text: data.message,
+                    timer: 1500,
+                    showConfirmButton: false,
+                    customClass: { popup: 'rounded-2xl' }
+                }).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Failed',
+                    text: data.message,
+                    confirmButtonColor: defaultColor,
+                    customClass: { popup: 'rounded-2xl' }
+                });
+            }
+        } catch (err) {
+            console.error(err);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'An unexpected connection error occurred.',
+                confirmButtonColor: defaultColor,
+                customClass: { popup: 'rounded-2xl' }
+            });
+        }
+    });
+
+    // Ajax edit category offer
+    document.getElementById('editOfferForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const id = document.getElementById('editOfferId').value;
+        const formData = new FormData(this);
+        const body = Object.fromEntries(formData.entries());
+
+        Swal.fire({
+            title: 'Updating...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        try {
+            const response = await fetch(`/admin/offers/categories/${id}/edit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Updated!',
+                    text: data.message,
+                    timer: 1500,
+                    showConfirmButton: false,
+                    customClass: { popup: 'rounded-2xl' }
+                }).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Failed',
+                    text: data.message,
+                    confirmButtonColor: defaultColor,
+                    customClass: { popup: 'rounded-2xl' }
+                });
+            }
+        } catch (err) {
+            console.error(err);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'An unexpected connection error occurred.',
+                confirmButtonColor: defaultColor,
+                customClass: { popup: 'rounded-2xl' }
+            });
+        }
+    });
+
+    // Toggle status
+    async function toggleOffer(id) {
+        try {
+            const response = await fetch(`/admin/offers/categories/${id}/toggle`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Updated!',
+                    text: data.message,
+                    timer: 1000,
+                    showConfirmButton: false,
+                    customClass: { popup: 'rounded-2xl' }
+                }).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Failed',
+                    text: data.message,
+                    confirmButtonColor: defaultColor,
+                    customClass: { popup: 'rounded-2xl' }
+                });
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    // Delete offer
+    function deleteOffer(id) {
+        Swal.fire({
+            title: 'Delete Offer?',
+            text: 'Are you sure you want to permanently delete this category offer? Products in this category will revert back to normal.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#9CA3AF',
+            confirmButtonText: 'Yes, Delete',
+            cancelButtonText: 'Cancel',
+            customClass: {
+                popup: 'rounded-2xl',
+                confirmButton: 'rounded-xl font-bold px-5 py-2.5 text-xs',
+                cancelButton: 'rounded-xl font-bold px-5 py-2.5 text-xs'
+            }
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Deleting...',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+
+                try {
+                    const response = await fetch(`/admin/offers/categories/${id}/delete`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Deleted!',
+                            text: data.message,
+                            timer: 1500,
+                            showConfirmButton: false,
+                            customClass: { popup: 'rounded-2xl' }
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Failed',
+                            text: data.message,
+                            confirmButtonColor: defaultColor,
+                            customClass: { popup: 'rounded-2xl' }
+                        });
+                    }
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+        });
+    }
+</script>
+
+</body>
+</html>

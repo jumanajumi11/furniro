@@ -2,9 +2,7 @@
 <body class="text-gray-800">
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="flex flex-col lg:flex-row gap-8">
-            <aside class="w-full lg:w-72">
-                <%- include('../layout/account-sidebar') %>
-            </aside>
+            <%- include('../layout/account-sidebar', { activePage: 'profile' }) %>
 
             <div class="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100">
                 <div class="p-8 border-b border-gray-100 flex justify-between items-center">
@@ -17,7 +15,7 @@
                     <div class="flex flex-col items-center mb-10">
                         <div id="image-display" class="w-32 h-32 rounded-full flex items-center justify-center text-4xl font-bold text-white bg-[#B88E2F] border-4 border-gray-50 overflow-hidden shadow-md mb-4">
                             <% if (user && user.image) { %>
-                                <img id="preview" src="/upload/<%= user.image %>" class="w-full h-full object-cover">
+                                <img id="preview" src="<%= user.image.startsWith('http') ? user.image : '/upload/' + user.image %>" class="w-full h-full object-cover">
                             <% } else { %>
                                 <span id="letter"><%= user.name ? user.name.charAt(0).toUpperCase() : 'U' %></span>
                             <% } %>

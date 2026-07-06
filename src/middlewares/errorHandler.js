@@ -1,6 +1,4 @@
-/**
- * Global error handling middleware.
- */
+
 export const errorHandler = (err, req, res, next) => {
     console.error("❌ GLOBAL ERROR HANDLER:", err);
 
@@ -18,7 +16,7 @@ export const errorHandler = (err, req, res, next) => {
         });
     }
 
-    // Traditional page rendering fallback
+    
     res.status(statusCode).render('user/404', {
         error: message
     });

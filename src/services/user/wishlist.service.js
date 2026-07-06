@@ -1,21 +1,21 @@
 import Wishlist from '../../models/wishlist.js';
 import Product from '../../models/product.js';
 import mongoose from 'mongoose';
+import { applyOffers } from './offer.service.js';
 
-/**
- * Get user's wishlist populated with product details.
- */
+
 export const getWishlist = async (userId) => {
-    return await Wishlist.findOne({ userId }).populate({
+    const wl = await Wishlist.findOne({ userId }).populate({
         path: 'products',
         populate: { path: 'category' }
     });
+    if (wl && wl.products && wl.products.length > 0) {
+        await applyOffers(wl.products);
+    }
+    return wl;
 };
 
-/**
- * Scan and clean unavailable items in user's wishlist (deleted, unlisted, or inactive categories).
- * Returns the cleaned wishlist document.
- */
+
 export const cleanUnavailableWishlistItems = async (userId) => {
     let wishlist = await Wishlist.findOne({ userId });
     if (!wishlist) {
@@ -36,7 +36,6 @@ export const cleanUnavailableWishlistItems = async (userId) => {
         
         const product = await Product.findById(prodId).populate('category');
         
-        // Product must exist, not be deleted, must be listed, and its category must be active & listed
         const isProductValid = product && 
                                !product.isDeleted && 
                                product.isListed && 
@@ -54,17 +53,17 @@ export const cleanUnavailableWishlistItems = async (userId) => {
         await wishlist.save();
     }
 
-    // Populate and return
-    return await Wishlist.findOne({ userId }).populate({
+    const wl = await Wishlist.findOne({ userId }).populate({
         path: 'products',
         populate: { path: 'category' }
     });
+    if (wl && wl.products && wl.products.length > 0) {
+        await applyOffers(wl.products);
+    }
+    return wl;
 };
 
-/**
- * Toggle product in user's wishlist.
- * Blocks adding deleted or unlisted products/categories.
- */
+
 export const toggleWishlist = async (userId, productId) => {
     if (!mongoose.Types.ObjectId.isValid(productId)) {
         throw new Error('Invalid Product ID');
@@ -72,7 +71,7 @@ export const toggleWishlist = async (userId, productId) => {
 
     const product = await Product.findById(productId).populate('category');
     
-    // Validate product status
+    
     if (!product || product.isDeleted) {
         throw new Error('This product is no longer available');
     }
@@ -86,10 +85,10 @@ export const toggleWishlist = async (userId, productId) => {
     let added = false;
 
     if (prodIndex > -1) {
-        // Toggle behavior: remove if exists
+        
         wishlist.products.splice(prodIndex, 1);
     } else {
-        // Toggle behavior: add if not exists, but block unlisted/blocked products
+        
         if (!product.isListed || (product.category && (!product.category.isListed || product.category.isDeleted))) {
             throw new Error('This product is currently unavailable and cannot be added to wishlist');
         }
@@ -107,9 +106,7 @@ export const toggleWishlist = async (userId, productId) => {
     };
 };
 
-/**
- * Remove an item from the wishlist directly.
- */
+
 export const removeItemFromWishlist = async (userId, productId) => {
     if (!mongoose.Types.ObjectId.isValid(productId)) {
         throw new Error('Invalid Product ID');

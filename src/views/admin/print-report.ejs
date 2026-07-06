@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Report - Furniro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: white; color: black; }
+        @media print {
+            body { background: white; color: black; }
+            .no-print { display: none !important; }
+            .print-border { border: 1px solid #E5E7EB !important; }
+        }
+    </style>
+</head>
+<body class="p-8">
+
+    <!-- Header Section -->
+    <div class="flex justify-between items-start border-b-2 border-gray-900 pb-6 mb-8">
+        <div>
+            <h1 class="text-3xl font-black tracking-tight text-gray-900">FURNIRO SALES REPORT</h1>
+            <p class="text-xs font-bold text-gray-500 mt-1.5">
+                GENERATED ON: <%= new Date().toLocaleString('en-IN') %>
+            </p>
+            <p class="text-xs font-bold text-gray-500">
+                DATE FILTER: <%= filter %> (<%= startDate.toLocaleDateString() %> - <%= endDate.toLocaleDateString() %>)
+            </p>
+        </div>
+        <div class="text-right">
+            <h2 class="text-2xl font-black text-gray-900">Furniro</h2>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Admin Operations</p>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="mb-8">
+        <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Financial & Sales Summary</h3>
+        <div class="grid grid-cols-4 gap-4 text-xs">
+            <div class="p-4 border border-gray-200 rounded-xl bg-gray-50/50">
+                <span class="block font-bold text-gray-500 mb-1">Gross Revenue</span>
+                <span class="text-lg font-black text-gray-900">₹<%= summary.grossRevenue.toLocaleString('en-IN') %></span>
+            </div>
+            <div class="p-4 border border-gray-200 rounded-xl bg-gray-50/50">
+                <span class="block font-bold text-gray-500 mb-1">Coupon Discounts</span>
+                <span class="text-lg font-black text-red-600">-₹<%= summary.couponDiscount.toLocaleString('en-IN') %></span>
+            </div>
+            <div class="p-4 border border-gray-200 rounded-xl bg-gray-50/50">
+                <span class="block font-bold text-gray-500 mb-1">Offer Discounts</span>
+                <span class="text-lg font-black text-red-600">-₹<%= summary.offerDiscount.toLocaleString('en-IN') %></span>
+            </div>
+            <div class="p-4 border border-gray-200 rounded-xl bg-gray-50/50">
+                <span class="block font-bold text-gray-500 mb-1">Net Revenue</span>
+                <span class="text-lg font-black text-green-600">₹<%= summary.netRevenue.toLocaleString('en-IN') %></span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 text-xs mt-4">
+            <div class="p-4 border border-gray-200 rounded-xl">
+                <span class="font-bold text-gray-600">Total Orders Placed: </span>
+                <span class="font-black text-gray-900 ml-1"><%= summary.totalOrders %></span>
+            </div>
+            <div class="p-4 border border-gray-200 rounded-xl">
+                <span class="font-bold text-gray-600">Total Items Sold: </span>
+                <span class="font-black text-gray-900 ml-1"><%= summary.totalSalesCount %></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Sales Grid -->
+    <div>
+        <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Detailed Transaction Log</h3>
+        <table class="w-full text-left text-xs border-collapse">
+            <thead>
+                <tr class="bg-gray-100 border-b border-gray-300">
+                    <th class="p-3 font-bold text-gray-700">Order ID</th>
+                    <th class="p-3 font-bold text-gray-700">Date</th>
+                    <th class="p-3 font-bold text-gray-700">Customer</th>
+                    <th class="p-3 font-bold text-gray-700">Payment</th>
+                    <th class="p-3 font-bold text-gray-700 text-right">Gross Amount</th>
+                    <th class="p-3 font-bold text-gray-700 text-right">Coupon Ded.</th>
+                    <th class="p-3 font-bold text-gray-700 text-right">Offer Ded.</th>
+                    <th class="p-3 font-bold text-gray-700 text-right">Net Amount</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 border-b border-gray-200">
+                <% if (detailedTable && detailedTable.length > 0) { %>
+                    <% detailedTable.forEach(row => { %>
+                        <tr class="hover:bg-gray-50/50">
+                            <td class="p-3 font-semibold text-gray-800"><%= row.orderId %></td>
+                            <td class="p-3 text-gray-500"><%= new Date(row.date).toLocaleDateString('en-IN') %></td>
+                            <td class="p-3 font-bold text-gray-900"><%= row.customer %></td>
+                            <td class="p-3 text-gray-600"><%= row.paymentMethod %></td>
+                            <td class="p-3 text-right">₹<%= row.orderAmount.toLocaleString('en-IN') %></td>
+                            <td class="p-3 text-right text-red-600"><%= row.couponDeduction > 0 ? '-₹' + row.couponDeduction.toLocaleString('en-IN') : '—' %></td>
+                            <td class="p-3 text-right text-red-600"><%= row.offerDeduction > 0 ? '-₹' + row.offerDeduction.toLocaleString('en-IN') : '—' %></td>
+                            <td class="p-3 text-right font-bold text-gray-900">₹<%= row.finalAmount.toLocaleString('en-IN') %></td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="8" class="p-8 text-center text-gray-400 italic">No transactions found for this date range.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Print trigger -->
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            // Automatically launch native print window
+            setTimeout(() => {
+                window.print();
+            }, 500);
+        });
+    </script>
+</body>
+</html>

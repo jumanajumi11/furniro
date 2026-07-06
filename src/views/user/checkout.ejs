@@ -1,4 +1,5 @@
 <%- include('../layout/header') %>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <main class="bg-[#FDFBF7] min-h-screen py-10 overflow-x-hidden">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -111,13 +112,13 @@
                         </label>
 
                         <!-- Razorpay Card -->
-                        <label class="relative border-2 rounded-2xl p-5 flex flex-col justify-between transition-all border-gray-200 bg-gray-50/80 opacity-50 cursor-not-allowed payment-card" id="card-razorpay">
+                        <label class="relative border-2 rounded-2xl p-5 flex flex-col justify-between cursor-pointer hover:border-[#B88E2F]/50 transition-all border-gray-200 bg-white payment-card" id="card-razorpay">
                             <div class="flex items-start justify-between">
                                 <div class="flex items-center gap-3">
-                                    <input type="radio" name="paymentMethod" value="Razorpay" disabled class="w-4 h-4 text-gray-400 border-gray-300 focus:ring-gray-400 cursor-not-allowed">
+                                    <input type="radio" name="paymentMethod" value="Razorpay" onchange="selectPayment(this)" class="w-4 h-4 text-[#B88E2F] border-gray-300 focus:ring-[#B88E2F]">
                                     <span class="font-bold text-sm text-gray-800">Razorpay</span>
                                 </div>
-                                <i class="fas fa-globe text-gray-400 text-lg"></i>
+                                <i class="fas fa-globe text-[#B88E2F] text-lg"></i>
                             </div>
                             <div class="mt-4">
                                 <p class="text-xs text-gray-500 font-medium">Cards, UPI & Netbanking</p>
@@ -126,13 +127,13 @@
                         </label>
 
                         <!-- Wallet Card -->
-                        <label class="relative border-2 rounded-2xl p-5 flex flex-col justify-between transition-all border-gray-200 bg-gray-50/80 opacity-50 cursor-not-allowed payment-card" id="card-wallet">
+                        <label class="relative border-2 rounded-2xl p-5 flex flex-col justify-between cursor-pointer hover:border-[#B88E2F]/50 transition-all border-gray-200 bg-white payment-card" id="card-wallet">
                             <div class="flex items-start justify-between">
                                 <div class="flex items-center gap-3">
-                                    <input type="radio" name="paymentMethod" value="Wallet" disabled class="w-4 h-4 text-gray-400 border-gray-300 focus:ring-gray-400 cursor-not-allowed">
+                                    <input type="radio" name="paymentMethod" value="Wallet" onchange="selectPayment(this)" class="w-4 h-4 text-[#B88E2F] border-gray-300 focus:ring-[#B88E2F]">
                                     <span class="font-bold text-sm text-gray-800">Wallet</span>
                                 </div>
-                                <i class="fas fa-wallet text-gray-400 text-lg"></i>
+                                <i class="fas fa-wallet text-[#B88E2F] text-lg"></i>
                             </div>
                             <div class="mt-4">
                                 <p class="text-xs text-gray-500 font-bold">Balance: ₹<%= walletBalance.toLocaleString('en-IN') %></p>
@@ -178,15 +179,29 @@
                                             if (variant) {
                                                 size = variant.size;
                                                 color = variant.color;
-                                                price = variant.price || price;
+                                                price = variant.salePrice || variant.price || price;
                                             }
                                         }
                                         
                                         let imgUrl = '/images/placeholder.png';
-                                        if (item.productImage) {
-                                            imgUrl = `/upload/products/${item.productImage}`;
-                                        } else if (item.productId.images && item.productId.images.length > 0) {
-                                            imgUrl = `/upload/products/${item.productId.images[0]}`;
+                                        if (color && item.productId.colors && item.productId.colors.length > 0) {
+                                            const selectedColor = item.productId.colors.find(c => c.name.toLowerCase() === color.toLowerCase());
+                                            if (selectedColor && selectedColor.images && selectedColor.images.length > 0) {
+                                                const firstImg = selectedColor.images[0];
+                                                imgUrl = firstImg.startsWith('http') ? firstImg : '/upload/products/' + firstImg;
+                                            }
+                                        }
+                                        if (imgUrl === '/images/placeholder.png') {
+                                            if (item.productId.images && item.productId.images.length > 0) {
+                                                const firstImg = item.productId.images[0];
+                                                imgUrl = firstImg.startsWith('http') ? firstImg : `/upload/products/${firstImg}`;
+                                            } else if (item.productId.colors && item.productId.colors.length > 0) {
+                                                const defaultColor = item.productId.colors.find(c => c.isDefault) || item.productId.colors[0];
+                                                if (defaultColor && defaultColor.images && defaultColor.images.length > 0) {
+                                                    const firstImg = defaultColor.images[0];
+                                                    imgUrl = firstImg.startsWith('http') ? firstImg : '/upload/products/' + firstImg;
+                                                }
+                                            }
                                         }
                                     %>
                                     <div class="flex gap-4 items-center pt-3 first:pt-0">
@@ -209,7 +224,18 @@
                                         </div>
                                         <div class="text-right flex-shrink-0">
                                             <p class="font-bold text-sm text-gray-800">₹<%= (price * item.quantity).toLocaleString('en-IN') %></p>
-                                            <p class="text-[10px] text-gray-400 font-semibold">₹<%= price.toLocaleString('en-IN') %> each</p>
+                                            <%
+                                                let origUnitPrice = item.productId.variants && item.productId.variants.length > 0 && item.variantId
+                                                    ? item.productId.variants.id(item.variantId).price
+                                                    : item.productId.regularPrice;
+                                            %>
+                                            <% if (origUnitPrice && origUnitPrice > price) { %>
+                                                <p class="text-[10px] text-gray-400 line-through font-semibold font-medium">₹<%= origUnitPrice.toLocaleString('en-IN') %> each</p>
+                                                <p class="text-[9px] text-[#E97171] font-black"><%= Math.round((1 - price / origUnitPrice) * 100) %>% OFF</p>
+                                                <p class="text-[9px] text-green-600 font-bold">Save ₹<%= ((origUnitPrice - price) * item.quantity).toLocaleString('en-IN') %></p>
+                                            <% } else { %>
+                                                <p class="text-[10px] text-gray-400 font-semibold">₹<%= price.toLocaleString('en-IN') %> each</p>
+                                            <% } %>
                                         </div>
                                     </div>
                                 <% } %>
@@ -249,31 +275,27 @@
                     <div class="space-y-3 text-sm border-b border-amber-100/50 pb-4">
                         <div class="flex justify-between text-gray-600">
                             <span>Subtotal</span>
-                            <span class="font-semibold text-gray-900" id="breakdown-subtotal">₹<%= totals.subtotal.toLocaleString('en-IN') %></span>
-                        </div>
-                        <div class="flex justify-between text-green-600 <%= totals.discount > 0 ? '' : 'hidden' %>">
-                            <span>Product Discounts</span>
-                            <span class="font-semibold" id="breakdown-product-discount">-₹<%= totals.discount.toLocaleString('en-IN') %></span>
-                        </div>
-                        <div class="flex justify-between text-green-600 <%= totals.couponDiscount > 0 ? '' : 'hidden' %>" id="breakdown-coupon-row">
-                            <span>Coupon Savings</span>
-                            <span class="font-bold" id="breakdown-coupon-discount">-₹<%= totals.couponDiscount.toLocaleString('en-IN') %></span>
+                            <span class="font-semibold text-gray-900" id="breakdown-subtotal">₹<%= (totals.subtotal - totals.discount).toLocaleString('en-IN') %></span>
                         </div>
                         <div class="flex justify-between text-gray-600">
-                            <span>Tax (GST 18%)</span>
+                            <span>Tax</span>
                             <span class="font-semibold text-gray-900" id="breakdown-tax">₹<%= totals.tax.toLocaleString('en-IN') %></span>
                         </div>
                         <div class="flex justify-between text-gray-600">
-                            <span>Shipping Charge</span>
+                            <span>Shipping</span>
                             <span class="font-semibold text-gray-900" id="breakdown-shipping">
                                 <%= totals.shippingCharge === 0 ? 'Free' : `₹${totals.shippingCharge.toLocaleString('en-IN')}` %>
                             </span>
+                        </div>
+                        <div class="flex justify-between text-green-600 <%= totals.couponDiscount > 0 ? '' : 'hidden' %>" id="breakdown-coupon-row">
+                            <span>Coupon Discount</span>
+                            <span class="font-bold" id="breakdown-coupon-discount">-₹<%= totals.couponDiscount.toLocaleString('en-IN') %></span>
                         </div>
                     </div>
 
                     <!-- Grand Total -->
                     <div class="flex justify-between items-end">
-                        <span class="font-bold text-gray-900">Total Amount</span>
+                        <span class="font-bold text-gray-900">Final Total</span>
                         <span class="text-2xl font-extrabold text-[#B88E2F]" id="breakdown-total">₹<%= totals.grandTotal.toLocaleString('en-IN') %></span>
                     </div>
 
@@ -397,36 +419,27 @@
                 </button>
             </div>
             <div class="p-6 overflow-y-auto space-y-4 flex-1" id="coupon-modal-body">
-                <!-- Coupon 1 -->
-                <div class="bg-white border border-amber-200 rounded-2xl p-4 flex justify-between items-center transition-all hover:shadow-md">
-                    <div class="space-y-1">
-                        <div class="flex items-center gap-2">
-                            <span class="font-extrabold text-[#B88E2F] text-base tracking-wide uppercase">WELCOME10</span>
-                            <span class="px-2 py-0.5 bg-amber-100 text-[#B88E2F] text-[9px] font-bold rounded">10% OFF</span>
+                <% if (typeof coupons !== 'undefined' && coupons && coupons.length > 0) { %>
+                    <% coupons.forEach(coupon => { %>
+                        <div class="bg-white border border-amber-200 rounded-2xl p-4 flex justify-between items-center transition-all hover:shadow-md">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-extrabold text-[#B88E2F] text-base tracking-wide uppercase"><%= coupon.code %></span>
+                                    <span class="px-2 py-0.5 bg-amber-100 text-[#B88E2F] text-[9px] font-bold rounded">
+                                        <%= coupon.discountType === 'percentage' ? `${coupon.discountValue}% OFF` : `₹${coupon.discountValue} OFF` %>
+                                    </span>
+                                </div>
+                                <p class="text-xs text-gray-500 font-medium font-bold">Min. purchase: ₹<%= coupon.minPurchase.toLocaleString('en-IN') %></p>
+                                <p class="text-[10px] text-gray-400 font-semibold">Expires: <%= new Date(coupon.expiryDate).toLocaleDateString('en-IN') %></p>
+                            </div>
+                            <button type="button" onclick="selectCouponFromModal('<%= coupon.code %>')" class="px-3 py-1.5 bg-[#B88E2F] hover:bg-[#967325] text-white text-xs font-bold rounded-xl transition-all shadow">
+                                Apply
+                            </button>
                         </div>
-                        <p class="text-xs text-gray-500 font-medium font-bold">Use code WELCOME10 on checkout</p>
-                    </div>
-                </div>
-                <!-- Coupon 2 -->
-                <div class="bg-white border border-amber-200 rounded-2xl p-4 flex justify-between items-center transition-all hover:shadow-md">
-                    <div class="space-y-1">
-                        <div class="flex items-center gap-2">
-                            <span class="font-extrabold text-[#B88E2F] text-base tracking-wide uppercase">SAVE200</span>
-                            <span class="px-2 py-0.5 bg-amber-100 text-[#B88E2F] text-[9px] font-bold rounded">Flat ₹200 OFF</span>
-                        </div>
-                        <p class="text-xs text-gray-500 font-medium font-bold">Use code SAVE200 on checkout</p>
-                    </div>
-                </div>
-                <!-- Coupon 3 -->
-                <div class="bg-white border border-amber-200 rounded-2xl p-4 flex justify-between items-center transition-all hover:shadow-md">
-                    <div class="space-y-1">
-                        <div class="flex items-center gap-2">
-                            <span class="font-extrabold text-[#B88E2F] text-base tracking-wide uppercase">FURNIRO15</span>
-                            <span class="px-2 py-0.5 bg-amber-100 text-[#B88E2F] text-[9px] font-bold rounded">15% OFF</span>
-                        </div>
-                        <p class="text-xs text-gray-500 font-medium font-bold">Use code FURNIRO15 on checkout</p>
-                    </div>
-                </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="text-center py-8 text-gray-400 font-medium italic">No coupons available right now.</div>
+                <% } %>
             </div>
             <!-- Modal Footer -->
             <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end rounded-b-3xl">
@@ -440,10 +453,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    const COD_LIMIT = 50000;
     let activeAddressId = '<%= addresses.find(a => a.isDefault)?._id || (addresses.length > 0 ? addresses[0]._id : "") %>';
     let activePaymentMethod = 'COD';
     let grandTotal = parseFloat('<%= totals.grandTotal %>') || 0;
-    let walletBalance = 5000;
+    let walletBalance = parseFloat('<%= walletBalance %>') || 0;
     let cartSubtotal = parseFloat('<%= totals.subtotal %>') || 0;
     let cartDiscount = parseFloat('<%= totals.discount %>') || 0;
     let currentNetCost = Math.max(0, cartSubtotal - cartDiscount);
@@ -545,15 +559,166 @@
         }
     }
 
-    function handleCouponAction() {
-        openCouponModal();
+    async function handleCouponAction() {
+        const input = document.getElementById('coupon-code-input');
+        const code = input.value.trim().toUpperCase();
+        const btn = document.getElementById('coupon-action-btn');
+        const isApplied = btn.textContent.trim() === 'Remove';
+
+        if (isApplied) {
+            await removeCoupon();
+        } else {
+            if (!code) {
+                openCouponModal();
+            } else {
+                await applyCoupon(code);
+            }
+        }
     }
 
-    function updatePriceBreakdown(totals) {}
+    async function applyCoupon(code) {
+        try {
+            Swal.fire({
+                title: 'Applying Coupon...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            const res = await fetch('/checkout/coupon/apply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code })
+            });
+            const data = await res.json();
+            Swal.close();
+
+            if (data.success) {
+                document.getElementById('coupon-code-input').value = data.couponCode;
+                document.getElementById('coupon-action-btn').textContent = 'Remove';
+                document.getElementById('applied-coupon-msg-container').classList.remove('hidden');
+                document.getElementById('applied-coupon-code-text').textContent = data.couponCode;
+
+                updatePriceBreakdown(data.totals);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Coupon Applied',
+                    text: data.message,
+                    confirmButtonColor: '#B88E2F'
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Coupon Failed',
+                    text: data.message,
+                    confirmButtonColor: '#B88E2F'
+                });
+            }
+        } catch (err) {
+            console.error(err);
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to apply coupon.' });
+        }
+    }
+
+    async function removeCoupon() {
+        try {
+            Swal.fire({
+                title: 'Removing Coupon...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            const res = await fetch('/checkout/coupon/remove', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+            Swal.close();
+
+            if (data.success) {
+                document.getElementById('coupon-code-input').value = '';
+                document.getElementById('coupon-action-btn').textContent = 'Apply';
+                document.getElementById('applied-coupon-msg-container').classList.add('hidden');
+
+                updatePriceBreakdown(data.totals);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Coupon Removed',
+                    text: data.message,
+                    confirmButtonColor: '#B88E2F'
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Failed to Remove',
+                    text: data.message,
+                    confirmButtonColor: '#B88E2F'
+                });
+            }
+        } catch (err) {
+            console.error(err);
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to remove coupon.' });
+        }
+    }
+
+    function selectCouponFromModal(code) {
+        closeCouponModal();
+        applyCoupon(code);
+    }
+
+    function updatePriceBreakdown(totals) {
+        const subtotal = totals.subtotal - totals.discount;
+        document.getElementById('breakdown-subtotal').textContent = '₹' + subtotal.toLocaleString('en-IN');
+        
+        const couponRow = document.getElementById('breakdown-coupon-row');
+        const couponDiscountEl = document.getElementById('breakdown-coupon-discount');
+        if (totals.couponDiscount > 0) {
+            couponRow.classList.remove('hidden');
+            couponDiscountEl.textContent = '-₹' + totals.couponDiscount.toLocaleString('en-IN');
+        } else {
+            couponRow.classList.add('hidden');
+            couponDiscountEl.textContent = '-₹0';
+        }
+        
+        document.getElementById('breakdown-tax').textContent = '₹' + totals.tax.toLocaleString('en-IN');
+        
+        const shippingEl = document.getElementById('breakdown-shipping');
+        if (totals.shippingCharge === 0) {
+            shippingEl.textContent = 'Free';
+        } else {
+            shippingEl.textContent = '₹' + totals.shippingCharge.toLocaleString('en-IN');
+        }
+        
+        document.getElementById('breakdown-total').textContent = '₹' + totals.grandTotal.toLocaleString('en-IN');
+        grandTotal = totals.grandTotal;
+        checkWalletSufficiency();
+    }
 
     function checkWalletSufficiency() {
         const warning = document.getElementById('wallet-warning');
-        if (warning) warning.classList.add('hidden');
+        const placeBtn = document.getElementById('btn-place-order');
+        if (activePaymentMethod === 'Wallet') {
+            if (walletBalance < grandTotal) {
+                if (warning) warning.classList.remove('hidden');
+                if (placeBtn) {
+                    placeBtn.disabled = true;
+                    placeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            } else {
+                if (warning) warning.classList.add('hidden');
+                if (placeBtn) {
+                    placeBtn.disabled = false;
+                    placeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+        } else {
+            if (warning) warning.classList.add('hidden');
+            if (placeBtn) {
+                placeBtn.disabled = false;
+                placeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
     }
 
     // Address selection card styling toggles
@@ -578,6 +743,14 @@
     // Payment Selection card highlight
     function selectPayment(radio) {
         activePaymentMethod = radio.value;
+        if (activePaymentMethod === 'COD' && grandTotal > COD_LIMIT) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'COD Limit Exceeded',
+                text: 'Cash on Delivery is available only for orders up to ₹50,000. Please choose Online Payment or Wallet.',
+                confirmButtonColor: '#B88E2F'
+            });
+        }
         document.querySelectorAll('.payment-card').forEach(card => {
             card.classList.remove('border-[#B88E2F]', 'bg-[#FCF9F3]');
             card.classList.add('border-gray-200', 'bg-white');
@@ -588,6 +761,7 @@
             targetCard.classList.remove('border-gray-200', 'bg-white');
             targetCard.classList.add('border-[#B88E2F]', 'bg-[#FCF9F3]');
         }
+        checkWalletSufficiency();
     }
 
     const validationRules = {
@@ -875,6 +1049,14 @@
         if (!activePaymentMethod) {
             return Swal.fire({ icon: 'warning', title: 'Select Payment', text: 'Please choose a payment option.' });
         }
+        if (activePaymentMethod === 'COD' && grandTotal > COD_LIMIT) {
+            return Swal.fire({
+                icon: 'warning',
+                title: 'COD Limit Exceeded',
+                text: 'Cash on Delivery is available only for orders up to ₹50,000. Please choose Online Payment or Wallet.',
+                confirmButtonColor: '#B88E2F'
+            });
+        }
 
 
 
@@ -920,28 +1102,99 @@
 
         if (activePaymentMethod === 'Razorpay') {
             Swal.fire({
-                title: 'Razorpay Gateway',
-                html: `
-                    <div class="text-left space-y-3 text-xs p-2 text-gray-600">
-                        <p class="font-bold text-gray-800 text-sm mb-4">Simulating Razorpay Transaction</p>
-                        <p><strong>Merchant:</strong> Furniro India</p>
-                        <p><strong>Amount Payable:</strong> <span class="font-bold text-[#B88E2F]">₹${grandTotal.toLocaleString('en-IN')}</span></p>
-                        <p class="text-gray-400 mt-2 text-[10px]">Select transaction outcome below to proceed:</p>
-                    </div>
-                `,
-                icon: 'info',
-                showCancelButton: true,
-                confirmButtonColor: '#B88E2F',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Approve Payment',
-                cancelButtonText: 'Cancel/Decline'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    placeOrderCall();
-                } else {
-                    Swal.fire({ icon: 'error', title: 'Payment Declined', text: 'Transaction cancelled by the user.', confirmButtonColor: '#B88E2F' });
+                title: 'Initializing Payment...',
+                text: 'Please wait while we connect to the payment gateway.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
                 }
             });
+
+            try {
+                // First, create the order on the server
+                const res = await fetch('/checkout/place-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+                const data = await res.json();
+                
+                if (!data.success) {
+                    Swal.fire({ icon: 'error', title: 'Checkout Failed', text: data.message, confirmButtonColor: '#B88E2F' });
+                    return;
+                }
+
+                if (!data.razorpayOrder) {
+                    Swal.fire({ icon: 'error', title: 'Gateway Error', text: 'Payment gateway failed to initialize. Please try again.', confirmButtonColor: '#B88E2F' });
+                    return;
+                }
+
+                Swal.close();
+
+                // Initialize Razorpay SDK
+                const options = {
+                    key: data.razorpayOrder.key,
+                    amount: data.razorpayOrder.amount,
+                    currency: data.razorpayOrder.currency,
+                    name: data.razorpayOrder.name,
+                    description: data.razorpayOrder.description,
+                    order_id: data.razorpayOrder.id,
+                    handler: async function (response) {
+                        try {
+                            Swal.fire({
+                                title: 'Verifying Payment...',
+                                allowOutsideClick: false,
+                                didOpen: () => { Swal.showLoading(); }
+                            });
+
+                            const verifyRes = await fetch('/checkout/verify-payment', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    orderId: data.orderId,
+                                    razorpayPaymentId: response.razorpay_payment_id,
+                                    razorpayOrderId: response.razorpay_order_id,
+                                    razorpaySignature: response.razorpay_signature
+                                })
+                            });
+                            
+                            const verifyData = await verifyRes.json();
+                            
+                            if (verifyData.success) {
+                                window.location.href = `/checkout/success/${data.orderId}`;
+                            } else {
+                                Swal.fire({ icon: 'error', title: 'Payment Verification Failed', text: verifyData.message }).then(() => {
+                                    window.location.href = `/checkout/failure/${data.orderId}`;
+                                });
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            window.location.href = `/checkout/failure/${data.orderId}`;
+                        }
+                    },
+                    prefill: data.razorpayOrder.prefill,
+                    theme: {
+                        color: "#B88E2F"
+                    },
+                    modal: {
+                        ondismiss: function() {
+                            // User closed the modal without completing payment
+                            window.location.href = `/checkout/failure/${data.orderId}`;
+                        }
+                    }
+                };
+
+                const rzp = new window.Razorpay(options);
+                rzp.on('payment.failed', function (response){
+                    // Payment failed event
+                    window.location.href = `/checkout/failure/${data.orderId}`;
+                });
+                rzp.open();
+
+            } catch (err) {
+                console.error(err);
+                Swal.fire({ icon: 'error', title: 'Error', text: 'An unexpected connection error occurred.', confirmButtonColor: '#B88E2F' });
+            }
         } else {
             placeOrderCall();
         }

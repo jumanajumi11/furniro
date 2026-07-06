@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Referral System Management - Furniro Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F9FAFB; }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+<%- include('./adminPartials/adminSidebar.ejs', { activePage: 'referrals' }) %>
+
+<main class="flex-1 p-6 lg:p-10 overflow-y-auto max-w-7xl mx-auto w-full">
+    
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">REFERRAL SYSTEM</h1>
+            <p class="text-gray-500 mt-1 text-sm font-medium">Configure program rewards, track signups, and monitor reward balances.</p>
+        </div>
+        
+        <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm">
+            <div class="text-right">
+                <p class="text-xs font-black text-[#B88E2F] uppercase tracking-widest">System Admin</p>
+                <p class="text-sm font-bold text-gray-900 leading-none mt-0.5">Jumana</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-[#B88E2F] flex items-center justify-center text-white font-extrabold text-sm shadow-inner">
+                JU
+            </div>
+        </div>
+    </div>
+
+    <!-- Referral Settings Form Card -->
+    <div class="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm mb-8">
+        <h2 class="text-base font-extrabold text-gray-900 flex items-center gap-2.5 mb-6">
+            <div class="w-8 h-8 rounded-lg bg-[#B88E2F]/10 flex items-center justify-center text-[#B88E2F]">
+                <i class="fas fa-cog text-sm"></i>
+            </div>
+            Program Settings & Rewards Configuration
+        </h2>
+
+        <form id="referralSettingsForm" class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+            <div>
+                <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Program Status</label>
+                <select name="referralEnabled"
+                        class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all cursor-pointer">
+                    <option value="true" <%= settings.referralEnabled ? 'selected' : '' %>>Enabled (Active)</option>
+                    <option value="false" <%= !settings.referralEnabled ? 'selected' : '' %>>Disabled (Inactive)</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Referrer Payout Amount (₹)</label>
+                <input type="number" name="referrerReward" min="0" value="<%= settings.referrerReward %>" required
+                       class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+            </div>
+
+            <div>
+                <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Referred User Payout Amount (₹)</label>
+                <input type="number" name="referredReward" min="0" value="<%= settings.referredReward %>" required
+                       class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+            </div>
+
+            <div class="md:col-span-3 flex justify-end pt-2">
+                <button type="submit" class="px-6 py-3 bg-[#B88E2F] hover:bg-[#9c7524] text-white font-bold text-sm rounded-2xl shadow-md transition">
+                    Save Configuration
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Payout History Table -->
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-6 border-b border-gray-50">
+            <h2 class="text-base font-extrabold text-gray-900 flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-green-600">
+                    <i class="fas fa-history text-sm"></i>
+                </div>
+                Referral History Logs
+            </h2>
+        </div>
+
+        <div class="overflow-x-auto w-full">
+            <table class="w-full text-left min-w-[850px]">
+                <thead class="bg-gray-50/75 border-b border-gray-100">
+                    <tr>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Referrer</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Referred Customer</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Referrer Reward</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Referred Reward</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Date Awarded</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    <% if (referralHistory && referralHistory.length > 0) { %>
+                        <% referralHistory.forEach(log => { %>
+                            <tr class="hover:bg-gray-50/30 transition-colors">
+                                <td class="px-6 py-5.5">
+                                    <p class="font-bold text-gray-800 text-xs"><%= log.referrer ? log.referrer.name : 'System User' %></p>
+                                    <p class="text-[10px] text-gray-400 font-medium mt-0.5"><%= log.referrer ? log.referrer.email : '' %></p>
+                                </td>
+                                
+                                <td class="px-6 py-5.5">
+                                    <p class="font-bold text-gray-800 text-xs"><%= log.referred ? log.referred.name : 'System User' %></p>
+                                    <p class="text-[10px] text-gray-400 font-medium mt-0.5"><%= log.referred ? log.referred.email : '' %></p>
+                                </td>
+
+                                <td class="px-6 py-5.5 text-xs text-green-600 font-bold">
+                                    +₹<%= log.referrerReward %>
+                                </td>
+
+                                <td class="px-6 py-5.5 text-xs text-green-600 font-bold">
+                                    +₹<%= log.referredReward %>
+                                </td>
+
+                                <td class="px-6 py-5.5 text-xs text-gray-500 font-semibold">
+                                    <%= new Date(log.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+                                </td>
+                                
+                                <td class="px-6 py-5.5 text-center">
+                                    <span class="inline-block text-[9px] uppercase font-black px-2.5 py-1 bg-green-50 border border-green-200 text-green-700 rounded-full tracking-wider">
+                                        <%= log.status || 'Completed' %>
+                                    </span>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="6" class="py-14 text-center text-gray-400 font-bold italic">
+                                <i class="fas fa-users-cog text-3xl text-gray-200 mb-3 block"></i>
+                                No referrals processed yet.
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<script>
+    const defaultColor = '#B88E2F';
+
+    // Submit referral settings configuration
+    document.getElementById('referralSettingsForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const body = Object.fromEntries(formData.entries());
+
+        Swal.fire({
+            title: 'Saving changes...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        try {
+            const response = await fetch('/admin/referrals/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Configuration Saved!',
+                    text: data.message,
+                    timer: 1500,
+                    showConfirmButton: false,
+                    customClass: { popup: 'rounded-2xl' }
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Failed to save',
+                    text: data.message,
+                    confirmButtonColor: defaultColor,
+                    customClass: { popup: 'rounded-2xl' }
+                });
+            }
+        } catch (err) {
+            console.error('Update referral settings error:', err);
+        }
+    });
+</script>
+
+</body>
+</html>

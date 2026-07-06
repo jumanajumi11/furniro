@@ -15,7 +15,6 @@
 </head>
 <body class="flex min-h-screen">
 
- 
 <%- include('./adminPartials/adminSidebar.ejs', { activePage: 'customers' }) %>
 
     <main class="flex-1 p-8 lg:p-12 overflow-y-auto">
@@ -23,7 +22,13 @@
         <div class="flex justify-between items-center mb-10">
             <div>
                 <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight uppercase">Customer Management</h1>
-                <p class="text-gray-500 mt-1 text-sm font-medium">Monitor customer activity and manage account statuses.</p>
+                <p class="text-gray-500 mt-1 text-sm font-medium">
+                    Monitor customer activity and manage account statuses.
+                    <span class="ml-2 bg-[#B88E2F]/10 text-[#B88E2F] px-2.5 py-0.5 rounded-full text-xs font-bold">Total overall: <%= totalNonAdmins %></span>
+                    <% if (search || status) { %>
+                        <span class="ml-2 bg-indigo-50 text-indigo-600 px-2.5 py-0.5 rounded-full text-xs font-bold">Found: <%= totalUsers %></span>
+                    <% } %>
+                </p>
             </div>
             
             <div class="flex items-center gap-6">
@@ -50,31 +55,38 @@
             <form action="/admin/customers" method="GET" class="flex flex-wrap items-center gap-4">
                 <div class="relative flex-1 min-w-[300px]">
                     <input type="text" name="search" id="searchInput" value="<%= search %>" 
-                           placeholder="Search users by name or email..." 
+                           placeholder="Search users by name, email, or phone..." 
                            class="w-full pl-12 pr-10 py-3.5 bg-gray-50/50 border border-gray-100 rounded-xl text-sm font-medium focus:outline-none focus:ring-4 focus:ring-[#B88E2F]/5 focus:border-[#B88E2F] transition-all">
                     <svg class="w-5 h-5 absolute left-4 top-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     
                     <% if(search) { %>
-                        <a href="/admin/customers" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600">
+                        <a href="/admin/customers?status=<%= status %>&sort=<%= sort %>" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                         </a>
                     <% } %>
                 </div>
 
                 <select name="status" onchange="this.form.submit()" class="bg-white border border-gray-100 text-gray-500 text-sm font-bold rounded-xl px-6 py-3.5 pr-12 outline-none cursor-pointer hover:border-[#B88E2F] transition-all">
-    <option value="">All Statuses</option>
-    <option value="active" <%= status === 'active' ? 'selected' : '' %>>Active</option>
-    <option value="blocked" <%= status === 'blocked' ? 'selected' : '' %>>Blocked</option>
-</select>
+                    <option value="">All Statuses</option>
+                    <option value="active" <%= status === 'active' ? 'selected' : '' %>>Active</option>
+                    <option value="blocked" <%= status === 'blocked' ? 'selected' : '' %>>Blocked</option>
+                </select>
 
-<select name="sort" onchange="this.form.submit()" class="bg-white border border-gray-100 text-gray-500 text-sm font-bold rounded-xl px-6 py-3.5 pr-12 outline-none cursor-pointer hover:border-[#B88E2F] transition-all">
-    <option value="desc" <%= sort === 'desc' ? 'selected' : '' %>>Newest First</option>
-    <option value="asc" <%= sort === 'asc' ? 'selected' : '' %>>Oldest First</option>
-</select>
+                <select name="sort" onchange="this.form.submit()" class="bg-white border border-gray-100 text-gray-500 text-sm font-bold rounded-xl px-6 py-3.5 pr-12 outline-none cursor-pointer hover:border-[#B88E2F] transition-all">
+                    <option value="desc" <%= (sort === 'desc' || sort === 'newest') ? 'selected' : '' %>>Newest First</option>
+                    <option value="asc" <%= (sort === 'asc' || sort === 'oldest') ? 'selected' : '' %>>Oldest First</option>
+                    <option value="name_az" <%= sort === 'name_az' ? 'selected' : '' %>>Name A-Z</option>
+                    <option value="name_za" <%= sort === 'name_za' ? 'selected' : '' %>>Name Z-A</option>
+                </select>
                 
-                <button type="submit" class="bg-[#5C59E8] hover:bg-[#4A47D1] text-white px-10 py-3.5 rounded-xl font-bold text-sm transition-all shadow-lg shadow-indigo-100 uppercase tracking-wider">
-                    Search
-                </button>
+                <div class="flex gap-2">
+                    <button type="submit" class="bg-[#5C59E8] hover:bg-[#4A47D1] text-white px-8 py-3.5 rounded-xl font-bold text-sm transition-all shadow-lg shadow-indigo-100 uppercase tracking-wider">
+                        Search
+                    </button>
+                    <a href="/admin/customers" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-8 py-3.5 rounded-xl font-bold text-sm transition-all text-center uppercase tracking-wider flex items-center justify-center">
+                        Clear
+                    </a>
+                </div>
             </form>
         </div>
 
@@ -82,26 +94,68 @@
             <table class="w-full text-left">
                 <thead class="bg-gray-50/50 border-b border-gray-100">
                     <tr>
+                        <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.15em]">#</th>
                         <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.15em]">User</th>
                         <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.15em]">Email</th>
+                        <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.15em]">Phone Number</th>
+                        <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.15em]">Referral Code</th>
                         <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.15em]">Joined Date</th>
                         <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] text-center">Status</th>
                         <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
-                    <% users.forEach(user => { %>
+                    <% if (users.length === 0) { %>
+                    <tr>
+                        <td colspan="8" class="px-8 py-12 text-center text-gray-400 font-medium">
+                            No customers found matching the search/filter criteria.
+                        </td>
+                    </tr>
+                    <% } %>
+                    <% users.forEach((user, index) => { %>
                     <tr class="hover:bg-gray-50/20 transition-colors">
+                        <td class="px-8 py-6 text-sm text-gray-500 font-bold">
+                            <%= ((currentPage - 1) * limit) + index + 1 %>
+                        </td>
                         <td class="px-8 py-6">
                             <div class="flex items-center gap-4">
-                                <div class="w-11 h-11 rounded-full overflow-hidden border-2 border-white shadow-sm bg-gray-100">
-                                    <img src="<%= user.image ? '/upload/' + user.image : 'https://ui-avatars.com/api/?name=' + user.name + '&background=F3F4F6&color=6B7280&bold=true' %>" class="w-full h-full object-cover">
+                                <div class="w-11 h-11 rounded-full overflow-hidden border-2 border-white shadow-sm relative flex items-center justify-center">
+                                    <% if (user && user.image) { %>
+                                        <img
+                                            src="<%= user.image.startsWith('http') || user.image.startsWith('/') ? user.image : '/upload/' + user.image %>"
+                                            alt="Avatar"
+                                            class="w-full h-full object-cover"
+                                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                        >
+                                        <div
+                                            style="display:none"
+                                            class="w-full h-full bg-[#B88E2F] text-white font-bold flex items-center justify-center text-sm uppercase"
+                                        >
+                                            <%= (user.name || 'U').charAt(0).toUpperCase() %>
+                                        </div>
+                                    <% } else { %>
+                                        <div class="w-full h-full bg-[#B88E2F] text-white font-bold flex items-center justify-center text-sm uppercase">
+                                            <%= (user.name || 'U').charAt(0).toUpperCase() %>
+                                        </div>
+                                    <% } %>
                                 </div>
                                 <p class="font-bold text-gray-900 text-sm tracking-tight"><%= user.name %></p>
                             </div>
                         </td>
                         <td class="px-8 py-6">
                             <p class="text-xs text-gray-400 font-medium italic"><%= user.email %></p>
+                        </td>
+                        <td class="px-8 py-6 text-sm text-gray-700 font-medium">
+                            <%= user.phone || 'N/A' %>
+                        </td>
+                        <td class="px-8 py-6">
+                            <% if (user.referralCode) { %>
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-orange-50 text-[#B88E2F]">
+                                    <%= user.referralCode %>
+                                </span>
+                            <% } else { %>
+                                <span class="text-xs text-gray-400 italic">None</span>
+                            <% } %>
                         </td>
                         <td class="px-8 py-6">
                             <div class="text-sm">
@@ -125,24 +179,50 @@
                 </tbody>
             </table>
 
-            <div class="px-8 py-8 border-t border-gray-50 flex items-center justify-between bg-white">
-                <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">Page <%= currentPage %> of <%= totalPages %></p>
+            <% if (totalPages > 0) { %>
+            <div class="px-8 py-8 border-t border-gray-50 flex items-center justify-between bg-white flex-wrap gap-4">
+                <div class="flex items-center gap-2">
+                    <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">Page <%= currentPage %> of <%= totalPages %></p>
+                    <span class="text-xs text-gray-400">| Showing <%= users.length %> of <%= totalUsers %> entries</span>
+                </div>
                 <div class="flex gap-2">
+                    <% if (currentPage > 1) { %>
+                        <a href="?page=<%= currentPage - 1 %>&search=<%= search %>&status=<%= status %>&sort=<%= sort %>" 
+                           class="w-12 h-10 flex items-center justify-center rounded-xl text-xs font-black transition-all bg-gray-50 text-gray-400 hover:bg-gray-100">
+                            Prev
+                        </a>
+                    <% } else { %>
+                        <span class="w-12 h-10 flex items-center justify-center rounded-xl text-xs font-black bg-gray-100/50 text-gray-300 cursor-not-allowed">
+                            Prev
+                        </span>
+                    <% } %>
+
                     <% for(let i = 1; i <= totalPages; i++) { %>
-                        <a href="?page=<%= i %>&search=<%= search %>" 
+                        <a href="?page=<%= i %>&search=<%= search %>&status=<%= status %>&sort=<%= sort %>" 
                            class="w-10 h-10 flex items-center justify-center rounded-xl text-xs font-black transition-all <%= currentPage == i ? 'bg-[#5C59E8] text-white shadow-xl shadow-indigo-100' : 'bg-gray-50 text-gray-400 hover:bg-gray-100' %>">
                             <%= i %>
                         </a>
                     <% } %>
+
+                    <% if (currentPage < totalPages) { %>
+                        <a href="?page=<%= currentPage + 1 %>&search=<%= search %>&status=<%= status %>&sort=<%= sort %>" 
+                           class="w-12 h-10 flex items-center justify-center rounded-xl text-xs font-black transition-all bg-gray-50 text-gray-400 hover:bg-gray-100">
+                            Next
+                        </a>
+                    <% } else { %>
+                        <span class="w-12 h-10 flex items-center justify-center rounded-xl text-xs font-black bg-gray-100/50 text-gray-300 cursor-not-allowed">
+                            Next
+                        </span>
+                    <% } %>
                 </div>
             </div>
+            <% } %>
         </div>
     </main>
 
     <script>
         
 function confirmToggleBlock(userId, isBlocked) {
-    
     let currentStatus = (isBlocked === 'true' || isBlocked === true);
 
     Swal.fire({
@@ -176,7 +256,6 @@ function confirmToggleBlock(userId, isBlocked) {
                         customClass: { popup: 'rounded-[2rem]' } 
                     });
 
-                    
                     const allBtns = document.querySelectorAll('button[onclick]');
                     let btn;
                     allBtns.forEach(b => {
@@ -186,22 +265,14 @@ function confirmToggleBlock(userId, isBlocked) {
                     });
                     
                     if (btn) {
-                        
                         btn.innerText = data.isBlocked ? 'Unblock' : 'Block';
-                        
-                        
                         if (data.isBlocked) {
-                            
                             btn.className = "inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all bg-green-500 text-white shadow-green-100 px-5 py-2.5 rounded-lg shadow-lg hover:opacity-90";
                         } else {
-                            
                             btn.className = "inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all bg-[#F43F5E] text-white shadow-red-100 px-5 py-2.5 rounded-lg shadow-lg hover:opacity-90";
                         }
-
-                        
                         btn.setAttribute('onclick', `confirmToggleBlock('${userId}', ${data.isBlocked})`);
 
-                        
                         const badge = btn.closest('tr').querySelector('td span');
                         if (badge) {
                             badge.innerText = data.isBlocked ? 'Blocked' : 'Active';
@@ -218,33 +289,6 @@ function confirmToggleBlock(userId, isBlocked) {
             });
         }
     });
-}
-
-        
-
-// Admin side script
-async function handleBlockStatus(userId) {
-    const response = await fetch(`/admin/customers/toggle-block/${userId}`, { method: 'PATCH' });
-    const data = await response.json();
-
-    if (data.success) {
-        
-
-        Swal.fire({
-            title: 'Updated!',
-            text: data.isBlocked ? 'User Blocked' : 'User Unblocked',
-            icon: 'success',
-            timer: 1000,
-            showConfirmButton: false
-        });
-
-        
-        const btn = document.querySelector(`button[onclick*="${userId}"]`);
-        if (btn) {
-            btn.innerText = data.isBlocked ? 'Unblock' : 'Block';
-            btn.style.backgroundColor = data.isBlocked ? '#10B981' : '#EF4444';
-        }
-    }
 }
 </script>
 </body>

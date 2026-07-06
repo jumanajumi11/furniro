@@ -122,16 +122,16 @@
                                     <%
                                         let prodName = 'Unavailable Product';
                                         let imgSrc = '/images/placeholder.png';
-                                        let size = '';
-                                        let color = '';
+                                        let size = item.size || '';
+                                        let color = item.color || '';
 
                                         if (item.productId) {
                                             prodName = item.productId.productName;
-                                            if (item.productId.images && item.productId.images.length > 0) {
-                                                const rawImg = item.productId.images[0];
-                                                imgSrc = rawImg.startsWith('http') ? rawImg : '/upload/products/' + rawImg;
+                                            let imgRaw = item.image || (item.productId.images && item.productId.images.length > 0 ? item.productId.images[0] : null);
+                                            if (imgRaw) {
+                                                imgSrc = imgRaw.startsWith('http') ? imgRaw : '/upload/products/' + imgRaw;
                                             }
-                                            if (item.productId.variants && item.productId.variants.length > 0 && item.variantId) {
+                                            if (!size && !color && item.productId.variants && item.productId.variants.length > 0 && item.variantId) {
                                                 const variant = item.productId.variants.id(item.variantId);
                                                 if (variant) {
                                                     size = variant.size;
@@ -199,9 +199,12 @@
                             <span class="font-bold text-gray-700">₹<%= order.shippingCharge.toLocaleString('en-IN') %></span>
                         </div>
                         <div class="border-t border-dashed border-gray-100 my-2"></div>
+                        <%
+                            const returnSubtotal = returnRequest.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                        %>
                         <div class="flex justify-between items-center pt-1">
-                            <span class="text-xs font-black text-gray-900 uppercase">Grand Total (Refund amount)</span>
-                            <span class="text-base font-extrabold text-[#B88E2F]">₹<%= order.grandTotal.toLocaleString('en-IN') %></span>
+                            <span class="text-xs font-black text-gray-900 uppercase">Return Subtotal</span>
+                            <span class="text-base font-extrabold text-[#B88E2F]">₹<%= returnSubtotal.toLocaleString('en-IN') %></span>
                         </div>
                     </div>
                 </div>
@@ -224,13 +227,27 @@
                     </div>
                 </div>
 
-                <!-- Customer Details -->
                 <div class="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm card">
                     <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Customer Details</h3>
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-[#B88E2F] text-white font-bold flex items-center justify-center shadow-sm text-sm uppercase">
-                            <%= (user.name || 'C').charAt(0) %>
-                        </div>
+                        <% if (user && user.image) { %>
+                            <img
+                                src="<%= user.image.startsWith('http') || user.image.startsWith('/') ? user.image : '/upload/' + user.image %>"
+                                alt="Avatar"
+                                class="w-10 h-10 rounded-full object-cover shadow-sm flex-shrink-0"
+                                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                            >
+                            <div
+                                style="display:none"
+                                class="w-10 h-10 rounded-full bg-[#B88E2F] text-white font-bold flex items-center justify-center shadow-sm text-sm uppercase flex-shrink-0"
+                            >
+                                <%= (user.name || 'C').charAt(0).toUpperCase() %>
+                            </div>
+                        <% } else { %>
+                            <div class="w-10 h-10 rounded-full bg-[#B88E2F] text-white font-bold flex items-center justify-center shadow-sm text-sm uppercase flex-shrink-0">
+                                <%= (user.name || 'C').charAt(0).toUpperCase() %>
+                            </div>
+                        <% } %>
                         <div>
                             <p class="font-bold text-gray-800 text-xs"><%= user.name || 'Guest' %></p>
                             <p class="text-[10px] text-gray-400 font-medium mt-0.5"><%= user.email %></p>
@@ -295,7 +312,7 @@
                 });
 
                 try {
-                    const response = await fetch('/admin/orders/<%= order._id %>/return-request/approve', {
+                    const response = await fetch('/admin/return-requests/<%= returnRequest._id %>/approve', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' }
                     });
@@ -367,7 +384,7 @@
                 });
 
                 try {
-                    const response = await fetch('/admin/orders/<%= order._id %>/return-request/reject', {
+                    const response = await fetch('/admin/return-requests/<%= returnRequest._id %>/reject', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ reason: result.value })

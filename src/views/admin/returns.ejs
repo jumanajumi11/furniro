@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Return Requests Management - Furniro Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F9FAFB; }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+<%- include('./adminPartials/adminSidebar.ejs', { activePage: 'returns' }) %>
+
+<main class="flex-1 p-6 lg:p-10 overflow-y-auto max-w-7xl mx-auto w-full">
+    
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">RETURN REQUESTS</h1>
+            <p class="text-gray-500 mt-1 text-sm font-medium">Manage return requests, inspect reasons, and handle refunds.</p>
+        </div>
+        
+        <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm">
+            <div class="text-right">
+                <p class="text-xs font-black text-[#B88E2F] uppercase tracking-widest">System Admin</p>
+                <p class="text-sm font-bold text-gray-900 leading-none mt-0.5">Jumana</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-[#B88E2F] flex items-center justify-center text-white font-extrabold text-sm shadow-inner">
+                JU
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtering UI Tabs -->
+    <div class="flex flex-wrap gap-2 mb-6 border-b border-gray-100 pb-4">
+        <a href="/admin/returns?status=All&search=<%= encodeURIComponent(search) %>&sortBy=<%= sortBy %>" 
+           class="px-4 py-2 text-xs font-bold rounded-2xl border transition-all <%= status === 'All' || !status ? 'bg-[#B88E2F] text-white border-[#B88E2F] shadow-md shadow-[#B88E2F]/10' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50' %>">
+            All Requests
+        </a>
+        <a href="/admin/returns?status=Requested&search=<%= encodeURIComponent(search) %>&sortBy=<%= sortBy %>" 
+           class="px-4 py-2 text-xs font-bold rounded-2xl border transition-all <%= status === 'Requested' ? 'bg-[#B88E2F] text-white border-[#B88E2F] shadow-md shadow-[#B88E2F]/10' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50' %>">
+            Pending Approval
+        </a>
+        <a href="/admin/returns?status=Approved&search=<%= encodeURIComponent(search) %>&sortBy=<%= sortBy %>" 
+           class="px-4 py-2 text-xs font-bold rounded-2xl border transition-all <%= status === 'Approved' ? 'bg-[#B88E2F] text-white border-[#B88E2F] shadow-md shadow-[#B88E2F]/10' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50' %>">
+            Approved (Returned)
+        </a>
+        <a href="/admin/returns?status=Rejected&search=<%= encodeURIComponent(search) %>&sortBy=<%= sortBy %>" 
+           class="px-4 py-2 text-xs font-bold rounded-2xl border transition-all <%= status === 'Rejected' ? 'bg-[#B88E2F] text-white border-[#B88E2F] shadow-md shadow-[#B88E2F]/10' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50' %>">
+            Rejected
+        </a>
+    </div>
+
+    <!-- Filters, Search & Sorting -->
+    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-5 mb-6">
+        <form method="GET" action="/admin/returns" class="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
+            <input type="hidden" name="page" value="1">
+            <input type="hidden" name="status" value="<%= status %>">
+            
+            <div class="flex-1 flex flex-col sm:flex-row gap-3">
+                <div class="relative flex-1 min-w-[240px]">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                        <i class="fas fa-search text-sm"></i>
+                    </span>
+                    <input type="text" name="search" placeholder="Search by Order Code, Username..." value="<%= search || '' %>"
+                           class="w-full bg-gray-50 border border-gray-100 text-gray-800 text-sm rounded-2xl pl-10 pr-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                </div>
+            </div>
+
+            <div class="flex flex-wrap sm:flex-nowrap gap-3 items-center">
+                <div class="relative w-full sm:w-48">
+                    <select name="sortBy" onchange="this.form.submit()"
+                            class="w-full bg-gray-50 border border-gray-100 text-gray-700 text-sm rounded-2xl pl-4 pr-10 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all cursor-pointer">
+                        <option value="newest" <%= sortBy === 'newest' ? 'selected' : '' %>>Newest First</option>
+                        <option value="oldest" <%= sortBy === 'oldest' ? 'selected' : '' %>>Oldest First</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <button type="submit" class="flex-1 sm:flex-none px-6 py-3 bg-[#B88E2F] text-white font-bold text-sm rounded-2xl hover:bg-[#9c7524] shadow-md shadow-[#B88E2F]/10 transition">
+                        Apply
+                    </button>
+                    <a href="/admin/returns" class="px-5 py-3 bg-gray-100 text-gray-600 font-bold text-sm rounded-2xl hover:bg-gray-200 transition text-center flex items-center justify-center">
+                        Clear
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Returns Table Container -->
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto w-full">
+            <table class="w-full text-left min-w-[950px]">
+                <thead class="bg-gray-50/75 border-b border-gray-100 sticky top-0 backdrop-blur-md">
+                    <tr>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Order ID</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Customer</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Reason</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Refund Amount</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider text-center">Status</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    <% if (returnRequests && returnRequests.length > 0) { %>
+                        <% returnRequests.forEach(req => { %>
+                            <tr class="hover:bg-gray-50/30 transition-colors">
+                                <td class="px-6 py-5.5">
+                                    <p class="font-bold text-gray-900 text-sm">
+                                        <%= req.orderId ? (req.orderId.orderNumber || req.orderId._id) : 'N/A' %>
+                                    </p>
+                                </td>
+                                
+                                <td class="px-6 py-5.5 text-xs text-gray-500 font-semibold">
+                                    <%= new Date(req.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) %>
+                                </td>
+                                
+                                <td class="px-6 py-5.5">
+                                    <div>
+                                        <p class="font-bold text-gray-800 text-xs"><%= req.userId ? req.userId.name : 'Unknown User' %></p>
+                                        <p class="text-[10px] text-gray-400 font-medium italic mt-0.5"><%= req.userId ? req.userId.email : '' %></p>
+                                    </div>
+                                </td>
+                                
+                                <td class="px-6 py-5.5 text-xs text-gray-600 font-medium max-w-xs truncate" title="<%= req.reason %>">
+                                    <%= req.reason %>
+                                </td>
+
+                                <td class="px-6 py-5.5">
+                                    <p class="font-extrabold text-[#B88E2F] text-sm">
+                                        ₹<%= req.items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString('en-IN') %>
+                                    </p>
+                                </td>
+                                
+                                <td class="px-6 py-5.5 text-center">
+                                    <%
+                                        let statusColor = 'bg-gray-100 text-gray-700 border-gray-200';
+                                        if (req.status === 'Requested') statusColor = 'bg-orange-100 text-orange-700 border-orange-200';
+                                        else if (req.status === 'Approved') statusColor = 'bg-green-100 text-green-700 border-green-200';
+                                        else if (req.status === 'Rejected') statusColor = 'bg-rose-100 text-rose-700 border-rose-200';
+                                    %>
+                                    <span class="inline-block text-[9px] uppercase font-black px-3 py-1 rounded-full border tracking-wide <%= statusColor %>">
+                                        <%= req.status %>
+                                    </span>
+                                </td>
+                                
+                                <td class="px-6 py-5.5 text-right">
+                                    <% if (req.orderId) { %>
+                                        <a href="/admin/return-requests/<%= req._id %>"
+                                           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-100 text-gray-500 hover:bg-[#B88E2F] hover:text-white hover:border-[#B88E2F] transition text-[10px] font-bold shadow-sm">
+                                            <i class="fas fa-eye text-[10px]"></i> View & Action
+                                        </a>
+                                    <% } else { %>
+                                        <span class="text-xs text-gray-400 italic">No Order Data</span>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="7" class="py-14 text-center text-gray-400 font-bold italic">
+                                <i class="fas fa-inbox text-3xl text-gray-200 mb-3 block"></i>
+                                No return requests found.
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Footer -->
+        <% if (totalPages > 1) { %>
+            <div class="px-6 py-5 bg-gray-50/50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <span class="text-xs text-gray-500 font-medium">
+                    Showing Page <%= currentPage %> of <%= totalPages %>
+                </span>
+                
+                <div class="flex items-center gap-1.5">
+                    <% if (currentPage > 1) { %>
+                        <a href="/admin/returns?page=<%= currentPage - 1 %>&search=<%= encodeURIComponent(search) %>&status=<%= status %>&sortBy=<%= sortBy %>" 
+                           class="w-9 h-9 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-100 transition flex items-center justify-center text-xs font-bold shadow-sm">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    <% } %>
+
+                    <% for (let i = 1; i <= totalPages; i++) { %>
+                        <% if (i === currentPage) { %>
+                            <span class="w-9 h-9 bg-[#B88E2F] text-white rounded-xl flex items-center justify-center text-xs font-black shadow-md">
+                                <%= i %>
+                            </span>
+                        <% } else { %>
+                            <a href="/admin/returns?page=<%= i %>&search=<%= encodeURIComponent(search) %>&status=<%= status %>&sortBy=<%= sortBy %>"
+                               class="w-9 h-9 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-100 transition flex items-center justify-center text-xs font-bold shadow-sm">
+                                <%= i %>
+                            </a>
+                        <% } %>
+                    <% } %>
+
+                    <% if (currentPage < totalPages) { %>
+                        <a href="/admin/returns?page=<%= currentPage + 1 %>&search=<%= encodeURIComponent(search) %>&status=<%= status %>&sortBy=<%= sortBy %>" 
+                           class="w-9 h-9 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-100 transition flex items-center justify-center text-xs font-bold shadow-sm">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    <% } %>
+                </div>
+            </div>
+        <% } %>
+    </div>
+</main>
+
+</body>
+</html>

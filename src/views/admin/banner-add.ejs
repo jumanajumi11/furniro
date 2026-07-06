@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Banner - Furniro Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F9FAFB; }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+<%- include('./adminPartials/adminSidebar.ejs', { activePage: 'banners' }) %>
+
+<main class="flex-1 p-6 lg:p-10 overflow-y-auto max-w-4xl mx-auto w-full">
+    
+    <!-- Breadcrumbs & Header -->
+    <div class="mb-8">
+        <div class="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+            <a href="/admin/banners" class="hover:text-[#B88E2F]">Banners</a>
+            <span>/</span>
+            <span class="text-gray-600">Create Banner</span>
+        </div>
+        <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Create Banner</h1>
+        <p class="text-gray-500 mt-1 text-sm font-medium">Add a new advertising banner slider to your retail homepage.</p>
+    </div>
+
+    <!-- Form Container -->
+    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 sm:p-8">
+        <form id="createBannerForm" enctype="multipart/form-data" class="space-y-6">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Title -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Banner Title *</label>
+                    <input type="text" name="title" required placeholder="Enter main headline"
+                           class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                </div>
+
+                <!-- Subtitle -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Banner Subtitle (Optional)</label>
+                    <input type="text" name="subtitle" placeholder="Enter secondary text"
+                           class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Banner Description (Optional)</label>
+                <textarea name="description" rows="3" placeholder="Enter a brief promotional text details..."
+                          class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all"></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Redirect Type -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Redirect Type *</label>
+                    <select name="redirectType" id="redirectType" required onchange="handleRedirectTypeChange()"
+                            class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                        <option value="No Redirect">No Redirect</option>
+                        <option value="Shop Page">Shop Page</option>
+                        <option value="Product Details Page">Product Details Page</option>
+                        <option value="Category Page">Category Page</option>
+                        <option value="Brand Page">Brand Page</option>
+                        <option value="Offer Page">Offer Page</option>
+                        <option value="External URL">External URL</option>
+                    </select>
+                </div>
+
+                <!-- Redirect Target (Dynamically displayed based on selection) -->
+                <div id="targetContainer" class="hidden">
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Redirect Target *</label>
+                    
+                    <!-- Targets inputs -->
+                    <select id="targetProduct" class="hidden w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                        <option value="">Select a Product</option>
+                        <% products.forEach(prod => { %>
+                            <option value="<%= prod._id %>"><%= prod.productName %></option>
+                        <% }) %>
+                    </select>
+
+                    <select id="targetCategory" class="hidden w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                        <option value="">Select a Category</option>
+                        <% categories.forEach(cat => { %>
+                            <option value="<%= cat.name %>"><%= cat.name %></option>
+                        <% }) %>
+                    </select>
+
+                    <select id="targetBrand" class="hidden w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                        <option value="">Select a Brand</option>
+                        <% brands.forEach(brand => { %>
+                            <option value="<%= brand %>"><%= brand %></option>
+                        <% }) %>
+                    </select>
+
+                    <select id="targetOffer" class="hidden w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                        <option value="true">Active Offers (Show All Products Under Promotion)</option>
+                    </select>
+
+                    <input type="url" id="targetUrl" placeholder="https://example.com" class="hidden w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Button Text -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Button Text *</label>
+                    <input type="text" name="buttonText" required value="Shop Now" placeholder="e.g. Shop Now, Discover"
+                           class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                </div>
+
+                <!-- Display Order -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Display Order (Priority) *</label>
+                    <input type="number" name="displayOrder" required value="0" min="0"
+                           class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Start Date -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Start Date *</label>
+                    <input type="date" name="startDate" id="startDate" required
+                           class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                </div>
+
+                <!-- End Date -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">End Date *</label>
+                    <input type="date" name="endDate" id="endDate" required
+                           class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Image Upload -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Banner Image * (JPG, JPEG, PNG, WEBP, Max 5MB)</label>
+                    <input type="file" name="bannerImage" id="bannerImage" required accept="image/*" onchange="previewImage(event)"
+                           class="w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#B88E2F]/10 file:text-[#B88E2F] hover:file:bg-[#B88E2F]/20 file:cursor-pointer">
+                    
+                    <div id="imagePreviewContainer" class="hidden mt-4 w-48 h-24 rounded-lg overflow-hidden border border-gray-200 shadow-inner bg-gray-50">
+                        <img id="imagePreview" src="" alt="Preview" class="w-full h-full object-cover">
+                    </div>
+                </div>
+
+                <!-- Status -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Status *</label>
+                    <select name="status" required
+                            class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Submit buttons -->
+            <div class="flex justify-end gap-3 border-t border-gray-100 pt-6">
+                <a href="/admin/banners" class="px-6 py-3 bg-gray-100 text-gray-600 font-bold text-sm rounded-2xl hover:bg-gray-200 transition">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-3 bg-[#B88E2F] hover:bg-[#9c7524] text-white font-bold text-sm rounded-2xl shadow-md shadow-[#B88E2F]/15 transition">
+                    Save Banner
+                </button>
+            </div>
+
+        </form>
+    </div>
+</main>
+
+<script>
+    function handleRedirectTypeChange() {
+        const type = document.getElementById('redirectType').value;
+        const targetContainer = document.getElementById('targetContainer');
+        const prod = document.getElementById('targetProduct');
+        const cat = document.getElementById('targetCategory');
+        const brand = document.getElementById('targetBrand');
+        const offer = document.getElementById('targetOffer');
+        const url = document.getElementById('targetUrl');
+
+        // Hide all target inputs first
+        prod.classList.add('hidden');
+        cat.classList.add('hidden');
+        brand.classList.add('hidden');
+        offer.classList.add('hidden');
+        url.classList.add('hidden');
+        targetContainer.classList.add('hidden');
+
+        // Show corresponding input
+        if (type === 'Product Details Page') {
+            targetContainer.classList.remove('hidden');
+            prod.classList.remove('hidden');
+        } else if (type === 'Category Page') {
+            targetContainer.classList.remove('hidden');
+            cat.classList.remove('hidden');
+        } else if (type === 'Brand Page') {
+            targetContainer.classList.remove('hidden');
+            brand.classList.remove('hidden');
+        } else if (type === 'Offer Page') {
+            targetContainer.classList.remove('hidden');
+            offer.classList.remove('hidden');
+        } else if (type === 'External URL') {
+            targetContainer.classList.remove('hidden');
+            url.classList.remove('hidden');
+        }
+    }
+
+    function previewImage(event) {
+        const input = event.target;
+        const previewContainer = document.getElementById('imagePreviewContainer');
+        const preview = document.getElementById('imagePreview');
+
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                previewContainer.classList.remove('hidden');
+            }
+            reader.readAsDataURL(input.files[0]);
+        } else {
+            previewContainer.classList.add('hidden');
+        }
+    }
+
+    document.getElementById('createBannerForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const form = e.target;
+        const formData = new FormData(form);
+
+        // Append correct target based on redirect type
+        const type = document.getElementById('redirectType').value;
+        let target = '';
+        if (type === 'Product Details Page') {
+            target = document.getElementById('targetProduct').value;
+        } else if (type === 'Category Page') {
+            target = document.getElementById('targetCategory').value;
+        } else if (type === 'Brand Page') {
+            target = document.getElementById('targetBrand').value;
+        } else if (type === 'Offer Page') {
+            target = document.getElementById('targetOffer').value;
+        } else if (type === 'External URL') {
+            target = document.getElementById('targetUrl').value;
+        }
+        
+        formData.append('redirectTarget', target);
+
+        // Frontend validation
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+
+        if (new Date(endDate) <= new Date(startDate)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid Dates',
+                text: 'End Date must be after Start Date.'
+            });
+            return;
+        }
+
+        const imageInput = document.getElementById('bannerImage');
+        if (imageInput.files.length > 0) {
+            const file = imageInput.files[0];
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Format',
+                    text: 'Please upload JPG, JPEG, PNG, or WEBP image only.'
+                });
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'File Too Large',
+                    text: 'Banner image size must not exceed 5MB.'
+                });
+                return;
+            }
+        }
+
+        try {
+            Swal.showLoading();
+            const response = await fetch('/admin/banners', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: result.message,
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.href = '/admin/banners';
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: result.message
+                });
+            }
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Something went wrong while saving.'
+            });
+        }
+    });
+</script>
+
+</body>
+</html>

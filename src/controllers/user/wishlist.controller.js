@@ -2,6 +2,7 @@ import wishlistService from '../../services/user/wishlist.service.js';
 import cartService from '../../services/user/cart.service.js';
 import Product from '../../models/product.js';
 import Cart from '../../models/cart.js';
+import { logger } from '../../utils/logger.js';
 
 
 export const loadWishlist = async (req, res) => {
@@ -13,6 +14,7 @@ export const loadWishlist = async (req, res) => {
 
         const wishlist = await wishlistService.cleanUnavailableWishlistItems(userId);
         const products = wishlist ? wishlist.products : [];
+        logger.debug('[Wishlist] First product variants:', JSON.stringify(products[0]?.variants, null, 2));
 
         res.render('user/wishlist', {
             user: req.session.user || null,
@@ -85,46 +87,36 @@ export const moveToCart = async (req, res) => {
             return res.status(401).json({ success: false, message: 'Please login to perform this action' });
         }
 
-        const { productId } = req.body;
+        const { productId, variantId } = req.body;
         
         const product = await Product.findById(productId);
         if (!product || product.isDeleted || !product.isListed) {
             return res.status(400).json({ success: false, message: 'This product is currently unavailable' });
         }
 
-        let targetVariantId = null;
+        let targetVariantId = variantId || null;
         if (product.variants && product.variants.length > 0) {
-            const selectedVariant = product.variants.find(v => v.stock > 0);
-            if (!selectedVariant) {
-                return res.status(400).json({ success: false, message: 'This item is currently out of stock' });
+            if (!targetVariantId) {
+                return res.status(400).json({ success: false, message: 'Please select a size/color option' });
             }
-            targetVariantId = selectedVariant._id;
-        }
-
-        const cart = await Cart.findOne({ userId });
-        let alreadyInCart = false;
-        if (cart) {
-            alreadyInCart = cart.items.some(item => 
-                item.productId.toString() === productId.toString() &&
-                (targetVariantId 
-                    ? item.variantId && item.variantId.toString() === targetVariantId.toString()
-                    : !item.variantId)
-            );
-        }
-
-        if (alreadyInCart) {
-            return res.status(200).json({
-                success: false,
-                alreadyInCart: true,
-                message: 'Product is already in your cart.'
-            });
+            const selectedVariant = product.variants.id(targetVariantId);
+            if (!selectedVariant) {
+                return res.status(400).json({ success: false, message: 'Selected product variant is invalid' });
+            }
+            if (selectedVariant.stock <= 0) {
+                return res.status(400).json({ success: false, message: 'This variant is currently out of stock' });
+            }
+        } else {
+            if (product.stock <= 0) {
+                return res.status(400).json({ success: false, message: 'This product is currently out of stock' });
+            }
         }
 
         const result = await cartService.addItemToCart(userId, productId, targetVariantId, 1);
         
         return res.json({
             success: true,
-            message: 'Product moved to cart successfully.',
+            message: result.message || 'Product moved to cart successfully.',
             cartCount: result.cartCount,
             wishlistCount: result.wishlistCount
         });

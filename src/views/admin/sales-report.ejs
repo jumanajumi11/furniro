@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Reports - Furniro Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F9FAFB; }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+<%- include('./adminPartials/adminSidebar.ejs', { activePage: 'sales-report' }) %>
+
+<main class="flex-1 p-6 lg:p-10 overflow-y-auto max-w-7xl mx-auto w-full">
+    
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">SALES REPORTS</h1>
+            <p class="text-gray-500 mt-1 text-sm font-medium">Analyze revenue trends, discounts, and customer purchase summary.</p>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <button onclick="downloadCSV()" class="px-5 py-3 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-bold text-xs rounded-2xl flex items-center gap-2 shadow-sm transition">
+                <i class="fas fa-file-excel text-green-600"></i> Export Excel
+            </button>
+            <button onclick="printReport()" class="px-5 py-3 bg-[#B88E2F] hover:bg-[#9c7524] text-white font-bold text-xs rounded-2xl flex items-center gap-2 shadow-md transition">
+                <i class="fas fa-file-pdf"></i> Export PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Configuration -->
+    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 mb-8">
+        <form method="GET" action="/admin/reports/sales" id="reportFilterForm" class="flex flex-col md:flex-row gap-4 items-stretch md:items-end justify-between">
+            <div class="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Date Filter</label>
+                    <select name="filter" id="filterSelect" onchange="toggleCustomDates()"
+                            class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all cursor-pointer">
+                        <option value="Daily" <%= filter === 'Daily' ? 'selected' : '' %>>Daily (Today)</option>
+                        <option value="Weekly" <%= filter === 'Weekly' ? 'selected' : '' %>>Weekly (Last 7 Days)</option>
+                        <option value="Monthly" <%= filter === 'Monthly' ? 'selected' : '' %>>Monthly (Start of Month)</option>
+                        <option value="Yearly" <%= filter === 'Yearly' ? 'selected' : '' %>>Yearly (This Year)</option>
+                        <option value="Custom" <%= filter === 'Custom' ? 'selected' : '' %>>Custom Date Range</option>
+                    </select>
+                </div>
+
+                <div id="startDateGroup" class="<%= filter === 'Custom' ? '' : 'hidden' %>">
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Start Date</label>
+                    <input type="date" name="customStart" value="<%= customStart %>"
+                           class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                </div>
+
+                <div id="endDateGroup" class="<%= filter === 'Custom' ? '' : 'hidden' %>">
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">End Date</label>
+                    <input type="date" name="customEnd" value="<%= customEnd %>"
+                           class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <button type="submit" class="px-6 py-3 bg-[#B88E2F] text-white font-bold text-sm rounded-2xl hover:bg-[#9c7524] transition shadow-md shadow-[#B88E2F]/10">
+                    Apply Filter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Summary Statistics Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Net Revenue -->
+        <div class="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm relative overflow-hidden">
+            <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Net Revenue</p>
+            <h3 class="text-2xl font-black text-gray-900 tracking-tight">₹<%= summary.netRevenue.toLocaleString('en-IN') %></h3>
+            <span class="block text-[10px] text-gray-400 font-semibold mt-2">Cash collections (grand total)</span>
+        </div>
+
+        <!-- Total Orders -->
+        <div class="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm relative overflow-hidden">
+            <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Total Orders</p>
+            <h3 class="text-2xl font-black text-gray-900 tracking-tight"><%= summary.totalOrders %></h3>
+            <span class="block text-[10px] text-gray-400 font-semibold mt-2">Count of successful orders</span>
+        </div>
+
+        <!-- Items Sold -->
+        <div class="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm relative overflow-hidden">
+            <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Total Items Sold</p>
+            <h3 class="text-2xl font-black text-gray-900 tracking-tight"><%= summary.totalSalesCount %></h3>
+            <span class="block text-[10px] text-gray-400 font-semibold mt-2">Sum of item quantities</span>
+        </div>
+
+        <!-- Discounts Given -->
+        <div class="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm relative overflow-hidden">
+            <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Total Discount Given</p>
+            <h3 class="text-2xl font-black text-red-500 tracking-tight">₹<%= summary.totalDiscount.toLocaleString('en-IN') %></h3>
+            <div class="flex justify-between items-center text-[9px] text-gray-400 mt-2 font-bold uppercase tracking-wider">
+                <span>Coupon: ₹<%= summary.couponDiscount %></span>
+                <span>Offer: ₹<%= summary.offerDiscount %></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Table -->
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-6 border-b border-gray-50 flex justify-between items-center">
+            <h2 class="text-base font-extrabold text-gray-900 flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-[#B88E2F]/10 flex items-center justify-center text-[#B88E2F]">
+                    <i class="fas fa-list text-sm"></i>
+                </div>
+                Detailed Sales Records
+            </h2>
+        </div>
+
+        <div class="overflow-x-auto w-full">
+            <table class="w-full text-left min-w-[950px]">
+                <thead class="bg-gray-50/75 border-b border-gray-100">
+                    <tr>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Order ID</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Customer</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Payment</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Gross Amount</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Coupon Ded.</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Offer Ded.</th>
+                        <th class="px-6 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-wider">Net (Final)</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    <% if (detailedTable && detailedTable.length > 0) { %>
+                        <% detailedTable.forEach(row => { %>
+                            <tr class="hover:bg-gray-50/30 transition-colors">
+                                <td class="px-6 py-5.5 font-bold text-gray-900 text-xs">
+                                    <%= row.orderId %>
+                                </td>
+                                <td class="px-6 py-5.5 text-xs text-gray-500 font-semibold">
+                                    <%= new Date(row.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) %>
+                                </td>
+                                <td class="px-6 py-5.5 font-bold text-gray-800 text-xs">
+                                    <%= row.customer %>
+                                </td>
+                                <td class="px-6 py-5.5 font-semibold text-gray-600 text-xs">
+                                    <%= row.paymentMethod %>
+                                </td>
+                                <td class="px-6 py-5.5 text-xs text-gray-700 font-semibold">
+                                    ₹<%= row.orderAmount.toLocaleString('en-IN') %>
+                                </td>
+                                <td class="px-6 py-5.5 text-xs text-red-500 font-semibold">
+                                    <%= row.couponDeduction > 0 ? '-₹' + row.couponDeduction.toLocaleString('en-IN') : '—' %>
+                                </td>
+                                <td class="px-6 py-5.5 text-xs text-red-500 font-semibold">
+                                    <%= row.offerDeduction > 0 ? '-₹' + row.offerDeduction.toLocaleString('en-IN') : '—' %>
+                                </td>
+                                <td class="px-6 py-5.5 text-xs font-black text-[#B88E2F]">
+                                    ₹<%= row.finalAmount.toLocaleString('en-IN') %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="8" class="py-14 text-center text-gray-400 font-bold italic">
+                                <i class="fas fa-inbox text-3xl text-gray-200 mb-3 block"></i>
+                                No sales transactions for the selected range.
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<script>
+    function toggleCustomDates() {
+        const filter = document.getElementById('filterSelect').value;
+        const start = document.getElementById('startDateGroup');
+        const end = document.getElementById('endDateGroup');
+
+        if (filter === 'Custom') {
+            start.classList.remove('hidden');
+            end.classList.remove('hidden');
+        } else {
+            start.classList.add('hidden');
+            end.classList.add('hidden');
+        }
+    }
+
+    function downloadCSV() {
+        const filter = document.getElementById('filterSelect').value;
+        const customStart = document.getElementsByName('customStart')[0].value;
+        const customEnd = document.getElementsByName('customEnd')[0].value;
+
+        let url = `/admin/reports/sales/csv?filter=${filter}`;
+        if (filter === 'Custom') {
+            url += `&customStart=${customStart}&customEnd=${customEnd}`;
+        }
+        window.location.href = url;
+    }
+
+    function printReport() {
+        const filter = document.getElementById('filterSelect').value;
+        const customStart = document.getElementsByName('customStart')[0].value;
+        const customEnd = document.getElementsByName('customEnd')[0].value;
+
+        let url = `/admin/reports/sales/print?filter=${filter}`;
+        if (filter === 'Custom') {
+            url += `&customStart=${customStart}&customEnd=${customEnd}`;
+        }
+        window.open(url, '_blank');
+    }
+</script>
+
+</body>
+</html>

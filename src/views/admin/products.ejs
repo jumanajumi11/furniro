@@ -201,7 +201,7 @@
                     else if (stock <= 5)   { stockBadge = 'badge-low-stock';  stockLabel = `Low Stock (${stock})`; }
                     else                   { stockBadge = 'badge-in-stock';   stockLabel = `In Stock (${stock})`; }
                     const imgSrc = (p.images && p.images[0])
-                        ? '/upload/products/' + p.images[0]
+                        ? (p.images[0].startsWith('http') ? p.images[0] : '/upload/products/' + p.images[0])
                         : 'https://placehold.co/48x48/F9F5F0/B88E2F?text=IMG';
                     const catName = p.category ? p.category.name : '—';
                     const price   = typeof p.regularPrice === 'number' ? `$${p.regularPrice.toFixed(2)}` : '—';

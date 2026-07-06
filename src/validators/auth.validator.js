@@ -1,6 +1,6 @@
 import Joi from 'joi';
 
-// Custom password complexity check
+
 const passwordComplexity = Joi.string()
     .min(8)
     .pattern(/[a-zA-Z]/)

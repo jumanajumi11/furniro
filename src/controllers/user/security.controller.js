@@ -1,5 +1,6 @@
 import securityService from '../../services/user/security.service.js';
 import profileService from '../../services/user/profile.service.js';
+import { logger } from '../../utils/logger.js';
 
 export const loadSecurity = async (req, res, next) => {
     try {
@@ -18,8 +19,8 @@ export const loadSecurity = async (req, res, next) => {
             success: success
         });
     } catch (error) {
-        console.log(error.message);
-        res.status(500).send("Server Error");
+        logger.error('loadSecurity error:', error.message);
+        res.status(500).send('Server Error');
     }
 };
 
@@ -57,12 +58,12 @@ export const createPassword = async (req, res, next) => {
 export const loadResetPassword = async (req, res, next) => {
     try {
         if (!req.session.allowReset) {
-            console.log("Access denied to Reset Page, redirecting to forgot-password");
+            logger.debug('Access denied to Reset Page, redirecting to forgot-password');
             return res.redirect('/forgot-password');
         }
         res.render('user/reset-password', { error: null });
     } catch (error) {
-        console.log(error);
+        logger.error('loadResetPassword error:', error);
         res.redirect('/forgot-password');
     }
 };

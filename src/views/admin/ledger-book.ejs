@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ledger Book - Furniro Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- jsPDF + AutoTable for client-side PDF generation (must load BEFORE page scripts) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F9FAFB; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .pdf-spin { animation: spin 0.8s linear infinite; display: inline-block; }
+
+        @keyframes pulse-gold {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(184, 142, 47, 0.4); }
+            50%       { box-shadow: 0 0 0 8px rgba(184, 142, 47, 0); }
+        }
+        #generatePdfBtn.generating { animation: pulse-gold 1.4s ease-in-out infinite; }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+<%- include('./adminPartials/adminSidebar.ejs', { activePage: 'ledger' }) %>
+
+<main class="flex-1 p-6 lg:p-10 overflow-y-auto max-w-7xl mx-auto w-full">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">LEDGER BOOK</h1>
+            <p class="text-gray-500 mt-1 text-sm font-medium">Global cash book ledger compiling sales, coupon write-offs, wallet payouts, and returns.</p>
+        </div>
+
+        <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm">
+            <div class="text-right">
+                <p class="text-xs font-black text-[#B88E2F] uppercase tracking-widest">System Admin</p>
+                <p class="text-sm font-bold text-gray-900 leading-none mt-0.5">Jumana</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-[#B88E2F] flex items-center justify-center text-white font-extrabold text-sm shadow-inner">
+                JU
+            </div>
+        </div>
+    </div>
+
+    <!-- Date Filters -->
+    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 mb-8">
+        <form method="GET" action="/admin/ledger" id="ledgerFilterForm"
+              class="flex flex-col md:flex-row gap-4 items-stretch md:items-end justify-between">
+
+            <div class="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Date Range Filter</label>
+                    <select name="filter" id="filterSelect" onchange="toggleCustomDates()"
+                            class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all cursor-pointer">
+                        <option value="Daily"   <%= filter === 'Daily'   ? 'selected' : '' %>>Daily (Today)</option>
+                        <option value="Monthly" <%= filter === 'Monthly' ? 'selected' : '' %>>Monthly (Start of Month)</option>
+                        <option value="Yearly"  <%= filter === 'Yearly'  ? 'selected' : '' %>>Yearly (This Year)</option>
+                        <option value="Custom"  <%= filter === 'Custom'  ? 'selected' : '' %>>Custom Date Range</option>
+                    </select>
+                </div>
+
+                <!-- Start date — always rendered, visibility toggled via CSS -->
+                <div id="startDateGroup" class="<%= filter === 'Custom' ? '' : 'hidden' %>">
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Start Date</label>
+                    <input type="date" name="customStart" id="customStartInput" value="<%= customStart %>"
+                           class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                </div>
+
+                <!-- End date — always rendered, visibility toggled via CSS -->
+                <div id="endDateGroup" class="<%= filter === 'Custom' ? '' : 'hidden' %>">
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">End Date</label>
+                    <input type="date" name="customEnd" id="customEndInput" value="<%= customEnd %>"
+                           class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-end gap-3 flex-shrink-0">
+                <!-- Apply Filter -->
+                <button type="submit" id="applyFilterBtn"
+                        class="px-6 py-3 bg-[#B88E2F] text-white font-bold text-sm rounded-2xl hover:bg-[#9c7524] transition shadow-md shadow-[#B88E2F]/10">
+                    Apply Filter
+                </button>
+
+                <!-- Generate PDF -->
+                <button type="button" id="generatePdfBtn" onclick="handleGeneratePDF()"
+                        class="flex items-center gap-2 px-6 py-3 bg-gray-900 text-white font-bold text-sm rounded-2xl hover:bg-gray-700 transition shadow-md shadow-gray-900/10 select-none">
+                    <i id="pdfBtnIcon" class="fas fa-file-pdf text-sm"></i>
+                    <span id="pdfBtnText">Generate PDF</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Ledger Balances Summary -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+
+        <div class="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm">
+            <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Opening Balance</p>
+            <h3 class="text-xl font-black text-gray-900 tracking-tight">₹<%= openingBalance.toLocaleString('en-IN') %></h3>
+            <span class="block text-[10px] text-gray-400 font-semibold mt-2">Balance before start date</span>
+        </div>
+
+        <div class="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm">
+            <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-1 text-green-600">Total Credits (+)</p>
+            <h3 class="text-xl font-black text-green-600 tracking-tight">₹<%= totalCredits.toLocaleString('en-IN') %></h3>
+            <span class="block text-[10px] text-gray-400 font-semibold mt-2">Inflow from sales / adjustments</span>
+        </div>
+
+        <div class="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm">
+            <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-1 text-red-500">Total Debits (-)</p>
+            <h3 class="text-xl font-black text-red-500 tracking-tight">₹<%= totalDebits.toLocaleString('en-IN') %></h3>
+            <span class="block text-[10px] text-gray-400 font-semibold mt-2">Refunds, coupons &amp; referral payouts</span>
+        </div>
+
+        <div class="bg-white rounded-[20px] p-6 border border-gray-100 shadow-sm">
+            <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-1 text-[#B88E2F]">Closing Balance</p>
+            <h3 class="text-xl font-black text-[#B88E2F] tracking-tight">₹<%= closingBalance.toLocaleString('en-IN') %></h3>
+            <span class="block text-[10px] text-gray-400 font-semibold mt-2">End of period balance</span>
+        </div>
+    </div>
+
+    <!-- Ledger detailed table -->
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-6 border-b border-gray-50 flex justify-between items-center">
+            <h2 class="text-base font-extrabold text-gray-900 flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-[#B88E2F]">
+                    <i class="fas fa-book-open text-sm"></i>
+                </div>
+                Itemized Cash Book Entries
+            </h2>
+        </div>
+
+        <div class="overflow-x-auto w-full">
+            <table class="w-full text-left min-w-[950px]">
+                <thead class="bg-gray-50/75 border-b border-gray-100">
+                    <tr>
+                        <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-wider">Category</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-wider">Description</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-wider text-right">Credit (+)</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-wider text-right">Debit (-)</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-wider text-right">Running Balance</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-wider">Reference ID</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    <% if (detailedTable && detailedTable.length > 0) { %>
+                        <% detailedTable.forEach(row => { %>
+                            <tr class="hover:bg-gray-50/30 transition-colors">
+                                <td class="px-6 py-4 text-xs text-gray-500 font-semibold whitespace-nowrap">
+                                    <%= new Date(row.date).toLocaleString('en-IN', {
+                                        day: '2-digit', month: 'short', year: 'numeric',
+                                        hour: '2-digit', minute: '2-digit'
+                                    }) %>
+                                </td>
+
+                                <td class="px-6 py-4">
+                                    <%
+                                        let catColor = 'bg-gray-50 border-gray-200 text-gray-600';
+                                        if (row.category === 'Sale')             catColor = 'bg-green-50 border-green-200 text-green-700';
+                                        else if (row.category === 'Refund')      catColor = 'bg-red-50 border-red-200 text-red-700';
+                                        else if (row.category === 'Referral Reward') catColor = 'bg-purple-50 border-purple-200 text-purple-700';
+                                        else if (row.category === 'Coupon Discount') catColor = 'bg-amber-50 border-amber-200 text-amber-700';
+                                    %>
+                                    <span class="inline-block text-[9px] uppercase font-black px-2 py-0.5 rounded border tracking-wide <%= catColor %>">
+                                        <%= row.category %>
+                                    </span>
+                                </td>
+
+                                <td class="px-6 py-4 text-xs text-gray-700 font-medium"><%= row.description %></td>
+
+                                <td class="px-6 py-4 text-right text-xs text-green-600 font-bold">
+                                    <%= row.type === 'Credit' ? '+₹' + row.amount.toLocaleString('en-IN') : '—' %>
+                                </td>
+
+                                <td class="px-6 py-4 text-right text-xs text-red-500 font-bold">
+                                    <%= row.type === 'Debit' ? '-₹' + row.amount.toLocaleString('en-IN') : '—' %>
+                                </td>
+
+                                <td class="px-6 py-4 text-right text-xs text-gray-900 font-extrabold">
+                                    ₹<%= row.runningBalance.toLocaleString('en-IN') %>
+                                </td>
+
+                                <td class="px-6 py-4 text-xs font-semibold text-gray-400"><%= row.refId %></td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="7" class="py-14 text-center text-gray-400 font-bold italic">
+                                <i class="fas fa-inbox text-3xl text-gray-200 mb-3 block"></i>
+                                Ledger is empty for the selected range.
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<script>
+/* ============================================================
+   LEDGER BOOK — CLIENT-SIDE SCRIPTS
+   All functions are in a single IIFE to prevent duplicate
+   declarations and avoid polluting global scope.
+   ============================================================ */
+(function () {
+    'use strict';
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    /** Format a number as Indian Rupee string: ₹1,23,456.00 */
+    function fmtINR(amount) {
+        var num = Number(amount) || 0;
+        return '\u20B9' + num.toLocaleString('en-IN', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+
+    // ── Toggle custom date pickers ────────────────────────────────────────────
+
+    window.toggleCustomDates = function () {
+        var filter = document.getElementById('filterSelect').value;
+        var startGrp = document.getElementById('startDateGroup');
+        var endGrp   = document.getElementById('endDateGroup');
+
+        if (filter === 'Custom') {
+            startGrp.classList.remove('hidden');
+            endGrp.classList.remove('hidden');
+        } else {
+            startGrp.classList.add('hidden');
+            endGrp.classList.add('hidden');
+        }
+    };
+
+    // ── PDF button state ──────────────────────────────────────────────────────
+
+    function setPdfBtnLoading(loading) {
+        var btn  = document.getElementById('generatePdfBtn');
+        var icon = document.getElementById('pdfBtnIcon');
+        var txt  = document.getElementById('pdfBtnText');
+
+        if (loading) {
+            btn.disabled = true;
+            btn.classList.add('generating', 'opacity-75', 'cursor-not-allowed');
+            icon.className = 'pdf-spin fas fa-circle-notch text-sm';
+            txt.textContent = 'Generating\u2026';
+        } else {
+            btn.disabled = false;
+            btn.classList.remove('generating', 'opacity-75', 'cursor-not-allowed');
+            icon.className = 'fas fa-file-pdf text-sm';
+            txt.textContent = 'Generate PDF';
+        }
+    }
+
+    // ── Client-side validation ────────────────────────────────────────────────
+
+    function validateFilters() {
+        var filter   = document.getElementById('filterSelect').value;
+
+        console.log('[Ledger PDF] validateFilters — filter:', filter);
+
+        if (filter !== 'Custom') return true;   // non-custom filters always valid
+
+        var startEl = document.getElementById('customStartInput');
+        var endEl   = document.getElementById('customEndInput');
+        var startVal = startEl ? startEl.value : '';
+        var endVal   = endEl   ? endEl.value   : '';
+
+        console.log('[Ledger PDF] Custom range — start:', startVal, 'end:', endVal);
+
+        if (!startVal) {
+            Swal.fire({
+                icon: 'warning', title: 'Start Date Required',
+                text: 'Please select a Start Date for the Custom date range.',
+                confirmButtonColor: '#B88E2F'
+            });
+            return false;
+        }
+        if (!endVal) {
+            Swal.fire({
+                icon: 'warning', title: 'End Date Required',
+                text: 'Please select an End Date for the Custom date range.',
+                confirmButtonColor: '#B88E2F'
+            });
+            return false;
+        }
+
+        var start = new Date(startVal);
+        var end   = new Date(endVal);
+        var today = new Date();
+        today.setHours(23, 59, 59, 999);
+
+        if (start > end) {
+            Swal.fire({
+                icon: 'error', title: 'Invalid Date Range',
+                text: 'Start Date cannot be after End Date.',
+                confirmButtonColor: '#B88E2F'
+            });
+            return false;
+        }
+        if (start > today || end > today) {
+            Swal.fire({
+                icon: 'error', title: 'Future Dates Not Allowed',
+                text: 'Please select dates that are not in the future.',
+                confirmButtonColor: '#B88E2F'
+            });
+            return false;
+        }
+
+        return true;
+    }
+
+    // ── Main handler: fetch → PDF ─────────────────────────────────────────────
+
+    window.handleGeneratePDF = async function () {
+        if (!validateFilters()) return;
+
+        var filterEl     = document.getElementById('filterSelect');
+        var startEl      = document.getElementById('customStartInput');
+        var endEl        = document.getElementById('customEndInput');
+
+        var filter       = filterEl ? filterEl.value : 'Monthly';
+        var customStart  = (startEl && startEl.value) ? startEl.value : '';
+        var customEnd    = (endEl   && endEl.value)   ? endEl.value   : '';
+
+        // Build query string — omit empty custom dates to keep URL clean
+        var params = new URLSearchParams();
+        params.set('filter', filter);
+        if (customStart) params.set('customStart', customStart);
+        if (customEnd)   params.set('customEnd',   customEnd);
+
+        var url = '/admin/ledger/generate-pdf?' + params.toString();
+
+        console.log('[Ledger PDF] Sending request →', url);
+        console.log('[Ledger PDF] Payload — filter:', filter, 'customStart:', customStart, 'customEnd:', customEnd);
+
+        setPdfBtnLoading(true);
+
+        try {
+            var response = await fetch(url, {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' },
+                credentials: 'same-origin'       // send session cookie with fetch
+            });
+
+            console.log('[Ledger PDF] Response status:', response.status, response.statusText);
+
+            // If the session expired, the server redirects to /admin/login (HTML 302).
+            // Detect this by checking Content-Type before calling .json()
+            var contentType = response.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                console.error('[Ledger PDF] Non-JSON response received — likely session expired. Content-Type:', contentType);
+                Swal.fire({
+                    icon: 'warning', title: 'Session Expired',
+                    text: 'Your admin session has expired. Please log in again.',
+                    confirmButtonColor: '#B88E2F'
+                }).then(function () {
+                    window.location.href = '/admin/login';
+                });
+                return;
+            }
+
+            var data = await response.json();
+            console.log('[Ledger PDF] Response data:', data);
+
+            if (!response.ok) {
+                Swal.fire({
+                    icon: 'error', title: 'Validation Error',
+                    text: data.error || 'An unexpected error occurred.',
+                    confirmButtonColor: '#B88E2F'
+                });
+                return;
+            }
+
+            if (data.empty) {
+                Swal.fire({
+                    icon: 'info', title: 'No Entries Found',
+                    text: 'No ledger entries found for the selected period.',
+                    confirmButtonColor: '#B88E2F'
+                });
+                return;
+            }
+
+            if (!data.success) {
+                Swal.fire({
+                    icon: 'error', title: 'Error',
+                    text: data.error || 'Failed to fetch ledger data.',
+                    confirmButtonColor: '#B88E2F'
+                });
+                return;
+            }
+
+            // All good — build the PDF
+            buildAndDownloadPDF(data);
+
+        } catch (err) {
+            console.error('[Ledger PDF] Fetch/build error:', err);
+            Swal.fire({
+                icon: 'error', title: 'PDF Generation Failed',
+                html: 'An error occurred while generating the PDF.<br><small style="color:#999">' +
+                      err.message + '</small>',
+                confirmButtonColor: '#B88E2F'
+            });
+        } finally {
+            setPdfBtnLoading(false);
+        }
+    };
+
+    // ── jsPDF builder ─────────────────────────────────────────────────────────
+
+    function buildAndDownloadPDF(data) {
+        console.log('[Ledger PDF] buildAndDownloadPDF — rows:', data.detailedTable.length);
+
+        // Verify jsPDF is loaded
+        if (!window.jspdf || !window.jspdf.jsPDF) {
+            Swal.fire({
+                icon: 'error', title: 'Library Not Loaded',
+                text: 'jsPDF library failed to load. Please check your internet connection and refresh the page.',
+                confirmButtonColor: '#B88E2F'
+            });
+            return;
+        }
+
+        var jsPDF  = window.jspdf.jsPDF;
+        var doc    = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+        var pageW  = doc.internal.pageSize.getWidth();
+        var margin = 14;
+
+        var generatedAt = new Date().toLocaleString('en-IN', {
+            day: '2-digit', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+
+        // Colour palette
+        var GOLD     = [184, 142,  47];
+        var DARK     = [ 17,  24,  39];
+        var GRAY     = [107, 114, 128];
+        var GREEN    = [ 21, 128,  61];
+        var RED      = [185,  28,  28];
+        var LIGHT_BG = [249, 250, 251];
+        var WHITE    = [255, 255, 255];
+        var BORDER   = [229, 231, 235];
+
+        // ── Header banner ─────────────────────────────────────────────────
+        doc.setFillColor.apply(doc, DARK);
+        doc.rect(0, 0, pageW, 28, 'F');
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(18);
+        doc.setTextColor.apply(doc, GOLD);
+        doc.text('FURNIRO', margin, 12);
+
+        doc.setFontSize(8);
+        doc.setTextColor(200, 200, 200);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Furniture Store \u2014 Admin Finance', margin, 19);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.setTextColor.apply(doc, GOLD);
+        doc.text('LEDGER BOOK', pageW - margin, 12, { align: 'right' });
+
+        doc.setFontSize(7);
+        doc.setTextColor(200, 200, 200);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Generated: ' + generatedAt, pageW - margin, 19, { align: 'right' });
+
+        // ── Period bar ────────────────────────────────────────────────────
+        doc.setFillColor.apply(doc, LIGHT_BG);
+        doc.rect(0, 28, pageW, 12, 'F');
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor.apply(doc, GRAY);
+        doc.text('Filter: ' + data.filter, margin, 36);
+        doc.text('Period: ' + data.startDate + '  \u2013  ' + data.endDate, margin + 50, 36);
+
+        // ── Summary section ───────────────────────────────────────────────
+        var summaryY = 46;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor.apply(doc, DARK);
+        doc.text('FINANCIAL SUMMARY', margin, summaryY);
+
+        doc.setDrawColor.apply(doc, GOLD);
+        doc.setLineWidth(0.5);
+        doc.line(margin, summaryY + 2, pageW - margin, summaryY + 2);
+
+        var boxW = (pageW - (margin * 2) - 9) / 4;
+        var boxH = 22;
+        var boxY = summaryY + 5;
+
+        var summaryItems = [
+            { label: 'Opening Balance', value: fmtINR(data.openingBalance), color: DARK,  lc: GRAY  },
+            { label: 'Total Credits',   value: fmtINR(data.totalCredits),   color: GREEN, lc: GREEN },
+            { label: 'Total Debits',    value: fmtINR(data.totalDebits),    color: RED,   lc: RED   },
+            { label: 'Closing Balance', value: fmtINR(data.closingBalance), color: GOLD,  lc: GOLD  }
+        ];
+
+        summaryItems.forEach(function (item, i) {
+            var bx = margin + i * (boxW + 3);
+            doc.setFillColor.apply(doc, WHITE);
+            doc.setDrawColor.apply(doc, BORDER);
+            doc.setLineWidth(0.3);
+            doc.roundedRect(bx, boxY, boxW, boxH, 2, 2, 'FD');
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(6.5);
+            doc.setTextColor.apply(doc, item.lc);
+            doc.text(item.label.toUpperCase(), bx + 4, boxY + 7);
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10);
+            doc.setTextColor.apply(doc, item.color);
+            doc.text(item.value, bx + 4, boxY + 17);
+        });
+
+        // ── Transaction table ─────────────────────────────────────────────
+        var tableStartY = boxY + boxH + 8;
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor.apply(doc, DARK);
+        doc.text('TRANSACTION DETAILS', margin, tableStartY);
+
+        doc.setDrawColor.apply(doc, GOLD);
+        doc.setLineWidth(0.5);
+        doc.line(margin, tableStartY + 2, pageW - margin, tableStartY + 2);
+
+        // Body rows
+        var bodyRows = data.detailedTable.map(function (row) {
+            return [
+                row.date,
+                row.category,
+                row.description,
+                row.type === 'Credit' ? fmtINR(row.amount) : '\u2014',
+                row.type === 'Debit'  ? fmtINR(row.amount) : '\u2014',
+                fmtINR(row.runningBalance),
+                row.refId
+            ];
+        });
+
+        // Totals footer row
+        bodyRows.push([
+            { content: 'TOTALS', colSpan: 3, styles: { fontStyle: 'bold', fillColor: DARK, textColor: WHITE, halign: 'left' } },
+            { content: fmtINR(data.totalCredits),   styles: { fontStyle: 'bold', textColor: GREEN, fillColor: DARK, halign: 'right' } },
+            { content: fmtINR(data.totalDebits),    styles: { fontStyle: 'bold', textColor: RED,   fillColor: DARK, halign: 'right' } },
+            { content: fmtINR(data.closingBalance), styles: { fontStyle: 'bold', textColor: GOLD,  fillColor: DARK, halign: 'right' } },
+            { content: '',                           styles: { fillColor: DARK } }
+        ]);
+
+        doc.autoTable({
+            head: [[
+                { content: 'Date',           styles: { halign: 'left'  } },
+                { content: 'Category',       styles: { halign: 'left'  } },
+                { content: 'Description',    styles: { halign: 'left'  } },
+                { content: 'Credit (+)',      styles: { halign: 'right' } },
+                { content: 'Debit (-)',       styles: { halign: 'right' } },
+                { content: 'Running Balance', styles: { halign: 'right' } },
+                { content: 'Reference ID',   styles: { halign: 'left'  } }
+            ]],
+            body: bodyRows,
+            startY: tableStartY + 5,
+            margin: { left: margin, right: margin },
+            tableWidth: 'wrap',
+            styles: {
+                font: 'helvetica',
+                fontSize: 7.5,
+                cellPadding: 3,
+                textColor: DARK,
+                lineColor: BORDER,
+                lineWidth: 0.25,
+                overflow: 'linebreak'
+            },
+            headStyles: {
+                fillColor: DARK,
+                textColor: WHITE,
+                fontStyle: 'bold',
+                fontSize: 7.5,
+                cellPadding: 4
+            },
+            alternateRowStyles: { fillColor: LIGHT_BG },
+            columnStyles: {
+                0: { cellWidth: 32, halign: 'left'  },   // Date
+                1: { cellWidth: 26, halign: 'left'  },   // Category
+                2: { cellWidth: 'auto', halign: 'left' }, // Description
+                3: { cellWidth: 28, halign: 'right' },   // Credit
+                4: { cellWidth: 28, halign: 'right' },   // Debit
+                5: { cellWidth: 30, halign: 'right' },   // Running Balance
+                6: { cellWidth: 38, halign: 'left'  }    // Ref ID
+            },
+            didParseCell: function (hookData) {
+                // Colour credit / debit amount cells
+                if (hookData.section === 'body' && hookData.row.index < data.detailedTable.length) {
+                    var row = data.detailedTable[hookData.row.index];
+                    if (hookData.column.index === 3 && row.type === 'Credit') {
+                        hookData.cell.styles.textColor = GREEN;
+                    }
+                    if (hookData.column.index === 4 && row.type === 'Debit') {
+                        hookData.cell.styles.textColor = RED;
+                    }
+                }
+            }
+        });
+
+        // ── Page numbers footer bar ───────────────────────────────────────
+        var pageCount = doc.internal.getNumberOfPages();
+        for (var pg = 1; pg <= pageCount; pg++) {
+            doc.setPage(pg);
+            var pgW = doc.internal.pageSize.getWidth();
+            var pgH = doc.internal.pageSize.getHeight();
+
+            doc.setFillColor.apply(doc, DARK);
+            doc.rect(0, pgH - 10, pgW, 10, 'F');
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7);
+            doc.setTextColor(200, 200, 200);
+            doc.text('Furniro \u2014 Confidential Financial Document', margin, pgH - 3.5);
+            doc.text('Page ' + pg + ' of ' + pageCount, pgW - margin, pgH - 3.5, { align: 'right' });
+        }
+
+        // ── Save PDF ──────────────────────────────────────────────────────
+        var dateStamp = new Date().toISOString().slice(0, 10);
+        var filename  = 'furniro-ledger-' + data.filter.toLowerCase() + '-' + dateStamp + '.pdf';
+        doc.save(filename);
+
+        console.log('[Ledger PDF] PDF saved as:', filename);
+
+        Swal.fire({
+            icon: 'success',
+            title: 'PDF Downloaded!',
+            text: 'Ledger Book PDF has been downloaded successfully.',
+            timer: 2800,
+            showConfirmButton: false,
+            toast: true,
+            position: 'top-end'
+        });
+    }
+
+})(); // end IIFE
+</script>
+
+</body>
+</html>
