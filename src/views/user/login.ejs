@@ -132,6 +132,15 @@
         e.preventDefault();
     }
 });
+
+// Clear validation errors in real-time as user types
+document.getElementById('email').addEventListener('input', function() {
+    document.getElementById('emailError').textContent = "";
+});
+document.getElementById('password').addEventListener('input', function() {
+    document.getElementById('passwordError').textContent = "";
+});
+
  function togglePassword() {
     const pass = document.getElementById("password");
     pass.type = pass.type === "password" ? "text" : "password";

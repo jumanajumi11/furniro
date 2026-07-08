@@ -3,6 +3,7 @@ import User from '../../models/user.js';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
 import { logger } from '../../utils/logger.js';
+import { logOtp } from '../../utils/otpLogger.js';
 
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
@@ -131,13 +132,13 @@ export const sendResetOTP = async (req, res) => {
 
         const otp = generateOTP();
         
-        logger.debug('\n=================================');
-        logger.debug('OTP GENERATED');
-        logger.debug('Email:', email);
-        logger.debug('OTP:', otp);
-        logger.debug('Generated At:', new Date().toISOString());
-        logger.debug('Expires In: 60 Seconds');
-        logger.debug('=================================\n');
+        // Log generated OTP to terminal
+        logOtp({
+            purpose: 'Admin Password Reset',
+            email: email,
+            otp,
+            expires: '1 minute'
+        });
 
         req.session.resetOTP = otp;
         req.session.resetEmail = email;
@@ -264,6 +265,15 @@ export const resendAdminOTP = async (req, res) => {
         }
 
         const otp = generateOTP();
+
+        // Log resent OTP to terminal
+        logOtp({
+            type: 'Resent',
+            purpose: 'Resend Admin Password Reset OTP',
+            email: email,
+            otp,
+            expires: '1 minute'
+        });
 
         req.session.resetOTP = otp;
         req.session.otpExpiry = Date.now() + 60 * 1000;

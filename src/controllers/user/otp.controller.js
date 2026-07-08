@@ -139,7 +139,8 @@ export const resendOTP = async (req, res, next) => {
         }
 
         const email = tempData.email;
-        const otpData = await otpService.sendOtp(email, req.session.purpose || 'signup');
+        // Pass isResend=true to ensure it's logged as a resent OTP in the console
+        const otpData = await otpService.sendOtp(email, req.session.purpose || 'signup', true);
 
         req.session.resendCount += 1;
         req.session.userTempData.otp = otpData.otp;

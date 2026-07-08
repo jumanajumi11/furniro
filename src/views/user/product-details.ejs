@@ -1127,6 +1127,8 @@
   // Reviews stars selection
   function setFormStars(rating) {
       document.getElementById('review-rating-value').value = rating;
+      const errorP = document.getElementById('review-rating-error');
+      if (errorP) errorP.classList.add('hidden');
       
       const stars = document.querySelectorAll('#star-selector i');
       stars.forEach((star, index) => {
@@ -1169,6 +1171,24 @@
 
       return isValid;
   }
+
+  // Clear review validation errors in real-time as user types/interacts
+  document.addEventListener('DOMContentLoaded', () => {
+      const titleInput = document.getElementById('review-title');
+      if (titleInput) {
+          titleInput.addEventListener('input', () => {
+              const err = document.getElementById('review-title-error');
+              if (err) err.classList.add('hidden');
+          });
+      }
+      const commentInput = document.getElementById('review-comment');
+      if (commentInput) {
+          commentInput.addEventListener('input', () => {
+              const err = document.getElementById('review-comment-error');
+              if (err) err.classList.add('hidden');
+          });
+      }
+  });
 </script>
 
 <script>

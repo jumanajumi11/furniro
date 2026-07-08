@@ -2,6 +2,7 @@ import User from '../../models/user.js';
 import { generateOTP } from '../../utils/generateOTP.js';
 import { sendOTPEmail } from '../../utils/mail.js';
 import { logger } from '../../utils/logger.js';
+import { logOtp } from '../../utils/otpLogger.js';
 
 const formatTimestamp = (ms) => {
     const d = new Date(ms);
@@ -14,6 +15,7 @@ const formatTimestamp = (ms) => {
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
+// Kept logOtpToConsole for backwards compatibility if needed, but we now use the centralized logOtp
 const logOtpToConsole = (email, otp, durationMs) => {
     if (process.env.NODE_ENV !== "production") {
         const now = Date.now();
@@ -30,7 +32,7 @@ const logOtpToConsole = (email, otp, durationMs) => {
 };
 
 
-export const sendOtp = async (email, purpose = 'signup') => {
+export const sendOtp = async (email, purpose = 'signup', isResend = false) => {
     const cleanEmail = email.toLowerCase().trim();
     
     
@@ -56,7 +58,21 @@ export const sendOtp = async (email, purpose = 'signup') => {
     }
 
     const otp = generateOTP();
-    logOtpToConsole(cleanEmail, otp, 120 * 1000);
+    // Log OTP to terminal using the centralized logger
+    if (isResend) {
+        logOtp({
+            type: 'Resent',
+            purpose: purpose === 'signup' ? 'Resend Signup OTP' : 'Resend Forgot Password OTP',
+            email: cleanEmail,
+            otp
+        });
+    } else {
+        logOtp({
+            purpose: purpose === 'signup' ? 'Signup' : 'Forgot Password',
+            email: cleanEmail,
+            otp
+        });
+    }
     try {
         await sendOTPEmail(cleanEmail, otp);
     } catch (mailError) {
@@ -80,7 +96,12 @@ export const sendEmailUpdateOtp = async (newEmail, currentUserId) => {
     }
 
     const otp = generateOTP();
-    logOtpToConsole(cleanEmail, otp, 60 * 1000);
+    // Log Update Email OTP to terminal
+    logOtp({
+        type: 'Update Email OTP',
+        email: cleanEmail,
+        otp
+    });
     try {
         await sendOTPEmail(cleanEmail, otp);
     } catch (mailError) {
