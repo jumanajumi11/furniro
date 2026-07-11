@@ -38,16 +38,46 @@ export const verifyPayment = async (req, res) => {
         }
 
         const secret = process.env.RAZORPAY_KEY_SECRET || 'test_secret_key';
+        console.log("--- RAZORPAY VERIFY PAYMENT DEBUG ---");
+        console.log("orderId:", orderId);
+        console.log("razorpayPaymentId:", razorpayPaymentId);
+        console.log("razorpayOrderId:", razorpayOrderId);
+        console.log("razorpaySignature:", razorpaySignature);
+        console.log("secret length:", secret ? secret.length : 0);
+
         const generatedSignature = crypto.createHmac('sha256', secret)
             .update(razorpayOrderId + "|" + razorpayPaymentId)
             .digest('hex');
+            
+        console.log("generatedSignature:", generatedSignature);
+        console.log("match:", generatedSignature === razorpaySignature);
+        console.log("-------------------------------------");
 
         if (generatedSignature === razorpaySignature) {
             order.paymentStatus = 'Paid';
-            order.status = 'Processing';
+            order.status = 'Pending';
             order.razorpayPaymentId = razorpayPaymentId;
             order.razorpaySignature = razorpaySignature;
             await order.save();
+
+            // Deduct from wallet if partial wallet payment was used
+            if (order.walletDeduction > 0) {
+                const user = await User.findById(order.userId);
+                if (user) {
+                    user.wallet = Math.max(0, (user.wallet || 0) - order.walletDeduction);
+                    await user.save();
+
+                    await WalletTransaction.create({
+                        userId: order.userId,
+                        amount: order.walletDeduction,
+                        type: 'debit',
+                        description: `Payment for Order #${order.orderNumber} (Wallet Deduction)`,
+                        orderId: order._id,
+                        status: 'completed',
+                        transactionDate: new Date()
+                    });
+                }
+            }
 
             for (const item of order.items) {
                 const product = await Product.findById(item.productId);
@@ -69,6 +99,9 @@ export const verifyPayment = async (req, res) => {
 
             return res.status(200).json({ success: true, message: 'Payment verified successfully', orderId: order._id });
         } else {
+            order.paymentStatus = 'Failed';
+            order.status = 'Payment Failed';
+            await order.save();
             return res.status(400).json({ success: false, message: 'Invalid payment signature' });
         }
 
@@ -82,12 +115,12 @@ export const retryPayment = async (req, res) => {
     try {
         const { orderId } = req.body;
         const order = await Order.findById(orderId).populate('userId');
-        if (!order || order.status !== 'Pending Payment') {
+        if (!order || !['Pending Payment', 'Payment Failed'].includes(order.status)) {
             return res.status(400).json({ success: false, message: 'Invalid order or order is not pending payment' });
         }
 
         const options = {
-            amount: Math.round(order.grandTotal * 100),
+            amount: Math.round((order.payableAmount !== undefined ? order.payableAmount : order.grandTotal) * 100),
             currency: "INR",
             receipt: "" + order.orderNumber
         };
@@ -126,6 +159,12 @@ export const loadFailure = async (req, res) => {
         const order = await Order.findById(orderId);
         if (!order) {
             return res.redirect('/shop?error=Order not found');
+        }
+
+        if (order.paymentStatus !== 'Paid') {
+            order.status = 'Payment Failed';
+            order.paymentStatus = 'Failed';
+            await order.save();
         }
 
         res.render('user/order-failure', {

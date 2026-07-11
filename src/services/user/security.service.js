@@ -2,10 +2,22 @@ import User from '../../models/user.js';
 import bcrypt from 'bcryptjs';
 
 
-export const changePassword = async (userId, { oldPassword, newPassword }) => {
+export const changePassword = async (userId, { oldPassword, newPassword, confirmPassword }) => {
     const user = await User.findById(userId);
     if (!user) {
         throw new Error("User not found");
+    }
+
+    if (!oldPassword || !newPassword || !confirmPassword) {
+        throw new Error("All fields are mandatory!");
+    }
+
+    if (newPassword === oldPassword) {
+        throw new Error("New password must be different from your current password.");
+    }
+
+    if (newPassword !== confirmPassword) {
+        throw new Error("Confirm password does not match the new password.");
     }
 
     const isMatch = await bcrypt.compare(oldPassword, user.password);

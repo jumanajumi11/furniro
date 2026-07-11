@@ -322,7 +322,7 @@
     <div class="fixed inset-0 bg-black/50 transition-opacity" onclick="closeAddressModal()"></div>
     <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 sm:p-0">
         <div class="relative bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:max-w-2xl w-full">
-            <form id="address-form" onsubmit="saveAddress(event)">
+            <form id="address-form" onsubmit="saveAddress(event)" novalidate>
                 <div class="bg-[#FDFBF7] px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                     <h3 class="text-lg font-bold text-gray-900" id="modal-title">Add New Address</h3>
                     <button type="button" onclick="closeAddressModal()" class="text-gray-400 hover:text-gray-600">
@@ -496,7 +496,6 @@
         });
 
         // Numeric checks on inputs
-        restrictNumericInput(document.getElementById('modal-phone'));
         restrictNumericInput(document.getElementById('modal-pincode'));
         
         // Setup real-time validators
@@ -699,14 +698,33 @@
         const warning = document.getElementById('wallet-warning');
         const placeBtn = document.getElementById('btn-place-order');
         if (activePaymentMethod === 'Wallet') {
-            if (walletBalance < grandTotal) {
-                if (warning) warning.classList.remove('hidden');
+            if (walletBalance <= 0) {
+                if (warning) {
+                    warning.textContent = 'Insufficient balance! Wallet is empty.';
+                    warning.classList.remove('hidden', 'text-amber-600', 'text-green-600');
+                    warning.classList.add('text-red-500');
+                }
                 if (placeBtn) {
                     placeBtn.disabled = true;
                     placeBtn.classList.add('opacity-50', 'cursor-not-allowed');
                 }
+            } else if (walletBalance < grandTotal) {
+                if (warning) {
+                    const remaining = grandTotal - walletBalance;
+                    warning.innerHTML = `Partial Wallet: ₹${walletBalance.toLocaleString('en-IN')} will be deducted. Pay remaining <span class="font-extrabold text-amber-700">₹${remaining.toLocaleString('en-IN')}</span> via Razorpay.`;
+                    warning.classList.remove('hidden', 'text-red-500', 'text-green-600');
+                    warning.classList.add('text-amber-600');
+                }
+                if (placeBtn) {
+                    placeBtn.disabled = false;
+                    placeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
             } else {
-                if (warning) warning.classList.add('hidden');
+                if (warning) {
+                    warning.textContent = 'Full Wallet Payment: Paid entirely from wallet.';
+                    warning.classList.remove('hidden', 'text-red-500', 'text-amber-600');
+                    warning.classList.add('text-green-600');
+                }
                 if (placeBtn) {
                     placeBtn.disabled = false;
                     placeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -747,7 +765,7 @@
             Swal.fire({
                 icon: 'warning',
                 title: 'COD Limit Exceeded',
-                text: 'Cash on Delivery is available only for orders up to ₹50,000. Please choose Online Payment or Wallet.',
+                text: 'Cash on Delivery is available only for orders up to ₹50,000',
                 confirmButtonColor: '#B88E2F'
             });
         }
@@ -766,38 +784,51 @@
 
     const validationRules = {
         name: (val) => {
-            if (!val.trim()) return 'Name is required.';
-            if (val.trim().length < 2) return 'Name must contain at least 2 characters.';
+            if (!val.trim()) return 'Full name is required';
+            if (val.trim().length < 2) return 'Name must contain at least 2 characters';
             return null;
         },
         phone: (val) => {
-            if (!val.trim()) return 'Phone number is required.';
-            if (!/^\d{10}$/.test(val.trim())) return 'Phone number must be exactly 10 digits.';
+            if (val === '') {
+                return "Phone number is required.";
+            }
+            if (val.includes(' ')) {
+                return "Phone number cannot contain spaces.";
+            }
+            if (/[^0-9]/.test(val)) {
+                return "Phone number can contain only numbers.";
+            }
+            if (val.length !== 10) {
+                return "Phone number must contain exactly 10 digits.";
+            }
+            if (!/^[6-9]/.test(val)) {
+                return "Please enter a valid Indian mobile number.";
+            }
             return null;
         },
         pincode: (val) => {
-            if (!val.trim()) return 'Pincode is required.';
-            if (!/^\d{6}$/.test(val.trim())) return 'Pincode must be exactly 6 digits.';
+            if (!val.trim()) return 'Pincode is required';
+            if (!/^\d{6}$/.test(val.trim())) return 'Pincode must be a 6-digit number';
             return null;
         },
         state: (val) => {
-            if (!val || !val.trim()) return 'State is required.';
+            if (!val || !val.trim()) return 'State is required';
             return null;
         },
         city: (val) => {
-            if (!val || !val.trim()) return 'City is required.';
+            if (!val || !val.trim()) return 'City is required';
             return null;
         },
         locality: (val) => {
-            if (!val.trim()) return 'Locality is required.';
+            if (!val.trim()) return 'Locality is required';
             return null;
         },
         house: (val) => {
-            if (!val.trim()) return 'House/Flat number is required.';
+            if (!val.trim()) return 'Address is required';
             return null;
         },
         area: (val) => {
-            if (!val.trim()) return 'Area/Street is required.';
+            if (!val.trim()) return 'Address is required';
             return null;
         }
     };
@@ -833,6 +864,25 @@
         }
         return true;
     }
+
+    // Attach real-time validation event listeners for checkout address form fields
+    ['name', 'phone', 'pincode', 'state', 'city', 'locality', 'house', 'area'].forEach(fieldName => {
+        const inputEl = document.getElementById(`modal-${fieldName}`);
+        if (inputEl) {
+            if (inputEl.tagName === 'INPUT') {
+                inputEl.addEventListener('input', () => {
+                    validateField(fieldName);
+                });
+            } else if (inputEl.tagName === 'SELECT') {
+                inputEl.addEventListener('change', () => {
+                    validateField(fieldName);
+                });
+            }
+            inputEl.addEventListener('blur', () => {
+                validateField(fieldName);
+            });
+        }
+    });
 
     // Address Modal controls
     function openAddAddressModal() {
@@ -1053,82 +1103,39 @@
             return Swal.fire({
                 icon: 'warning',
                 title: 'COD Limit Exceeded',
-                text: 'Cash on Delivery is available only for orders up to ₹50,000. Please choose Online Payment or Wallet.',
+                text: 'Cash on Delivery is available only for orders up to ₹50,000',
                 confirmButtonColor: '#B88E2F'
             });
         }
-
-
 
         const requestData = {
             addressId: activeAddressId,
             paymentMethod: activePaymentMethod
         };
 
-        const placeOrderCall = async () => {
-            Swal.fire({
-                title: 'Processing Order...',
-                text: 'Please wait while we verify your checkout details.',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-
-            try {
-                const res = await fetch('/checkout/place-order', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestData)
-                });
-                const data = await res.json();
-                if (data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Order Placed!',
-                        text: `Your order #${data.orderNumber} has been recorded successfully.`,
-                        confirmButtonColor: '#B88E2F'
-                    }).then(() => {
-                        window.location.href = `/checkout/success/${data.orderId}`;
-                    });
-                } else {
-                    Swal.fire({ icon: 'error', title: 'Checkout Failed', text: data.message, confirmButtonColor: '#B88E2F' });
-                }
-            } catch (err) {
-                console.error(err);
-                Swal.fire({ icon: 'error', title: 'Error', text: 'An unexpected connection error occurred.', confirmButtonColor: '#B88E2F' });
+        Swal.fire({
+            title: 'Processing Order...',
+            text: 'Please wait while we verify your checkout details.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
             }
-        };
+        });
 
-        if (activePaymentMethod === 'Razorpay') {
-            Swal.fire({
-                title: 'Initializing Payment...',
-                text: 'Please wait while we connect to the payment gateway.',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
+        try {
+            const res = await fetch('/checkout/place-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestData)
             });
+            const data = await res.json();
+            
+            if (!data.success) {
+                Swal.fire({ icon: 'error', title: 'Checkout Failed', text: data.message, confirmButtonColor: '#B88E2F' });
+                return;
+            }
 
-            try {
-                // First, create the order on the server
-                const res = await fetch('/checkout/place-order', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestData)
-                });
-                const data = await res.json();
-                
-                if (!data.success) {
-                    Swal.fire({ icon: 'error', title: 'Checkout Failed', text: data.message, confirmButtonColor: '#B88E2F' });
-                    return;
-                }
-
-                if (!data.razorpayOrder) {
-                    Swal.fire({ icon: 'error', title: 'Gateway Error', text: 'Payment gateway failed to initialize. Please try again.', confirmButtonColor: '#B88E2F' });
-                    return;
-                }
-
+            if (data.razorpayOrder) {
                 Swal.close();
 
                 // Initialize Razorpay SDK
@@ -1178,7 +1185,6 @@
                     },
                     modal: {
                         ondismiss: function() {
-                            // User closed the modal without completing payment
                             window.location.href = `/checkout/failure/${data.orderId}`;
                         }
                     }
@@ -1186,17 +1192,25 @@
 
                 const rzp = new window.Razorpay(options);
                 rzp.on('payment.failed', function (response){
-                    // Payment failed event
                     window.location.href = `/checkout/failure/${data.orderId}`;
                 });
                 rzp.open();
 
-            } catch (err) {
-                console.error(err);
-                Swal.fire({ icon: 'error', title: 'Error', text: 'An unexpected connection error occurred.', confirmButtonColor: '#B88E2F' });
+            } else {
+                // COD or Full Wallet payment
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Order Placed!',
+                    text: `Your order #${data.orderNumber} has been recorded successfully.`,
+                    confirmButtonColor: '#B88E2F'
+                }).then(() => {
+                    window.location.href = `/checkout/success/${data.orderId}`;
+                });
             }
-        } else {
-            placeOrderCall();
+
+        } catch (err) {
+            console.error(err);
+            Swal.fire({ icon: 'error', title: 'Error', text: 'An unexpected connection error occurred.', confirmButtonColor: '#B88E2F' });
         }
     }
 </script>

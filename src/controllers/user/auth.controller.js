@@ -1,12 +1,27 @@
 import authService from '../../services/user/auth.service.js';
 import otpService from '../../services/user/otp.service.js';
 import bcrypt from 'bcryptjs';
+import User from '../../models/user.js';
 
 export const loadSignup = (req, res) => {
+    let referredByCode = '';
     if (req.query.ref) {
         req.session.referredByCode = req.query.ref.trim();
+        referredByCode = req.query.ref.trim();
+    } else if (req.session.referredByCode) {
+        referredByCode = req.session.referredByCode;
     }
-    res.render('user/signup', { error: null });
+    res.render('user/signup', {
+        error: null,
+        errors: {},
+        formData: {
+            name: '',
+            email: '',
+            password: '',
+            confirmPassword: '',
+            referralCode: referredByCode
+        }
+    });
 };
 
 export const loadLogin = (req, res) => {
@@ -18,23 +33,56 @@ export const loadLogin = (req, res) => {
 
 export const signup = async (req, res, next) => {
     try {
-        const { name, email, password } = req.body;
+        console.log("OTP controller called");
+        const { name, email, password, confirmPassword, referralCode } = req.body;
         const userEmail = email.toLowerCase().trim();
 
-        
-        const otpData = await otpService.sendOtp(userEmail, 'signup');
+        // 1. Email uniqueness check
+        const existingEmail = await User.findOne({ email: userEmail });
+        if (existingEmail) {
+            return res.render('user/signup', {
+                error: "Email is already registered.",
+                errors: { email: "Email is already registered." },
+                formData: req.body
+            });
+        }
 
+        // 2. Referral code validation (optional)
+        let referredByUser = null;
+        if (referralCode && referralCode.trim() !== '') {
+            const cleanRef = referralCode.trim();
+            referredByUser = await User.findOne({ referralCode: cleanRef, isAdmin: false });
+            if (!referredByUser) {
+                return res.render('user/signup', {
+                    error: "Invalid referral code.",
+                    errors: { referralCode: "Invalid referral code." },
+                    formData: req.body
+                });
+            }
+            // A user cannot use their own referral code
+            if (referredByUser.email === userEmail) {
+                return res.render('user/signup', {
+                    error: "Invalid referral code.",
+                    errors: { referralCode: "Invalid referral code." },
+                    formData: req.body
+                });
+            }
+        }
+
+        console.log("About to generate OTP");
+        const otpData = await otpService.sendOtp(userEmail, 'signup');
+        console.log("OTP generated:", otpData.otp);
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password.trim(), salt);
 
         req.session.userTempData = {
-            name,
+            name: name.trim(),
             email: userEmail,
             password: hashedPassword, // hashed password
             otp: otpData.otp,
             otpGeneratedAt: otpData.otpGeneratedAt,
-            referredByCode: req.session.referredByCode || null
+            referredByCode: referralCode ? referralCode.trim() : null
         };
         req.session.otpExpiry = Date.now() + (5 * 60 * 1000);
         req.session.purpose = "signup";
@@ -42,13 +90,21 @@ export const signup = async (req, res, next) => {
         
         req.session.save(err => {
             if (err) {
-                return res.render('user/signup', { error: "Session Error" });
+                return res.render('user/signup', { 
+                    error: "Session Error", 
+                    errors: {}, 
+                    formData: req.body 
+                });
             }
             res.redirect('/verify-otp');
         });
     } catch (error) {
         console.error("CRITICAL SIGNUP ERROR:", error);
-        res.render('user/signup', { error: error.message || "Something went wrong on the server." });
+        res.render('user/signup', { 
+            error: error.message || "Something went wrong on the server.",
+            errors: {},
+            formData: req.body
+        });
     }
 };
 

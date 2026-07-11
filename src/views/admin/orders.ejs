@@ -396,7 +396,6 @@
 </main>
 
 <script>
-    // AJAX status updating handler with SweetAlert2 confirmation
     function updateOrderStatus(select, orderId) {
         const newStatus = select.value;
         const defaultConfirmButtonColor = '#B88E2F';
@@ -469,7 +468,6 @@
                     });
                 }
             } else {
-                // Reset select element back to its default value on cancel
                 window.location.reload();
             }
         });

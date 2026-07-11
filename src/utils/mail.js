@@ -36,4 +36,19 @@ export const sendOTPEmail = async (email, otp) => {
     }
 };
 
-export default { sendOTPEmail };
+export const sendEmailChangeNotification = async (oldEmail, newEmail) => {
+    try {
+        const mailOptions = {
+            from: "furniro75@gmail.com",
+            to: oldEmail,
+            subject: 'Security Alert: Your Email Has Been Changed',
+            text: `Hello, \n\nThe email address for your account has been successfully changed to ${newEmail}.\n\nIf you did not make this change, please contact support immediately.`
+        };
+        await transporter.sendMail(mailOptions);
+        logger.debug("Email change notification sent successfully to old email:", oldEmail);
+    } catch (error) {
+        logger.error("Email change notification mail error:", error);
+    }
+};
+
+export default { sendOTPEmail, sendEmailChangeNotification };

@@ -87,7 +87,7 @@
     <div class="fixed inset-0 bg-black/50 transition-opacity modal-overlay"></div>
     <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 sm:p-0">
         <div class="relative bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:max-w-3xl w-full">
-            <form id="address-form" action="/add-address" method="POST">
+            <form id="address-form" action="/add-address" method="POST" novalidate>
                 <div class="bg-white px-8 py-5 border-b border-gray-100 flex items-center justify-between">
                     <h3 class="text-xl font-bold text-gray-900" id="modal-title">Add New Address</h3>
                     <button type="button" class="text-gray-400 hover:text-gray-600 close-modal-btn">
@@ -113,7 +113,7 @@
         <input type="text" name="phone" id="phone" maxlength="10" 
                placeholder="10 digit mobile"
                class="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none transition-all focus:ring-4 focus:ring-[#B88E2F]/10 focus:border-[#B88E2F]" required>
-        <p id="phone-warning" class="text-[10px] text-red-500 font-bold uppercase hidden">Numbers only please!</p>
+        <p id="phone-warning" class="error-text text-[10px] text-red-500 font-bold uppercase hidden">Numbers only please!</p>
     </div>
 
     <div class="space-y-2">
@@ -121,7 +121,7 @@
         <input type="text" name="pincode" id="pincode" maxlength="6" 
                placeholder="6 digit pincode"
                class="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none transition-all focus:ring-4 focus:ring-[#B88E2F]/10 focus:border-[#B88E2F]" required>
-        <p id="pincode-warning" class="text-[10px] text-red-500 font-bold uppercase hidden">Numbers only please!</p>
+        <p id="pincode-warning" class="error-text text-[10px] text-red-500 font-bold uppercase hidden">Numbers only please!</p>
     </div>
 </div>
                         </div>
@@ -131,12 +131,14 @@
                             <select id="state-select" name="state" class="block w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none focus:border-[#B88E2F]" required>
                                 <option value="" disabled selected>Select State</option>
                             </select>
+                            <p class="error-text text-[10px] text-red-500 font-bold hidden" id="state-error"></p>
                         </div>
                         <div class="space-y-2">
                             <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">City</label>
                             <select id="city-select" name="city" class="block w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none focus:border-[#B88E2F]" disabled required>
                                 <option value="" disabled selected>Select City</option>
                             </select>
+                            <p class="error-text text-[10px] text-red-500 font-bold hidden" id="city-error"></p>
                         </div>
 
                         <div class="sm:col-span-1 space-y-2">
@@ -154,6 +156,7 @@
                         <div class="sm:col-span-2 space-y-2">
                             <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">Area / Street</label>
                             <input type="text" name="area" class="block w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none focus:border-[#B88E2F]" required>
+                            <p class="error-text text-[10px] text-red-500 font-bold hidden" id="area-error"></p>
                         </div>
                     </div>
 
@@ -197,18 +200,6 @@ document.addEventListener('DOMContentLoaded', () => {
         citySelect.disabled = true;
         document.querySelectorAll('.error-text, #phone-warning, #pincode-warning').forEach(el => el.classList.add('hidden'));
     }
-
-    // Real-time Number Validation
-    function checkNumeric(input, warningId) {
-        const warning = document.getElementById(warningId);
-        if (!input || !warning) return;
-        input.addEventListener('input', function() {
-            if (/[^0-9]/.test(this.value)) warning.classList.remove('hidden');
-            else warning.classList.add('hidden');
-        });
-    }
-    checkNumeric(phoneInput, 'phone-warning');
-    checkNumeric(pincodeInput, 'pincode-warning');
 
     function populateCities(selectedState, targetCity = null) {
         const cities = cityData[selectedState] || [];
@@ -279,55 +270,126 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-const inputs = form.querySelectorAll('input');
+    function getPhoneValidationError(rawVal) {
+        if (rawVal === '') {
+            return "Phone number is required.";
+        }
+        if (rawVal.includes(' ')) {
+            return "Phone number cannot contain spaces.";
+        }
+        if (/[^0-9]/.test(rawVal)) {
+            return "Phone number can contain only numbers.";
+        }
+        if (rawVal.length !== 10) {
+            return "Phone number must contain exactly 10 digits.";
+        }
+        if (!/^[6-9]/.test(rawVal)) {
+            return "Please enter a valid Indian mobile number.";
+        }
+        return null;
+    }
 
-inputs.forEach(input => {
-    input.addEventListener('input', function() {
-        const fieldName = this.getAttribute('name');
-        const val = this.value.trim();
+    function validateField(element) {
+        if (!element) return true;
+        const fieldName = element.getAttribute('name');
+        const val = element.value.trim();
         let errorId = '';
         let message = '';
 
-        
         if (fieldName === 'name') {
             errorId = 'name-error';
-            if (val.length > 0 && val.length < 3) message = "Minimum 3 characters required!";
+            if (val === '') {
+                message = "Full name is required";
+            } else if (val.length < 3) {
+                message = "Minimum 3 characters required";
+            }
+        } else if (fieldName === 'phone') {
+            errorId = 'phone-warning';
+            message = getPhoneValidationError(element.value);
+        } else if (fieldName === 'pincode') {
+            errorId = 'pincode-warning';
+            if (val === '') {
+                message = "Pincode is required";
+            } else if (!/^\d{6}$/.test(val)) {
+                message = "Pincode must be a 6-digit number";
+            }
+        } else if (fieldName === 'state') {
+            errorId = 'state-error';
+            if (!val) {
+                message = "State is required";
+            }
+        } else if (fieldName === 'city') {
+            errorId = 'city-error';
+            if (!val) {
+                message = "City is required";
+            }
         } else if (fieldName === 'locality') {
             errorId = 'locality-error';
-            if (val.length > 0 && val.length < 3) message = "Min 3 characters required!";
+            if (val === '') {
+                message = "Locality is required";
+            } else if (val.length < 3) {
+                message = "Minimum 3 characters required";
+            }
         } else if (fieldName === 'house') {
             errorId = 'house-error';
-            if (val.length > 0 && val.length < 2) message = "House info required!";
+            if (val === '') {
+                message = "Address is required";
+            } else if (val.length < 2) {
+                message = "Minimum 2 characters required";
+            }
         } else if (fieldName === 'area') {
             errorId = 'area-error';
-            if (val.length > 0 && val.length < 3) message = "Area info required!";
+            if (val === '') {
+                message = "Address is required";
+            } else if (val.length < 3) {
+                message = "Minimum 3 characters required";
+            }
         }
 
-        
         if (errorId) {
             const errorElement = document.getElementById(errorId);
             if (errorElement) {
                 if (message) {
                     errorElement.textContent = message;
                     errorElement.classList.remove('hidden');
+                    return false;
                 } else {
                     errorElement.classList.add('hidden');
                 }
             }
         }
+        return true;
+    }
+
+    // Attach validation listeners
+    const fieldsToValidate = form.querySelectorAll('input[name], select[name]');
+    fieldsToValidate.forEach(field => {
+        if (field.tagName === 'INPUT') {
+            field.addEventListener('input', () => {
+                validateField(field);
+            });
+        } else if (field.tagName === 'SELECT') {
+            field.addEventListener('change', () => {
+                validateField(field);
+            });
+        }
+        field.addEventListener('blur', () => {
+            validateField(field);
+        });
     });
-});
+
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        document.querySelectorAll('.error-text, #phone-warning, #pincode-warning').forEach(el => el.classList.add('hidden'));
         let isValid = true;
+        fieldsToValidate.forEach(field => {
+            const fieldValid = validateField(field);
+            if (!fieldValid) {
+                isValid = false;
+            }
+        });
 
-        function showError(id, message) {
-            const el = document.getElementById(id);
-            if (el) { el.textContent = message; el.classList.remove('hidden'); }
-            isValid = false;
-        }
+        if (!isValid) return;
 
         const nameVal = form.querySelector('input[name="name"]').value.trim();
         const phoneVal = phoneInput.value.trim();
@@ -337,31 +399,6 @@ inputs.forEach(input => {
         const localityVal = form.querySelector('input[name="locality"]').value.trim();
         const houseVal = form.querySelector('input[name="house"]').value.trim();
         const areaVal = form.querySelector('input[name="area"]').value.trim();
-
-        if (nameVal.length < 3) showError('name-error', "Minimum 3 characters required!");
-        if (!/^\d{10}$/.test(phoneVal)) showError('phone-warning', "Enter 10 digit number!");
-        if (!/^\d{6}$/.test(pinVal)) showError('pincode-warning', "Enter 6 digit pincode!");
-
-        // Locality Validation
-        if (!localityVal) {
-            showError('locality-error', "Locality is required!");
-        } else if (localityVal.length < 3) {
-            showError('locality-error', "Too short! Min 3 characters.");
-        } else if (localityVal.length > 30) {
-            showError('locality-error', "Too long! Max 30 characters.");
-        }
-
-        // House / Building Validation
-        if (!houseVal) {
-            showError('house-error', "House info is required!");
-        } else if (houseVal.length < 2) {
-            showError('house-error', "Too short! Min 2 characters.");
-        }
-
-        if (areaVal.length < 3) showError('area-error', "Minimum 3 characters required!");
-        if (!stateVal || !cityVal) { isValid = false; alert("Please select State and City!"); }
-
-        if (!isValid) return;
 
         // Determine method and URL based on mode (add vs edit)
         const isEdit = form.dataset.mode === 'edit';

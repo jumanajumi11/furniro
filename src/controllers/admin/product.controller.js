@@ -76,10 +76,18 @@ export const createProduct = async (req, res) => {
             const uploadedUrls = [];
             for (const file of colorFiles) {
                 try {
-                    const result = await uploadToCloudinary(file.path, 'products');
+                    let uploadInput;
+                    if (file.buffer) {
+                        uploadInput = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+                    } else {
+                        uploadInput = file.path;
+                    }
+                    const result = await uploadToCloudinary(uploadInput, 'products');
                     uploadedUrls.push(result.secure_url);
-                    // Delete local temp file
-                    await fs.promises.unlink(file.path).catch(() => {});
+                    // Delete local temp file if exists
+                    if (file.path) {
+                        await fs.promises.unlink(file.path).catch(() => {});
+                    }
                 } catch (uploadErr) {
                     // Clean up successful uploads from this request to avoid orphaned files
                     for (const url of uploadedUrls) {
@@ -89,7 +97,9 @@ export const createProduct = async (req, res) => {
                     // Clean up any remaining temp files in req.files
                     if (req.files) {
                         for (const f of req.files) {
-                            await fs.promises.unlink(f.path).catch(() => {});
+                            if (f.path) {
+                                await fs.promises.unlink(f.path).catch(() => {});
+                            }
                         }
                     }
                     throw uploadErr;
@@ -220,10 +230,18 @@ export const updateProduct = async (req, res) => {
             const uploadedUrls = [];
             for (const file of colorFiles) {
                 try {
-                    const result = await uploadToCloudinary(file.path, 'products');
+                    let uploadInput;
+                    if (file.buffer) {
+                        uploadInput = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+                    } else {
+                        uploadInput = file.path;
+                    }
+                    const result = await uploadToCloudinary(uploadInput, 'products');
                     uploadedUrls.push(result.secure_url);
-                    // Delete local temp file
-                    await fs.promises.unlink(file.path).catch(() => {});
+                    // Delete local temp file if exists
+                    if (file.path) {
+                        await fs.promises.unlink(file.path).catch(() => {});
+                    }
                 } catch (uploadErr) {
                     // Clean up successful uploads from this request to avoid orphaned files
                     for (const url of uploadedUrls) {
@@ -233,7 +251,9 @@ export const updateProduct = async (req, res) => {
                     // Clean up any remaining temp files in req.files
                     if (req.files) {
                         for (const f of req.files) {
-                            await fs.promises.unlink(f.path).catch(() => {});
+                            if (f.path) {
+                                await fs.promises.unlink(f.path).catch(() => {});
+                            }
                         }
                     }
                     throw uploadErr;

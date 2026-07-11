@@ -1,5 +1,4 @@
-import dotenv from 'dotenv';
-dotenv.config();
+import 'dotenv/config';
 
 console.log("GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID);
 
@@ -105,6 +104,11 @@ const userSession = session({
     }
 });
 
+// GLOBAL LOCALS
+app.use((req, res, next) => {
+    res.locals.formatCurrency = formatCurrency;
+    next();
+});
 
 // ADMIN ROUTES
 app.use('/admin', adminSession, adminRoutes);

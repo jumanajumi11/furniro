@@ -36,7 +36,7 @@
         </div>
 
         <!-- Form Section -->
-        <form action="/admin/login" method="POST" class="w-full flex flex-col gap-6">
+        <form action="/admin/login" method="POST" class="w-full flex flex-col gap-6" novalidate>
             
             <!-- Dynamic Error Message -->
             <% if (typeof error !== 'undefined' && error) { %>
@@ -48,8 +48,9 @@
             <!-- Email Address Field -->
             <div class="flex flex-col gap-2">
                 <label class="text-[14px] font-medium text-[#333333] ml-2">Email Address</label>
-                <input type="email" name="email" placeholder="admin@Furniro.com" required
+                <input type="email" name="email" placeholder="admin@Furniro.com"
                     class="w-full h-[54px] px-6 bg-[#EBEBEB] rounded-full text-[15px] text-gray-800 placeholder-[#999999] shadow-inner focus:outline-none focus:ring-2 focus:ring-[#B88E2F] focus:bg-white transition-all border border-transparent focus:border-[#B88E2F]">
+                <span id="error-email" class="text-red-500 text-xs ml-4 mt-0.5"></span>
             </div>
 
             <!-- Forgot Password Link -->
@@ -60,8 +61,9 @@
             <!-- Password Field -->
             <div class="flex flex-col gap-2">
                 <label class="text-[14px] font-medium text-[#333333] ml-2">Password</label>
-                <input type="password" name="password" required
+                <input type="password" name="password"
                     class="w-full h-[54px] px-6 bg-[#EBEBEB] rounded-full text-[15px] text-gray-800 shadow-inner focus:outline-none focus:ring-2 focus:ring-[#B88E2F] focus:bg-white transition-all border border-transparent focus:border-[#B88E2F]">
+                <span id="error-password" class="text-red-500 text-xs ml-4 mt-0.5"></span>
             </div>
 
             <!-- Log In Button -->
@@ -79,7 +81,6 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    
     const urlParams = new URLSearchParams(window.location.search);
     const successMsg = urlParams.get('success');
 
@@ -90,6 +91,57 @@
             text: successMsg,
             confirmButtonColor: '#B88E2F', 
             timer: 1000
+        });
+    }
+
+    const loginForm = document.querySelector('form');
+    if (loginForm) {
+        const emailInput = loginForm.querySelector('input[name="email"]');
+        const passwordInput = loginForm.querySelector('input[name="password"]');
+
+        const errorEmail = document.getElementById('error-email');
+        const errorPassword = document.getElementById('error-password');
+
+        function validateEmail() {
+            const val = emailInput.value.trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!val) {
+                errorEmail.textContent = "Email is required.";
+                emailInput.classList.add('border-red-500');
+                return false;
+            }
+            if (!emailRegex.test(val)) {
+                errorEmail.textContent = "Please enter a valid email address.";
+                emailInput.classList.add('border-red-500');
+                return false;
+            }
+            errorEmail.textContent = "";
+            emailInput.classList.remove('border-red-500');
+            return true;
+        }
+
+        function validatePassword() {
+            const val = passwordInput.value;
+            if (!val) {
+                errorPassword.textContent = "Password is required.";
+                passwordInput.classList.add('border-red-500');
+                return false;
+            }
+            errorPassword.textContent = "";
+            passwordInput.classList.remove('border-red-500');
+            return true;
+        }
+
+        emailInput.addEventListener('input', validateEmail);
+        passwordInput.addEventListener('input', validatePassword);
+
+        loginForm.addEventListener('submit', function(e) {
+            const isEmailValid = validateEmail();
+            const isPasswordValid = validatePassword();
+
+            if (!isEmailValid || !isPasswordValid) {
+                e.preventDefault();
+            }
         });
     }
 </script>

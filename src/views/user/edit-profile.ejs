@@ -38,16 +38,8 @@
 
 <div>
     <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-    <input type="email" name="email" id="emailInput" value="<%= user.email %>" <% if (user.googleId) { %> readonly <% } %> class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#B88E2F] outline-none <%= user.googleId ? 'bg-gray-100 cursor-not-allowed text-gray-500' : '' %>">
-    
+    <input type="email" name="email" id="emailInput" value="<%= user.email %>" <% if (user.googleId) { %> readonly class="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed text-gray-500 outline-none" <% } else { %> class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#B88E2F] outline-none" <% } %>>
     <p id="email-error" class="text-[11px] text-red-500 font-bold mt-1 hidden"></p>
-
-    <!-- <% if (user.googleId) { %>
-        <p class="text-[11px] text-blue-600 mt-2 flex items-center gap-1">
-            <i class="fas fa-info-circle"></i> Logged in via Google. Email cannot be changed.
-        </p>
-    <% } %> -->
-
 </div>
 
 <div>
@@ -72,6 +64,24 @@
 let timerInterval;
 let timeLeft = 60; 
 
+function getEmailValidationError(rawEmail) {
+    const email = rawEmail.trim();
+    if (email === '') {
+        return "Please enter a valid email address";
+    }
+    if (rawEmail.includes(' ')) {
+        return "Email address should not contain spaces";
+    }
+    if (!rawEmail.includes('@')) {
+        return "Please enter a valid email address with @";
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return "Please enter a valid email address";
+    }
+    return null;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const inputs = document.querySelectorAll('#profileForm input');
     inputs.forEach(input => {
@@ -88,6 +98,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     errorElement.innerHTML = `<i class="fas fa-exclamation-circle"></i> Please enter numbers only!`;
                     errorElement.className = "text-[11px] text-red-500 font-bold mt-2 flex items-center gap-1";
                     errorElement.classList.remove('hidden');
+                } else if (val !== '' && !/^\d{10}$/.test(val)) {
+                    errorElement.innerHTML = `<i class="fas fa-exclamation-circle"></i> Phone number must be a 10-digit number`;
+                    errorElement.className = "text-[11px] text-red-500 font-bold mt-2 flex items-center gap-1";
+                    errorElement.classList.remove('hidden');
                 } else {
                     errorElement.classList.add('hidden');
                 }
@@ -95,14 +109,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
             
             else if (fieldName === 'email') {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (val.length > 0 && !emailRegex.test(val)) {
-                    
-                    errorElement.innerHTML = `<i class="fas fa-exclamation-circle"></i> Please enter a valid email address with @!`;
+                const emailErrorMsg = getEmailValidationError(this.value);
+                if (emailErrorMsg) {
+                    errorElement.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${emailErrorMsg}`;
                     errorElement.className = "text-[11px] text-red-500 font-bold mt-2 flex items-center gap-1";
                     errorElement.classList.remove('hidden');
                 } else {
-                    
                     errorElement.classList.add('hidden');
                 }
             }
@@ -142,6 +154,7 @@ async function handleProfileUpdate() {
     const name = nameInput.value.trim();
     const phone = phoneInput.value.trim();
     const newEmail = emailInput.value.trim();
+    const rawEmail = emailInput.value;
     const currentEmail = "<%= user.email %>".trim();
     const isGoogleUser = "<%= user.googleId %>" ? true : false;
 
@@ -153,7 +166,6 @@ async function handleProfileUpdate() {
 
     let hasError = false;
 
-  
     if (name.length < 3) {
         const nameErr = document.getElementById('name-error');
         nameErr.innerHTML = `<i class="fas fa-exclamation-circle"></i> Name must be at least 3 characters!`;
@@ -162,198 +174,59 @@ async function handleProfileUpdate() {
         hasError = true;
     }
 
-    
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(newEmail)) {
-        emailError.innerHTML = `<i class="fas fa-exclamation-circle"></i> Please enter a valid email address with @!`;
-        emailError.className = "text-[11px] text-red-500 font-bold mt-2 flex items-center gap-1";
-        emailError.classList.remove('hidden');
-        hasError = true;
-    }
-
-    
-    const phoneRegex = /^[6-9]\d{9}$/;
+    const phoneRegex = /^\d{10}$/;
     if (phone && !phoneRegex.test(phone)) {
         const phoneErr = document.getElementById('phone-error');
-        phoneErr.innerHTML = `<i class="fas fa-exclamation-circle"></i> Please enter a valid 10-digit number.`;
+        phoneErr.innerHTML = `<i class="fas fa-exclamation-circle"></i> Phone number must be a 10-digit number`;
         phoneErr.className = "text-[11px] text-red-500 font-bold mt-2 flex items-center gap-1";
         phoneErr.classList.remove('hidden');
         hasError = true;
     }
 
-    
-    if (isGoogleUser && newEmail !== currentEmail) {
-        emailInput.value = currentEmail; 
-        return; 
+    // Email verification & validation on change
+    if (!isGoogleUser && newEmail !== currentEmail) {
+        const emailErrorMsg = getEmailValidationError(rawEmail);
+        if (emailErrorMsg) {
+            emailError.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${emailErrorMsg}`;
+            emailError.className = "text-[11px] text-red-500 font-bold mt-2 flex items-center gap-1";
+            emailError.classList.remove('hidden');
+            hasError = true;
+        }
     }
 
-    if (hasError) return; 
+    if (hasError) return;
 
-    
     if (!isGoogleUser && newEmail !== currentEmail) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(newEmail)) {
-            const emailError = document.getElementById('email-error');
-            emailError.textContent = "Please enter a valid email address.";
-            emailError.classList.remove('hidden');
-            return;
+        // Step 1: Send OTP first (do not open modal yet!)
+        Swal.fire({
+            title: 'Sending OTP...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        try {
+            const response = await fetch('/send-email-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ newEmail: newEmail })
+            });
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                Swal.fire('Error', data.message || 'Failed to send OTP.', 'error');
+                return;
+            }
+
+            // OTP sent successfully. Now open the OTP verification modal!
+            showOtpModal(newEmail);
+        } catch (error) {
+            Swal.fire('Error', 'Failed to connect. Please try again.', 'error');
         }
-        startOtpProcess(newEmail);
     } else {
         submitProfileData();
     }
 }
 
-
-async function startOtpProcess(email) {
-    timeLeft = 60;
-    
-    Swal.fire({
-        title: 'Sending OTP...',
-        didOpen: () => { Swal.showLoading(); }
-    });
-
-    try {
-        const response = await fetch('/send-email-otp', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ newEmail: email })
-        });
-        const data = await response.json();
-
-        if (response.status === 401 && data.isBlocked) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Blocked!',
-                text: 'Your account is blocked by the admin.',
-                confirmButtonColor: '#B88E2F',
-                allowOutsideClick: false
-            }).then(() => {
-                window.location.href = '/login?error=Your account is blocked';
-            });
-            return;
-        }
-
-        if (data.success) {
-            showOtpModal(email);
-        } else {
-            Swal.fire('Error', data.message, 'error');
-        }
-    } catch (error) {
-        Swal.fire('Error', 'Failed to send OTP.', 'error');
-    }
-}
-
-
-
-
-function showOtpModal(email) {
-    Swal.fire({
-        title: 'Verify Your Email',
-        html: `
-            <p class="text-sm mb-4">Enter the 6-digit OTP sent to <b>${email}</b></p>
-            <input id="otp-input" class="swal2-input text-center" placeholder="------" maxlength="6">
-            <div class="mt-3 text-sm font-semibold">
-                <span id="timer-text">Resend OTP in: <span id="timer-count">60</span>s</span>
-                <button id="resend-btn" class="hidden text-blue-600 hover:underline" onclick="resendOtp('${email}')">Resend OTP</button>
-            </div>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'Verify & Update',
-        confirmButtonColor: '#B88E2F',
-        allowOutsideClick: false,
-        didOpen: () => {
-            const timerCount = document.getElementById('timer-count');
-            const resendBtn = document.getElementById('resend-btn');
-            const timerText = document.getElementById('timer-text');
-            
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                if (timerCount) timerCount.textContent = timeLeft;
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    if (timerText) timerText.classList.add('hidden');
-                    if (resendBtn) resendBtn.classList.remove('hidden');
-                }
-            }, 1000);
-        },
-        preConfirm: () => {
-            const otp = document.getElementById('otp-input').value;
-            
-            
-            if (timeLeft <= 0) {
-                Swal.showValidationMessage('OTP Expired! Please resend a new one.');
-                return false;
-            }
-
-            if (!otp || otp.length !== 6) {
-                Swal.showValidationMessage('Please enter 6-digit OTP');
-                return false;
-            }
-            return otp;
-        }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            verifyOtp(result.value);
-        }
-    });
-}
-
-
-async function verifyOtp(otp) {
-    if (timeLeft <= 0) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Expired',
-            text: 'Your OTP has expired. Please request a new one.',
-            confirmButtonColor: '#B88E2F'
-        });
-        return;
-    }
-
-    try {
-        const response = await fetch('/verify-email-otp', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ otp })
-        });
-        const data = await response.json();
-
-        if (response.status === 401 && data.isBlocked) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Blocked!',
-                text: 'Your account is blocked by the admin.',
-                confirmButtonColor: '#B88E2F',
-                allowOutsideClick: false
-            }).then(() => {
-                window.location.href = '/login?error=Your account is blocked';
-            });
-            return;
-        }
-
-        if (data.success) {
-            submitProfileData();
-        } else {
-            Swal.fire('Invalid OTP', data.message, 'error');
-        }
-    } catch (error) {
-        Swal.fire('Error', 'Verification failed', 'error');
-    }
-}
-// Resend OTP function
-async function resendOtp(email) {
-    
-    clearInterval(timerInterval);
-    
-    
-    timeLeft = 60; 
-
-    
-    startOtpProcess(email);
-}
-// 5. Final Submit
 async function submitProfileData() {
     const form = document.getElementById('profileForm');
     const formData = new FormData(form);
@@ -393,6 +266,201 @@ async function submitProfileData() {
     } catch (error) {
         Swal.fire('Error', 'Update failed.', 'error');
     }
+}
+
+function showOtpModal(email) {
+    let timeLeft = 60;
+    let timerInterval;
+
+    const startTimer = () => {
+        const timerCount = document.getElementById('swal-timer-count');
+        const resendBtn = document.getElementById('swal-resend-btn');
+        const timerText = document.getElementById('swal-timer-text');
+
+        if (resendBtn) {
+            resendBtn.disabled = true;
+            resendBtn.className = "text-gray-400 font-bold cursor-not-allowed ml-2";
+        }
+        if (timerText) {
+            timerText.style.display = 'inline';
+        }
+
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            if (timerCount) {
+                const minutes = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+                const seconds = String(timeLeft % 60).padStart(2, '0');
+                timerCount.textContent = `${minutes}:${seconds}`;
+            }
+
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                if (timerText) {
+                    timerText.style.display = 'none';
+                }
+                if (resendBtn) {
+                    resendBtn.disabled = false;
+                    resendBtn.className = "text-[#B88E2F] hover:underline font-bold cursor-pointer ml-2";
+                }
+            }
+        }, 1000);
+    };
+
+    Swal.fire({
+        title: 'Verify Your Email',
+        html: `
+            <p class="text-sm mb-4">Enter the 6-digit verification code sent to <br><b>${email}</b></p>
+            <div class="flex justify-center mb-4">
+                <input id="swal-otp-input" class="swal2-input text-center !w-48 tracking-[0.5em] font-bold" placeholder="------" maxlength="6">
+            </div>
+            <p id="swal-otp-error" class="text-[11px] text-red-500 font-bold mt-1 mb-3 hidden"></p>
+            <p id="swal-otp-success" class="text-[11px] text-green-600 font-bold mt-1 mb-3 hidden"></p>
+            <div class="text-sm">
+                <span id="swal-timer-text">Resend OTP in <span id="swal-timer-count">01:00</span></span>
+                <button type="button" id="swal-resend-btn" disabled class="text-gray-400 font-bold cursor-not-allowed ml-2" onclick="resendSwalOtp(event, '${email}')">Resend OTP</button>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Verify & Update',
+        confirmButtonColor: '#B88E2F',
+        allowOutsideClick: false,
+        didOpen: () => {
+            startTimer();
+        },
+        willClose: () => {
+            clearInterval(timerInterval);
+        },
+        preConfirm: async () => {
+            const otpInput = document.getElementById('swal-otp-input');
+            const errorElement = document.getElementById('swal-otp-error');
+            const successElement = document.getElementById('swal-otp-success');
+            const otp = otpInput.value.trim();
+
+            if (errorElement) errorElement.classList.add('hidden');
+            if (successElement) successElement.classList.add('hidden');
+
+            if (!otp || otp.length !== 6) {
+                errorElement.innerHTML = `<i class="fas fa-exclamation-circle"></i> Please enter 6-digit OTP.`;
+                errorElement.classList.remove('hidden');
+                return false;
+            }
+
+            if (timeLeft <= 0) {
+                errorElement.innerHTML = `<i class="fas fa-exclamation-circle"></i> OTP expired! Please resend a new one.`;
+                errorElement.classList.remove('hidden');
+                return false;
+            }
+
+            Swal.showLoading();
+            try {
+                const response = await fetch('/verify-email-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ otp })
+                });
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    Swal.hideLoading();
+                    errorElement.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${data.message || 'Verification failed.'}`;
+                    errorElement.classList.remove('hidden');
+                    return false;
+                }
+                return true;
+            } catch (error) {
+                Swal.hideLoading();
+                errorElement.innerHTML = `<i class="fas fa-exclamation-circle"></i> Failed to verify OTP. Please try again.`;
+                errorElement.classList.remove('hidden');
+                return false;
+            }
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            submitProfileData();
+        }
+    });
+
+    window.resendSwalOtp = async function(event, email) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
+        const resendBtn = document.getElementById('swal-resend-btn');
+        const timerText = document.getElementById('swal-timer-text');
+        const timerCount = document.getElementById('swal-timer-count');
+        const errorElement = document.getElementById('swal-otp-error');
+        const successElement = document.getElementById('swal-otp-success');
+
+        // Clear existing timer immediately
+        clearInterval(timerInterval);
+        if (resendBtn) {
+            resendBtn.disabled = true;
+            resendBtn.className = "text-gray-400 font-bold cursor-not-allowed ml-2";
+        }
+        if (timerText) {
+            timerText.style.display = 'inline';
+        }
+        if (timerCount) {
+            timerCount.textContent = '01:00';
+        }
+        if (errorElement) {
+            errorElement.classList.add('hidden');
+        }
+        if (successElement) {
+            successElement.classList.add('hidden');
+        }
+
+        try {
+            const response = await fetch('/send-email-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ newEmail: email })
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                if (errorElement) {
+                    errorElement.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${data.message || 'Failed to resend OTP.'}`;
+                    errorElement.classList.remove('hidden');
+                }
+                if (resendBtn) {
+                    resendBtn.disabled = false;
+                    resendBtn.className = "text-[#B88E2F] hover:underline font-bold cursor-pointer ml-2";
+                }
+                if (timerText) {
+                    timerText.style.display = 'none';
+                }
+                return;
+            }
+
+            timeLeft = 60;
+            startTimer();
+
+            // Clear input field
+            const otpInput = document.getElementById('swal-otp-input');
+            if (otpInput) {
+                otpInput.value = '';
+            }
+
+            if (successElement) {
+                successElement.textContent = "OTP has been resent successfully";
+                successElement.classList.remove('hidden');
+            }
+        } catch (error) {
+            if (errorElement) {
+                errorElement.innerHTML = `<i class="fas fa-exclamation-circle"></i> Failed to resend OTP. Please try again.`;
+                errorElement.classList.remove('hidden');
+            }
+            if (resendBtn) {
+                resendBtn.disabled = false;
+                resendBtn.className = "text-[#B88E2F] hover:underline font-bold cursor-pointer ml-2";
+            }
+            if (timerText) {
+                timerText.style.display = 'none';
+            }
+        }
+    };
 }
 </script>
 </body>

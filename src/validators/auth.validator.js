@@ -1,5 +1,13 @@
 import Joi from 'joi';
+import { validateEmailFormat } from '../utils/emailValidator.js';
 
+const emailCustomValidator = (value, helpers) => {
+    const errorMsg = validateEmailFormat(value);
+    if (errorMsg) {
+        return helpers.message(errorMsg);
+    }
+    return value.toLowerCase().trim();
+};
 
 const passwordComplexity = Joi.string()
     .min(8)
@@ -17,19 +25,18 @@ export const signupSchema = Joi.object({
         'string.empty': 'Name is required.',
         'string.min': 'Name must be at least 2 characters long.'
     }),
-    email: Joi.string().trim().email().lowercase().required().messages({
-        'string.email': 'Invalid email format.',
+    email: Joi.string().required().custom(emailCustomValidator).messages({
         'string.empty': 'Email is required.'
     }),
     password: passwordComplexity,
     confirmPassword: Joi.any().equal(Joi.ref('password')).required().messages({
         'any.only': 'Passwords do not match.'
-    })
+    }),
+    referralCode: Joi.string().trim().allow('').optional()
 });
 
 export const loginSchema = Joi.object({
-    email: Joi.string().trim().email().lowercase().required().messages({
-        'string.email': 'Invalid email format.',
+    email: Joi.string().required().custom(emailCustomValidator).messages({
         'string.empty': 'Email is required.'
     }),
     password: Joi.string().required().messages({
@@ -38,8 +45,7 @@ export const loginSchema = Joi.object({
 });
 
 export const forgotPasswordSchema = Joi.object({
-    email: Joi.string().trim().email().lowercase().required().messages({
-        'string.email': 'Invalid email format.',
+    email: Joi.string().required().custom(emailCustomValidator).messages({
         'string.empty': 'Email is required.'
     })
 });

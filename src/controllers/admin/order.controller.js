@@ -261,6 +261,16 @@ export const updateOrderStatus = async (req, res) => {
             });
         }
 
+        // Prevent delivery/processing of unpaid online/wallet payment orders
+        if (status !== 'Cancelled') {
+            if (['Razorpay', 'Wallet'].includes(order.paymentMethod) && order.paymentStatus !== 'Paid') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Cannot update status. Payment is not completed successfully for this online/wallet order.'
+                });
+            }
+        }
+
         if (order.status === status) {
             return res.status(400).json({
                 success: false,

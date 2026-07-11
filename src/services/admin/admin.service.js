@@ -115,7 +115,7 @@ export const loadVerifyOTP = async (req, res) => {
 };
 export const sendResetOTP = async (req, res) => {
     try {
-
+        console.log("OTP controller called");
         const { email } = req.body;
 
         const admin = await User.findOne({
@@ -130,14 +130,23 @@ export const sendResetOTP = async (req, res) => {
             });
         }
 
+        console.log("About to generate OTP");
         const otp = generateOTP();
+        console.log("OTP created:", otp);
+
+        console.log("========== OTP DEBUG ==========");
+        console.log("Purpose:", "Admin Forgot Password");
+        console.log("Email:", email);
+        console.log("OTP:", otp);
+        console.log("===============================");
         
         // Log generated OTP to terminal
         logOtp({
-            purpose: 'Admin Password Reset',
+            type: "Generated",
+            purpose: "Admin Password Reset OTP",
             email: email,
-            otp,
-            expires: '1 minute'
+            otp: otp,
+            expires: "1 minute"
         });
 
         req.session.resetOTP = otp;
@@ -152,6 +161,7 @@ export const sendResetOTP = async (req, res) => {
             text: `Your OTP is ${otp}`
         };
 
+        console.log("Sending OTP email");
         transporter.sendMail(mailOptions, (err) => {
 
             if (err) {
@@ -253,7 +263,7 @@ export const resetPassword = async (req, res) => {
 
 export const resendAdminOTP = async (req, res) => {
     try {
-
+        console.log("OTP controller called");
         const email =
             req.session.adminEmail || req.session.resetEmail;
 
@@ -264,15 +274,23 @@ export const resendAdminOTP = async (req, res) => {
             });
         }
 
+        console.log("About to generate OTP");
         const otp = generateOTP();
+        console.log("OTP created:", otp);
+
+        console.log("========== OTP DEBUG ==========");
+        console.log("Purpose:", "Resend Admin Forgot Password");
+        console.log("Email:", email);
+        console.log("OTP:", otp);
+        console.log("===============================");
 
         // Log resent OTP to terminal
         logOtp({
-            type: 'Resent',
-            purpose: 'Resend Admin Password Reset OTP',
+            type: "Resent",
+            purpose: "Resend Admin Password Reset OTP",
             email: email,
-            otp,
-            expires: '1 minute'
+            otp: otp,
+            expires: "1 minute"
         });
 
         req.session.resetOTP = otp;
@@ -285,6 +303,7 @@ export const resendAdminOTP = async (req, res) => {
             text: `Your new OTP is ${otp}`
         };
 
+        console.log("Sending OTP email");
         transporter.sendMail(mailOptions, error => {
 
             if (error) {

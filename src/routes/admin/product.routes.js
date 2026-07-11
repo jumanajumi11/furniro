@@ -8,13 +8,7 @@ import * as auth from '../../middlewares/auth.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, 'public/upload/products/'),
-    filename:    (req, file, cb) => {
-        const unique = `prod-${Date.now()}-${Math.round(Math.random() * 1e6)}`;
-        cb(null, unique + path.extname(file.originalname).toLowerCase());
-    }
-});
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
     const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];

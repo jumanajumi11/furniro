@@ -32,6 +32,18 @@ export const loadLogin = async (req, res) => {
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email || !email.trim()) {
+            return res.render('admin/login', { error: 'Email is required.' });
+        }
+        if (!emailRegex.test(email.trim())) {
+            return res.render('admin/login', { error: 'Please enter a valid email address.' });
+        }
+        if (!password) {
+            return res.render('admin/login', { error: 'Password is required.' });
+        }
+
         const cleanEmail = email ? email.trim().toLowerCase() : '';
 
         logger.debug(`[Admin Login] Incoming request email: "${email}" -> cleanEmail: "${cleanEmail}"`);
@@ -107,6 +119,7 @@ export const loadVerifyOTP = async (req, res) => {
 
 export const sendResetOTP = async (req, res) => {
     try {
+        console.log("OTP controller called");
         const { email } = req.body;
         const cleanEmail = email ? email.trim().toLowerCase() : '';
         const admin = await User.findOne({
@@ -121,14 +134,23 @@ export const sendResetOTP = async (req, res) => {
             });
         }
 
+        console.log("About to generate OTP");
         const otp = generateOTP();
-        
+        console.log("OTP created:", otp);
+
+        console.log("========== OTP DEBUG ==========");
+        console.log("Purpose:", "Admin Forgot Password");
+        console.log("Email:", email);
+        console.log("OTP:", otp);
+        console.log("===============================");
+
         // Log generated OTP to terminal
         logOtp({
-            purpose: 'Admin Password Reset',
+            type: "Generated",
+            purpose: "Admin Password Reset OTP",
             email: email,
-            otp,
-            expires: '1 minute'
+            otp: otp,
+            expires: "1 minute"
         });
 
         req.session.resetOTP = otp;
@@ -143,6 +165,7 @@ export const sendResetOTP = async (req, res) => {
             text: `Your OTP is ${otp}`
         };
 
+        console.log("Sending OTP email");
         transporter.sendMail(mailOptions, (err) => {
             if (err) {
                 logger.error('[Admin] sendMail error:', err);
@@ -225,6 +248,7 @@ export const resetPassword = async (req, res) => {
 
 export const resendAdminOTP = async (req, res) => {
     try {
+        console.log("OTP controller called");
         const email = req.session.adminEmail || req.session.resetEmail;
 
         if (!email) {
@@ -234,15 +258,23 @@ export const resendAdminOTP = async (req, res) => {
             });
         }
 
+        console.log("About to generate OTP");
         const otp = generateOTP();
+        console.log("OTP created:", otp);
+
+        console.log("========== OTP DEBUG ==========");
+        console.log("Purpose:", "Resend Admin Forgot Password");
+        console.log("Email:", email);
+        console.log("OTP:", otp);
+        console.log("===============================");
 
         // Log resent OTP to terminal
         logOtp({
-            type: 'Resent',
-            purpose: 'Resend Admin Password Reset OTP',
+            type: "Resent",
+            purpose: "Resend Admin Password Reset OTP",
             email: email,
-            otp,
-            expires: '1 minute'
+            otp: otp,
+            expires: "1 minute"
         });
 
         req.session.resetOTP = otp;
@@ -255,6 +287,7 @@ export const resendAdminOTP = async (req, res) => {
             text: `Your new OTP is ${otp}`
         };
 
+        console.log("Sending OTP email");
         transporter.sendMail(mailOptions, error => {
             if (error) {
                 logger.error('[Admin] resendAdminOTP sendMail error:', error);

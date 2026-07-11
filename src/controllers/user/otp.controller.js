@@ -1,6 +1,8 @@
 import otpService from '../../services/user/otp.service.js';
-import { sendOTPEmail } from '../../utils/mail.js';
+import { sendOTPEmail, sendEmailChangeNotification } from '../../utils/mail.js';
+import User from '../../models/user.js';
 import { logger } from '../../utils/logger.js';
+import { validateEmailFormat } from '../../utils/emailValidator.js';
 
 export const getForgotPage = (req, res) => {
     res.render('user/forgot-password', { error: null });
@@ -8,10 +10,13 @@ export const getForgotPage = (req, res) => {
 
 export const forgotPassword = async (req, res, next) => {
     try {
+        console.log("OTP controller called");
         const { email } = req.body;
         const cleanEmail = email.trim().toLowerCase();
 
+        console.log("About to generate OTP");
         const otpData = await otpService.sendOtp(cleanEmail, 'forgot');
+        console.log("OTP generated:", otpData.otp);
 
         req.session.userTempData = {
             email: cleanEmail,
@@ -34,6 +39,13 @@ export const forgotPassword = async (req, res, next) => {
 };
 
 export const getOtpPage = (req, res) => {
+    if (req.session.purpose === 'signup' && req.session.otpExpiry && Date.now() > req.session.otpExpiry) {
+        delete req.session.userTempData;
+        delete req.session.purpose;
+        delete req.session.otpExpiry;
+        return res.redirect('/signup');
+    }
+
     if (!req.session.userTempData) {
         const purpose = req.session.purpose;
         if (purpose === 'signup') {
@@ -47,11 +59,17 @@ export const getOtpPage = (req, res) => {
     const remainingTime = Math.max(0, Math.floor((generatedAt + expirationLimit - Date.now()) / 1000));
 
     res.render('user/otp', { email: email, error: null, remainingTime: remainingTime });
-
 };
 
 export const verifyOTP = async (req, res, next) => {
     try {
+        if (req.session.purpose === 'signup' && req.session.otpExpiry && Date.now() > req.session.otpExpiry) {
+            delete req.session.userTempData;
+            delete req.session.purpose;
+            delete req.session.otpExpiry;
+            return res.status(400).json({ success: false, message: "Session expired. Please request a new OTP.", redirectUrl: '/signup' });
+        }
+
         const { otp } = req.body;
         const tempData = req.session.userTempData;
         const purpose = req.session.purpose;
@@ -74,24 +92,16 @@ export const verifyOTP = async (req, res, next) => {
             };
             delete req.session.userTempData;
             delete req.session.purpose;
+            delete req.session.otpExpiry;
 
             return res.json({ success: true, redirectUrl: result.redirectUrl });
         }
     } catch (error) {
         console.error("Verification Error:", error);
-        if (error.message.includes("expired")) {
-            if (req.session.userTempData) {
-                delete req.session.userTempData.otp;
-            }
-            return res.status(400).json({
-                success: false,
-                message: error.message,
-                isExpired: true
-            });
-        }
         res.status(400).json({ success: false, message: error.message || "server error!" });
     }
 };
+
 export const resetPassword = (req, res) => {
     try {
         if (!req.session.allowReset) {
@@ -125,9 +135,16 @@ export const getVerifyEmailPage = (req, res) => {
 
 export const resendOTP = async (req, res, next) => {
     try {
+        if (req.session.purpose === 'signup' && req.session.otpExpiry && Date.now() > req.session.otpExpiry) {
+            delete req.session.userTempData;
+            delete req.session.purpose;
+            delete req.session.otpExpiry;
+            return res.status(400).json({ success: false, message: "Session expired. Please request a new OTP.", redirectUrl: '/signup' });
+        }
+
         const tempData = req.session.userTempData;
         if (!tempData || !tempData.email) {
-            return res.status(400).json({ success: false, message: "Session expired. Please request a new OTP." });
+            return res.status(400).json({ success: false, message: "Session expired. Please request a new OTP.", redirectUrl: '/signup' });
         }
 
         if (req.session.resendCount === undefined) {
@@ -138,20 +155,28 @@ export const resendOTP = async (req, res, next) => {
             return res.status(400).json({ success: false, message: "Maximum resend attempts reached. Please restart the process." });
         }
 
+        console.log("OTP controller called");
         const email = tempData.email;
         // Pass isResend=true to ensure it's logged as a resent OTP in the console
+        console.log("About to generate OTP");
         const otpData = await otpService.sendOtp(email, req.session.purpose || 'signup', true);
+        console.log("OTP generated:", otpData.otp);
 
         req.session.resendCount += 1;
         req.session.userTempData.otp = otpData.otp;
         req.session.userTempData.otpGeneratedAt = otpData.otpGeneratedAt;
+
+        // Extend signup session expiry timer upon sending new OTP
+        if (req.session.purpose === 'signup') {
+            req.session.otpExpiry = Date.now() + (5 * 60 * 1000);
+        }
 
         req.session.save((err) => {
             if (err) {
                 logger.error('resendOTP — Session save error:', err);
                 return res.status(500).json({ success: false, message: 'Session error' });
             }
-            res.json({ success: true, message: "OTP resent successfully." });
+            res.json({ success: true, message: "A new OTP has been sent successfully." });
         });
     } catch (error) {
         console.error("Resend OTP Error:", error);
@@ -161,13 +186,17 @@ export const resendOTP = async (req, res, next) => {
 
 export const sendEmailUpdateOTP = async (req, res, next) => {
     try {
+        console.log("OTP controller called");
         const { newEmail } = req.body;
         if (!newEmail) {
             return res.status(400).json({ success: false, message: "Email is required" });
         }
 
         const currentUserId = req.session.user._id;
-        const otpData = await otpService.sendEmailUpdateOtp(newEmail, currentUserId);
+        const isResend = !!req.session.emailUpdateData;
+        console.log("About to generate OTP");
+        const otpData = await otpService.sendEmailUpdateOtp(newEmail, currentUserId, isResend);
+        console.log("OTP generated:", otpData.otp);
 
         req.session.emailUpdateData = {
             newEmail: otpData.newEmail,
@@ -197,16 +226,32 @@ export const verifyEmailOtp = async (req, res, next) => {
 
 export const sendEmailOtp = async (req, res, next) => {
     try {
+        console.log("OTP controller called");
         const { newEmail } = req.body;
         const currentUserId = req.session.user._id;
 
-        const otpData = await otpService.sendEmailUpdateOtp(newEmail, currentUserId);
+        const emailError = validateEmailFormat(newEmail);
+        if (emailError) {
+            return res.status(400).json({ success: false, message: emailError });
+        }
+
+        const currentUser = await User.findById(currentUserId);
+        if (newEmail.toLowerCase().trim() === currentUser.email.toLowerCase().trim()) {
+            return res.status(400).json({ success: false, message: "New email must be different from current email." });
+        }
+
+        const isResend = !!req.session.emailOtp;
+        console.log("About to generate OTP");
+        const otpData = await otpService.sendEmailUpdateOtp(newEmail, currentUserId, isResend);
+        console.log("OTP generated:", otpData.otp);
 
         req.session.emailOtp = otpData.otp;
         req.session.tempEmail = otpData.newEmail;
         req.session.otpExpiry = Date.now() + 60 * 1000;
+        delete req.session.emailUpdateOTP;
 
-        res.json({ success: true, message: "OTP sent to your email." });
+        const message = isResend ? "OTP has been resent successfully." : "OTP sent successfully.";
+        res.json({ success: true, message });
     } catch (error) {
         console.error("Send Email OTP Error:", error);
         res.status(400).json({ success: false, message: error.message || "Failed to send OTP to email." });
@@ -223,14 +268,25 @@ export const verifyAndSaveEmail = async (req, res, next) => {
         const otpExpiry = req.session.otpExpiry;
         const userId = req.session.user._id;
 
+        const currentUser = await User.findById(userId);
+        const oldEmail = currentUser.email;
+
         await otpService.verifyAndSaveEmail(otp, sessionData, otpExpiry, userId);
+
+        // Send email change notification to the old email
+        try {
+            await sendEmailChangeNotification(oldEmail, sessionData.newEmail);
+        } catch (mailErr) {
+            console.error("Failed to send email change notification:", mailErr);
+        }
 
         req.session.user.email = req.session.tempEmail;
         delete req.session.emailOtp;
         delete req.session.emailUpdateOTP;
         delete req.session.tempEmail;
+        delete req.session.otpExpiry;
 
-        res.json({ success: true, message: "Profile Updated Successfully!" });
+        res.json({ success: true, message: "Email updated successfully." });
     } catch (error) {
         console.error(error);
         res.status(400).json({ success: false, message: error.message || "Server Error" });

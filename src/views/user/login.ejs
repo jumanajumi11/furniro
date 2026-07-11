@@ -101,7 +101,7 @@
     let isValid = true;
 
     
-    const email = document.getElementById('email').value.trim();
+    const emailVal = document.getElementById('email').value;
     const password = document.getElementById('password').value.trim();
 
     
@@ -109,12 +109,22 @@
     document.getElementById('passwordError').textContent = "";
 
     // 1. Email Validation
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (email === "") {
-        document.getElementById('emailError').textContent = "Email is required";
-        isValid = false;
-    } else if (!emailPattern.test(email)) {
-        document.getElementById('emailError').textContent = "Please enter a valid email address";
+    let emailErrorMsg = null;
+    if (emailVal === undefined || emailVal === null || emailVal.trim() === '') {
+        emailErrorMsg = "Email address is required";
+    } else if (emailVal.includes(' ')) {
+        emailErrorMsg = "Email address should not contain spaces";
+    } else if (!emailVal.includes('@')) {
+        emailErrorMsg = "Please enter a valid email address with @";
+    } else {
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailPattern.test(emailVal.trim())) {
+            emailErrorMsg = "Please enter a valid email address";
+        }
+    }
+
+    if (emailErrorMsg) {
+        document.getElementById('emailError').textContent = emailErrorMsg;
         isValid = false;
     }
 

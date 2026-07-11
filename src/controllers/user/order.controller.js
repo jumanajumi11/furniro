@@ -133,11 +133,11 @@ export const placeOrder = async (req, res) => {
         }
 
         if (paymentMethod === 'COD' && totals.grandTotal > COD_LIMIT) {
-            return res.status(400).json({ success: false, message: `Cash on Delivery is available only for orders up to ₹${COD_LIMIT.toLocaleString('en-IN')}. Please choose Online Payment or Wallet.` });
+            return res.status(400).json({ success: false, message: "Cash on Delivery is available only for orders up to ₹50,000" });
         }
 
-        if (paymentMethod === 'Wallet' && (user.wallet || 0) < totals.grandTotal) {
-            return res.status(400).json({ success: false, message: 'Insufficient wallet balance' });
+        if (paymentMethod === 'Wallet' && (user.wallet || 0) <= 0) {
+            return res.status(400).json({ success: false, message: 'Wallet balance is 0. Please choose another payment method.' });
         }
 
         const orderNumber = 'FUR-' + Date.now().toString().slice(-6) + '-' + Math.floor(100 + Math.random() * 900);
@@ -172,7 +172,13 @@ export const placeOrder = async (req, res) => {
                 }
             }
 
-            const itemPrice = prod.salePrice || originalPrice;
+            let itemPrice = prod.salePrice || originalPrice;
+            if (prod.variants && prod.variants.length > 0 && item.variantId) {
+                const variant = prod.variants.id(item.variantId);
+                if (variant) {
+                    itemPrice = variant.salePrice || variant.price || itemPrice;
+                }
+            }
 
             return {
                 productId: prod._id,
@@ -182,10 +188,18 @@ export const placeOrder = async (req, res) => {
                 color: color || null,
                 size: size || null,
                 image: image || null,
-                status: paymentMethod === 'Razorpay' ? 'Pending' : 'Pending', 
+                status: 'Pending', 
                 returnStatus: 'None'
             };
         });
+
+        let walletDeduction = 0;
+        let payableAmount = totals.grandTotal;
+
+        if (paymentMethod === 'Wallet') {
+            walletDeduction = Math.min(user.wallet || 0, totals.grandTotal);
+            payableAmount = totals.grandTotal - walletDeduction;
+        }
 
         const newOrderData = {
             userId,
@@ -202,15 +216,17 @@ export const placeOrder = async (req, res) => {
                 pincode: selectedAddress.pincode
             },
             paymentMethod,
-            paymentStatus: paymentMethod === 'COD' ? 'Pending' : (paymentMethod === 'Wallet' ? 'Paid' : 'Pending'),
+            paymentStatus: payableAmount === 0 ? 'Paid' : 'Pending',
             subtotal: totals.subtotal,
             tax: totals.tax,
             shippingCharge: totals.shippingCharge,
             discount: totals.discount,
             couponDiscount: totals.couponDiscount,
             grandTotal: totals.grandTotal,
+            walletDeduction: walletDeduction,
+            payableAmount: payableAmount,
             couponCode: couponCode || null,
-            status: paymentMethod === 'Razorpay' ? 'Pending Payment' : 'Pending'
+            status: payableAmount === 0 ? 'Pending' : 'Pending Payment'
         };
 
         const order = new Order(newOrderData);
@@ -218,40 +234,23 @@ export const placeOrder = async (req, res) => {
 
         delete req.session.appliedCouponCode;
 
-        if (paymentMethod === 'Wallet') {
-            user.wallet = (user.wallet || 0) - totals.grandTotal;
+        if (walletDeduction > 0 && payableAmount === 0) {
+            user.wallet = (user.wallet || 0) - walletDeduction;
             await user.save();
 
             await WalletTransaction.create({
                 userId,
-                amount: totals.grandTotal,
+                amount: walletDeduction,
                 type: 'debit',
-                description: `Payment for Order #${orderNumber}`,
+                description: `Payment for Order #${orderNumber} (Wallet Deduction)`,
                 orderId: order._id,
                 status: 'completed',
                 transactionDate: new Date()
             });
+        }
 
-            // Adjust stocks
-            for (const item of items) {
-                const product = await Product.findById(item.productId._id);
-                if (product) {
-                    if (product.variants && product.variants.length > 0 && item.variantId) {
-                        const variant = product.variants.id(item.variantId);
-                        if (variant) {
-                            variant.stock = Math.max(0, variant.stock - item.quantity);
-                        }
-                    } else {
-                        product.stock = Math.max(0, product.stock - item.quantity);
-                    }
-                    await product.save();
-                }
-            }
-
-            if (!isBuyNow) {
-                await Cart.updateOne({ userId }, { $set: { items: [] } });
-            }
-        } else if (paymentMethod === 'COD') {
+        // Adjust stocks and clear cart immediately ONLY if the order is fully paid or is COD
+        if (payableAmount === 0 || paymentMethod === 'COD') {
             // Adjust stocks
             for (const item of items) {
                 const product = await Product.findById(item.productId._id);
@@ -274,9 +273,9 @@ export const placeOrder = async (req, res) => {
         }
 
         let razorpayOrderDetails = null;
-        if (paymentMethod === 'Razorpay') {
+        if (payableAmount > 0 && (paymentMethod === 'Razorpay' || paymentMethod === 'Wallet')) {
             const options = {
-                amount: Math.round(totals.grandTotal * 100),
+                amount: Math.round(payableAmount * 100),
                 currency: "INR",
                 receipt: "" + orderNumber
             };
@@ -441,6 +440,7 @@ export const cancelOrder = async (req, res) => {
             if (isOnlinePayment && isPaid) {
                 itemRefund = calculateItemRefund(order, item);
                 totalRefund += itemRefund;
+                order.refundedAmount = (order.refundedAmount || 0) + itemRefund;
             }
 
             item.status = 'Cancelled';
@@ -452,21 +452,29 @@ export const cancelOrder = async (req, res) => {
         if (totalRefund > 0) {
             const user = await User.findById(userId);
             if (user) {
-                user.wallet = (user.wallet || 0) + totalRefund;
-                await user.save();
-
-                order.refundedAmount = (order.refundedAmount || 0) + totalRefund;
-                order.refundDate = new Date();
-
-                await WalletTransaction.create({
+                const existingOrderRefund = await WalletTransaction.findOne({
                     userId,
-                    amount: totalRefund,
-                    type: 'credit',
-                    description: `Refund for Cancelled Order #${order.orderNumber} (All Items)`,
                     orderId: order._id,
-                    status: 'completed',
-                    transactionDate: new Date()
+                    type: 'credit',
+                    description: `Refund for Cancelled Order #${order.orderNumber} (All Items)`
                 });
+
+                if (!existingOrderRefund) {
+                    user.wallet = (user.wallet || 0) + totalRefund;
+                    await user.save();
+
+                    order.refundDate = new Date();
+
+                    await WalletTransaction.create({
+                        userId,
+                        amount: totalRefund,
+                        type: 'credit',
+                        description: `Refund for Cancelled Order #${order.orderNumber} (All Items)`,
+                        orderId: order._id,
+                        status: 'completed',
+                        transactionDate: new Date()
+                    });
+                }
             }
             const allItemsCancelled = order.items.every(i => i.status === 'Cancelled');
             if (allItemsCancelled) {
@@ -559,6 +567,7 @@ export const cancelOrderItem = async (req, res) => {
                     user.wallet = (user.wallet || 0) + refundAmount;
                     await user.save();
                     order.refundedAmount = (order.refundedAmount || 0) + refundAmount;
+                    order.refundDate = new Date();
                     
                     await WalletTransaction.create({
                         userId,

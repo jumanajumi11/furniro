@@ -17,7 +17,17 @@ export const validate = (schema, source = 'body') => {
             const path = req.path;
 
             if (path === '/signup') {
-                return res.render('user/signup', { error: errorMessage });
+                const errors = {};
+                if (error.details) {
+                    error.details.forEach(detail => {
+                        errors[detail.path[0]] = detail.message;
+                    });
+                }
+                return res.render('user/signup', {
+                    error: errorMessage,
+                    errors,
+                    formData: req.body
+                });
             }
 
             if (path === '/login') {

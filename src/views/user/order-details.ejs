@@ -400,7 +400,7 @@
 
                                 /* Price math */
                                 let itemTotal   = item.price * item.quantity;
-                                let itemTaxRate = 0.18;
+                                let itemTaxRate = 0.10;
                                 let itemTax     = Math.round(itemTotal * itemTaxRate);
 
                                 /* Cancel eligibility (Pending, Processing, Shipped, or Out For Delivery status only) */
@@ -504,7 +504,7 @@
 
                                     <!-- Right – Price Breakdown -->
                                     <div class="text-right flex-shrink-0 min-w-[100px]">
-                                        <p class="text-[10px] text-gray-400 font-medium">GST (18%):
+                                        <p class="text-[10px] text-gray-400 font-medium">Tax (GST):
                                             <span class="text-gray-500">+₹<%= itemTax.toLocaleString('en-IN') %></span>
                                         </p>
                                         <p class="text-base font-extrabold text-[#B88E2F] mt-1">₹<%= itemTotal.toLocaleString('en-IN') %></p>
@@ -626,7 +626,7 @@
                             </div>
                         <% } %>
                         <div class="flex justify-between text-gray-500">
-                            <span>Tax (GST 18%)</span>
+                            <span>Tax (GST)</span>
                             <span class="font-bold text-gray-700">₹<%= order.tax.toLocaleString('en-IN') %></span>
                         </div>
                         <div class="flex justify-between text-gray-500">
@@ -637,8 +637,21 @@
                         </div>
                         <div class="border-t border-dashed border-gray-200 my-1"></div>
                         <div class="flex justify-between items-center pt-1">
-                            <span class="text-[11px] font-extrabold text-gray-900 uppercase tracking-wider">Total Paid</span>
+                            <span class="text-[11px] font-extrabold text-gray-900 uppercase tracking-wider">Grand Total</span>
                             <span class="text-lg font-extrabold text-[#B88E2F]">₹<%= order.grandTotal.toLocaleString('en-IN') %></span>
+                        </div>
+                        <% if (order.walletDeduction > 0) { %>
+                            <div class="flex justify-between text-purple-600 pt-1">
+                                <span>Wallet Deduction</span>
+                                <span class="font-bold">-₹<%= order.walletDeduction.toLocaleString('en-IN') %></span>
+                            </div>
+                        <% } %>
+                        <div class="border-t border-dashed border-gray-200 my-1"></div>
+                        <div class="flex justify-between items-center pt-1">
+                            <span class="text-[11px] font-extrabold text-gray-900 uppercase tracking-wider">Final Paid Amount</span>
+                            <span class="text-lg font-extrabold text-[#B88E2F]">
+                                ₹<%= (order.payableAmount !== undefined ? order.payableAmount : order.grandTotal).toLocaleString('en-IN') %>
+                            </span>
                         </div>
                     </div>
                 </div>

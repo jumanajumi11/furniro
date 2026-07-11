@@ -1,0 +1,241 @@
+<%- include('../layout/header') %>
+<body class="text-gray-800">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex flex-col lg:flex-row gap-8">
+            <%- include('../layout/account-sidebar', { activePage: 'profile' }) %>
+
+            <div class="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 text-center">
+                <div class="p-8 border-b border-gray-100 text-left">
+                    <h2 class="text-xl font-bold text-gray-900">Verify Your New Email</h2>
+                    <p class="text-xs text-gray-500 mt-1">Enter the 6-digit verification code sent to <span class="font-semibold text-gray-800"><%= email %></span></p>
+                </div>
+
+                <div class="p-8 max-w-md mx-auto flex flex-col items-center">
+                    <div class="flex justify-center mb-6">
+                        <div class="bg-black p-2.5 rounded-lg shadow-md">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <form id="otpForm" class="w-full">
+                        <div class="flex justify-between gap-2 md:gap-4 mb-8" id="otpInputs">
+                            <input type="number" class="otp-input w-12 h-14 text-center text-xl font-bold bg-gray-100 border-2 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-[#B88E2F] outline-none transition-all" required>
+                            <input type="number" class="otp-input w-12 h-14 text-center text-xl font-bold bg-gray-100 border-2 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-[#B88E2F] outline-none transition-all" required>
+                            <input type="number" class="otp-input w-12 h-14 text-center text-xl font-bold bg-gray-100 border-2 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-[#B88E2F] outline-none transition-all" required>
+                            <input type="number" class="otp-input w-12 h-14 text-center text-xl font-bold bg-gray-100 border-2 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-[#B88E2F] outline-none transition-all" required>
+                            <input type="number" class="otp-input w-12 h-14 text-center text-xl font-bold bg-gray-100 border-2 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-[#B88E2F] outline-none transition-all" required>
+                            <input type="number" class="otp-input w-12 h-14 text-center text-xl font-bold bg-gray-100 border-2 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-[#B88E2F] outline-none transition-all" required>
+                        </div>
+
+                        <button type="submit" id="verifyBtn" 
+                            class="w-full py-3 bg-[#B88E2F] hover:bg-[#A07B28] text-white font-bold rounded-full shadow-lg transform active:scale-95 transition-all">
+                            Verify & Update Email
+                        </button>
+                    </form>
+
+                    <div class="mt-8 text-sm text-center">
+                        <p class="text-gray-600 mb-2">Didn't receive the code?</p>
+                        <button id="resendBtn" onclick="resendOTP()" 
+                                class="font-bold text-gray-400 transition-colors duration-300 pointer-events-none" disabled>
+                            Resend OTP
+                        </button>
+                        <div id="timer-display" class="text-sm text-[#B88E2F] mt-2 font-medium">
+                            Wait <span id="time">02:00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const inputs = document.querySelectorAll('#otpInputs input');
+        const verifyBtn = document.getElementById('verifyBtn');
+        const resendBtn = document.getElementById('resendBtn');
+        const timerDisplay = document.getElementById('timer-display');
+
+        let timerInterval;
+        let isTimerExpired = false;
+
+        function startTimer(duration) {
+            let timeLeft = duration;
+            isTimerExpired = false;
+            
+            if (resendBtn) {
+                resendBtn.disabled = true;
+                resendBtn.classList.remove('text-gray-900', 'hover:underline');
+                resendBtn.classList.add('text-gray-400', 'cursor-not-allowed');
+                resendBtn.style.pointerEvents = 'none';
+                resendBtn.style.color = ''; 
+            }
+
+            if (verifyBtn) {
+                verifyBtn.disabled = false;
+                verifyBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+            clearInterval(timerInterval);
+            
+            const updateUI = () => {
+                if (timerDisplay) {
+                    let minutes = Math.floor(timeLeft / 60);
+                    let seconds = timeLeft % 60;
+                    timerDisplay.innerHTML = `Wait 0${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                }
+            };
+
+            updateUI();
+
+            if (timeLeft <= 0) {
+                isTimerExpired = true;
+                if (resendBtn) {
+                    resendBtn.disabled = false;
+                    resendBtn.classList.remove('text-gray-400', 'cursor-not-allowed');
+                    resendBtn.classList.add('text-gray-900', 'hover:underline');
+                    resendBtn.style.pointerEvents = 'auto';
+                    resendBtn.style.color = '#B88E2F'; 
+                }
+                if (verifyBtn) {
+                    verifyBtn.disabled = true;
+                    verifyBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+                if (timerDisplay) timerDisplay.innerHTML = "00:00";
+                return;
+            }
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateUI();
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    isTimerExpired = true;
+                    
+                    if (resendBtn) {
+                        resendBtn.disabled = false;
+                        resendBtn.classList.remove('text-gray-400', 'cursor-not-allowed');
+                        resendBtn.classList.add('text-gray-900', 'hover:underline');
+                        resendBtn.style.pointerEvents = 'auto';
+                        resendBtn.style.color = '#B88E2F'; 
+                    }
+                    if (verifyBtn) {
+                        verifyBtn.disabled = true;
+                        verifyBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                    if (timerDisplay) timerDisplay.innerHTML = "00:00";
+                }
+            }, 1000);
+        }
+
+        const initialTime = Number("<%= locals.remainingTime !== undefined ? remainingTime : 120 %>") || 120;
+        startTimer(initialTime);
+
+        inputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                if (e.target.value.length > 1) e.target.value = e.target.value.slice(0, 1);
+                if (e.target.value !== "" && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === "Backspace" && e.target.value === "" && index > 0) {
+                    inputs[index - 1].focus();
+                }
+            });
+        });
+
+        async function resendOTP() {
+            try {
+                resendBtn.disabled = true;
+                const response = await fetch('/profile/change-email/resend-otp', { method: 'POST' });
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'OTP Sent!',
+                        text: 'A new OTP has been sent successfully.',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    startTimer(120); 
+                } else {
+                    Swal.fire('Error', data.message, 'error');
+                    if (data.redirectUrl) {
+                        setTimeout(() => {
+                            window.location.href = data.redirectUrl;
+                        }, 1500);
+                    } else {
+                        resendBtn.disabled = false;
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                resendBtn.disabled = false;
+            }
+        }
+
+        if (verifyBtn) {
+            verifyBtn.addEventListener('click', async function(e) { 
+                e.preventDefault();
+                
+                if (isTimerExpired) {
+                    Swal.fire('Expired', 'Your OTP has expired. Please resend a new one.', 'error');
+                    return;
+                }
+                
+                let otpValue = "";
+                inputs.forEach(input => otpValue += input.value);
+
+                if (otpValue.length < 6) {
+                    Swal.fire('Wait', 'Please enter the full 6-digit code.', 'warning');
+                    return;
+                }
+
+                verifyBtn.disabled = true;
+                verifyBtn.innerText = "Verifying...";
+
+                try {
+                    const response = await fetch('/profile/change-email/verify-otp', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ otp: otpValue }) 
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Updated!',
+                            text: data.message || 'Email updated successfully.',
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.href = data.redirectUrl || '/profile';
+                        });
+                    } else {
+                        Swal.fire('Invalid OTP', data.message, 'error');
+                        if (data.redirectUrl) {
+                            setTimeout(() => {
+                                window.location.href = data.redirectUrl;
+                            }, 1500);
+                        } else {
+                            verifyBtn.disabled = false;
+                            verifyBtn.innerText = "Verify & Update Email";
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error:", err);
+                    Swal.fire('Error', 'Something went wrong.', 'error');
+                    verifyBtn.disabled = false;
+                    verifyBtn.innerText = "Verify & Update Email";
+                }
+            });
+        }
+    </script>
+</body>
+</html>

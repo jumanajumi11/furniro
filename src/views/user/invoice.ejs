@@ -162,7 +162,7 @@
                     </div>
                 <% } %>
                 <div class="flex justify-between text-gray-500">
-                    <span>GST (18%)</span>
+                    <span>Tax (GST)</span>
                     <span class="font-bold text-gray-800">₹<%= order.tax.toLocaleString('en-IN') %></span>
                 </div>
                 <div class="flex justify-between text-gray-500">
@@ -172,8 +172,20 @@
                     </span>
                 </div>
                 <div class="border-t border-gray-200 pt-3 flex justify-between text-base">
-                    <span class="font-extrabold text-gray-900">Total Paid</span>
+                    <span class="font-extrabold text-gray-900">Grand Total</span>
                     <span class="font-extrabold text-[#B88E2F]">₹<%= order.grandTotal.toLocaleString('en-IN') %></span>
+                </div>
+                <% if (order.walletDeduction > 0) { %>
+                    <div class="flex justify-between text-purple-600">
+                        <span>Wallet Deduction</span>
+                        <span class="font-bold">-₹<%= order.walletDeduction.toLocaleString('en-IN') %></span>
+                    </div>
+                <% } %>
+                <div class="border-t border-gray-200 pt-3 flex justify-between text-base">
+                    <span class="font-extrabold text-gray-900">Final Paid Amount</span>
+                    <span class="font-extrabold text-[#B88E2F]">
+                        ₹<%= (order.payableAmount !== undefined ? order.payableAmount : order.grandTotal).toLocaleString('en-IN') %>
+                    </span>
                 </div>
             </div>
         </div>

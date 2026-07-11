@@ -2,6 +2,9 @@ import profileService from '../../services/user/profile.service.js';
 import { logger } from '../../utils/logger.js';
 import fs from 'fs';
 import { uploadToCloudinary, deleteFromCloudinary, getPublicIdFromUrl } from '../../utils/cloudinary.js';
+import User from '../../models/user.js';
+import { generateOTP } from '../../utils/generateOTP.js';
+import { sendOTPEmail, sendEmailChangeNotification } from '../../utils/mail.js';
 
 export const loadProfile = async (req, res, next) => {
     try {
@@ -40,7 +43,7 @@ export const loadEditProfile = async (req, res, next) => {
 
 export const updateProfile = async (req, res, next) => {
     try {
-        const { name, email, phone } = req.body;
+        const { name, phone } = req.body;
         const userId = req.session.user._id;
         
         let newImageUrl = null;
@@ -65,7 +68,6 @@ export const updateProfile = async (req, res, next) => {
 
         const updatedUser = await profileService.updateProfile(userId, { 
             name, 
-            email, 
             phone, 
             filename: newImageUrl 
         });

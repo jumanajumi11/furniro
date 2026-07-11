@@ -57,22 +57,35 @@ export const sendOtp = async (email, purpose = 'signup', isResend = false) => {
         }
     }
 
+    console.log("About to generate OTP");
     const otp = generateOTP();
+    console.log("OTP created:", otp);
+
+    console.log("========== OTP DEBUG ==========");
+    console.log("Purpose:", purpose === 'signup' ? "Signup" : "Forgot Password");
+    console.log("Email:", cleanEmail);
+    console.log("OTP:", otp);
+    console.log("===============================");
+
     // Log OTP to terminal using the centralized logger
     if (isResend) {
         logOtp({
-            type: 'Resent',
-            purpose: purpose === 'signup' ? 'Resend Signup OTP' : 'Resend Forgot Password OTP',
+            type: "Resent",
+            purpose: purpose === 'signup' ? "Resend Signup OTP" : "Resend Forgot Password OTP",
             email: cleanEmail,
-            otp
+            otp: otp,
+            expires: "5 minutes"
         });
     } else {
         logOtp({
-            purpose: purpose === 'signup' ? 'Signup' : 'Forgot Password',
+            type: "Generated",
+            purpose: purpose === 'signup' ? "Signup OTP" : "Forgot Password OTP",
             email: cleanEmail,
-            otp
+            otp: otp,
+            expires: "5 minutes"
         });
     }
+    console.log("Sending OTP email");
     try {
         await sendOTPEmail(cleanEmail, otp);
     } catch (mailError) {
@@ -87,7 +100,7 @@ export const sendOtp = async (email, purpose = 'signup', isResend = false) => {
 };
 
 
-export const sendEmailUpdateOtp = async (newEmail, currentUserId) => {
+export const sendEmailUpdateOtp = async (newEmail, currentUserId, isResend = false) => {
     const cleanEmail = newEmail.toLowerCase().trim();
 
     const existingUser = await User.findOne({ email: cleanEmail, _id: { $ne: currentUserId } });
@@ -95,17 +108,40 @@ export const sendEmailUpdateOtp = async (newEmail, currentUserId) => {
         throw new Error("This email address is already saved in the database!");
     }
 
+    console.log("About to generate OTP");
     const otp = generateOTP();
+    console.log("OTP created:", otp);
+
+    console.log("========== OTP DEBUG ==========");
+    console.log("Purpose:", "Update Email");
+    console.log("Email:", cleanEmail);
+    console.log("OTP:", otp);
+    console.log("===============================");
+
     // Log Update Email OTP to terminal
-    logOtp({
-        type: 'Update Email OTP',
-        email: cleanEmail,
-        otp
-    });
+    if (isResend) {
+        logOtp({
+            type: "Resent",
+            purpose: "Resend Update Email OTP",
+            email: cleanEmail,
+            otp: otp,
+            expires: "5 minutes"
+        });
+    } else {
+        logOtp({
+            type: "Generated",
+            purpose: "Update Email OTP",
+            email: cleanEmail,
+            otp: otp,
+            expires: "5 minutes"
+        });
+    }
+    console.log("Sending OTP email");
     try {
         await sendOTPEmail(cleanEmail, otp);
     } catch (mailError) {
-        logger.error("Mail send failed, but continuing email update OTP flow:", mailError.message);
+        logger.error("Mail send failed:", mailError.message);
+        throw new Error("Failed to send OTP. Please check the email address or try again later.");
     }
 
     return {

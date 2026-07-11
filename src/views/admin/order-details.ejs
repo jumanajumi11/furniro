@@ -57,10 +57,26 @@
     const activeItems    = (order.items || []).filter(i => !['Cancelled','Returned'].includes(i.status));
     const cancelledItems = (order.items || []).filter(i => ['Cancelled','Returned'].includes(i.status));
     const activeCount    = activeItems.reduce((n,i) => n + i.quantity, 0);
-    const activeSubtotal = activeItems.reduce((n,i) => n + (i.price * i.quantity), 0);
-    const netRetained    = activeSubtotal > 0
-        ? Math.max(0, activeSubtotal + tax + shippingCharge - couponDiscount)
-        : grandTotal;
+
+    let totalRefunded = 0;
+    const orderSubtotal = order.subtotal || (order.items || []).reduce((sum, i) => sum + (i.price * i.quantity), 0);
+    (order.items || []).forEach(item => {
+        if (['Cancelled', 'Returned'].includes(item.status) || item.returnStatus === 'Approved') {
+            if (item.refundAmount !== undefined && item.refundAmount !== null) {
+                totalRefunded += item.refundAmount;
+            } else {
+                const itemTotal = item.price * item.quantity;
+                const ratio = orderSubtotal > 0 ? (itemTotal / orderSubtotal) : 0;
+                const couponShare = Math.round((order.couponDiscount || 0) * ratio);
+                const taxShare   = Math.round((order.tax || 0) * ratio);
+                totalRefunded += Math.max(0, itemTotal - couponShare + taxShare);
+            }
+        }
+    });
+
+    const netRetained = (order.status === 'Cancelled' || order.status === 'Returned' || activeItems.length === 0)
+        ? 0
+        : Math.max(0, order.grandTotal - totalRefunded);
 
     /* ── Status colours ──────────────────────────────────────────── */
     const STATUS_META = {
@@ -459,11 +475,28 @@
                             </div>
                         </div>
 
-                        <!-- ORIGINAL PAID row -->
+                        <!-- Grand Total row -->
                         <div class="mt-4 pt-4 border-t-2 border-dashed border-gray-100">
                             <div class="flex justify-between items-center">
-                                <span class="text-[11px] font-black uppercase tracking-widest text-gray-500">Original Paid</span>
+                                <span class="text-[11px] font-black uppercase tracking-widest text-gray-500">Grand Total</span>
                                 <span class="text-xl font-black text-gray-900">₹<%= grandTotal.toLocaleString('en-IN') %></span>
+                            </div>
+                        </div>
+
+                        <% if (order.walletDeduction > 0) { %>
+                            <div class="flex justify-between text-purple-600 pt-3 text-sm">
+                                <span class="font-medium">Wallet Deduction</span>
+                                <span class="font-semibold">−₹<%= order.walletDeduction.toLocaleString('en-IN') %></span>
+                            </div>
+                        <% } %>
+
+                        <!-- Final Paid Amount row -->
+                        <div class="mt-4 pt-4 border-t-2 border-dashed border-gray-100">
+                            <div class="flex justify-between items-center">
+                                <span class="text-[11px] font-black uppercase tracking-widest text-gray-500">Final Paid Amount</span>
+                                <span class="text-xl font-black text-gray-900">
+                                    ₹<%= (order.payableAmount !== undefined ? order.payableAmount : order.grandTotal).toLocaleString('en-IN') %>
+                                </span>
                             </div>
                         </div>
 

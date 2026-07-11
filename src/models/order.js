@@ -45,6 +45,8 @@ const orderSchema = new mongoose.Schema({
     discount:      { type: Number, default: 0 },
     couponDiscount:{ type: Number, default: 0 },
     grandTotal:    { type: Number, required: true },
+    walletDeduction:{ type: Number, default: 0 },
+    payableAmount: { type: Number, default: 0 },
     couponCode:    { type: String },
     razorpayOrderId:   { type: String },
     razorpayPaymentId: { type: String },

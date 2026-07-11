@@ -184,14 +184,20 @@
                 Swal.fire({
                     icon: 'success',
                     title: 'OTP Sent!',
-                    text: 'A new OTP has been sent to your email.',
+                    text: 'A new OTP has been sent successfully.',
                     timer: 1500,
                     showConfirmButton: false
                 });
                 startTimer(120); 
             } else {
                 Swal.fire('Error', data.message, 'error');
-                resendBtn.disabled = false;
+                if (data.redirectUrl) {
+                    setTimeout(() => {
+                        window.location.href = data.redirectUrl;
+                    }, 1500);
+                } else {
+                    resendBtn.disabled = false;
+                }
             }
         } catch (error) {
             console.error('Error:', error);
@@ -233,8 +239,14 @@
                     window.location.href = data.redirectUrl || '/';
                 } else {
                     Swal.fire('Invalid', data.message, 'error');
-                    verifyBtn.disabled = false;
-                    verifyBtn.innerText = "Verify code";
+                    if (data.redirectUrl) {
+                        setTimeout(() => {
+                            window.location.href = data.redirectUrl;
+                        }, 1500);
+                    } else {
+                        verifyBtn.disabled = false;
+                        verifyBtn.innerText = "Verify code";
+                    }
                 }
             } catch (err) {
                 console.error("Error:", err);

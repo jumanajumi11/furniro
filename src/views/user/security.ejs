@@ -34,15 +34,39 @@
         <h3 class="text-xl font-extrabold text-gray-900 mb-2">Change Password</h3>
         <p class="text-sm text-gray-500 mb-6">Keep your account secure by updating your password regularly.</p>
         
-        <form id="changePasswordForm" action="/change-password" method="POST" class="space-y-4">
-            <input type="password" name="oldPassword" placeholder="Current Password" 
-                   class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-[#B88E2F]/10 focus:border-[#B88E2F] outline-none transition-all" required>
+        <form id="changePasswordForm" action="/change-password" method="POST" class="space-y-4" novalidate>
+            <div class="flex flex-col gap-1">
+                <div class="relative w-full">
+                    <input type="password" id="oldPasswordChange" name="oldPassword" placeholder="Current Password" 
+                           class="w-full p-4 pr-12 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-[#B88E2F]/10 focus:border-[#B88E2F] outline-none transition-all">
+                    <button type="button" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#B88E2F] focus:outline-none toggle-password-btn" data-target="oldPasswordChange">
+                        <i class="fas fa-eye-slash"></i>
+                    </button>
+                </div>
+                <span id="error-oldPassword" class="text-red-500 text-xs mt-1 ml-2"></span>
+            </div>
             
-            <input type="password" id="newPasswordChange" name="newPassword" placeholder="New Password" 
-                   class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-[#B88E2F]/10 focus:border-[#B88E2F] outline-none transition-all" required minlength="6">
+            <div class="flex flex-col gap-1">
+                <div class="relative w-full">
+                    <input type="password" id="newPasswordChange" name="newPassword" placeholder="New Password" 
+                           class="w-full p-4 pr-12 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-[#B88E2F]/10 focus:border-[#B88E2F] outline-none transition-all">
+                    <button type="button" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#B88E2F] focus:outline-none toggle-password-btn" data-target="newPasswordChange">
+                        <i class="fas fa-eye-slash"></i>
+                    </button>
+                </div>
+                <span id="error-newPassword" class="text-red-500 text-xs mt-1 ml-2"></span>
+            </div>
             
-            <input type="password" id="confirmPasswordChange" name="confirmPassword" placeholder="Confirm New Password" 
-                   class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-[#B88E2F]/10 focus:border-[#B88E2F] outline-none transition-all" required>
+            <div class="flex flex-col gap-1">
+                <div class="relative w-full">
+                    <input type="password" id="confirmPasswordChange" name="confirmPassword" placeholder="Confirm New Password" 
+                           class="w-full p-4 pr-12 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-[#B88E2F]/10 focus:border-[#B88E2F] outline-none transition-all">
+                    <button type="button" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#B88E2F] focus:outline-none toggle-password-btn" data-target="confirmPasswordChange">
+                        <i class="fas fa-eye-slash"></i>
+                    </button>
+                </div>
+                <span id="error-confirmPassword" class="text-red-500 text-xs mt-1 ml-2"></span>
+            </div>
             
             <button type="submit" class="w-full bg-[#B88E2F] hover:bg-[#A27B28] text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-orange-100">
                 Update Password
@@ -61,39 +85,118 @@
     
    
     const changeForm = document.getElementById('changePasswordForm');
-if (changeForm) {
-    changeForm.addEventListener('submit', function(e) {
-        
-        const oldPass = changeForm.querySelector('input[name="oldPassword"]').value.trim();
-        const newPass = document.getElementById('newPasswordChange').value.trim();
-        const confirmPass = document.getElementById('confirmPasswordChange').value.trim();
+    if (changeForm) {
+        const oldPassInput = changeForm.querySelector('input[name="oldPassword"]');
+        const newPassInput = document.getElementById('newPasswordChange');
+        const confirmPassInput = document.getElementById('confirmPasswordChange');
 
-        let errorMessage = "";
+        const errorOld = document.getElementById('error-oldPassword');
+        const errorNew = document.getElementById('error-newPassword');
+        const errorConfirm = document.getElementById('error-confirmPassword');
 
-        
-        if (!oldPass || !newPass || !confirmPass) {
-            errorMessage = 'All fields are mandatory!';
-        } 
-        
-        else if (newPass !== confirmPass) {
-            errorMessage = 'New passwords do not match!';
+        function validateOldPassword() {
+            const val = oldPassInput.value.trim();
+            if (!val) {
+                errorOld.textContent = "Current password is required.";
+                oldPassInput.classList.add('border-red-500');
+                return false;
+            }
+            errorOld.textContent = "";
+            oldPassInput.classList.remove('border-red-500');
+            return true;
         }
-        
-        else if (newPass.length < 6) {
-            errorMessage = 'New password must be at least 6 characters!';
+
+        function validateNewPassword() {
+            const val = newPassInput.value.trim();
+            const currentVal = oldPassInput.value.trim();
+            if (!val) {
+                errorNew.textContent = "New password is required.";
+                newPassInput.classList.add('border-red-500');
+                return false;
+            }
+            if (val.length < 6) {
+                errorNew.textContent = "New password must be at least 6 characters!";
+                newPassInput.classList.add('border-red-500');
+                return false;
+            }
+            if (val === currentVal) {
+                errorNew.textContent = "New password must be different from your current password.";
+                newPassInput.classList.add('border-red-500');
+                return false;
+            }
+            errorNew.textContent = "";
+            newPassInput.classList.remove('border-red-500');
+            return true;
         }
 
-        if (errorMessage) {
-            e.preventDefault();
-            Swal.fire({
-                icon: 'error',
-                title: 'Validation Error',
-                text: errorMessage,
-                confirmButtonColor: '#B88E2F'
+        function validateConfirmPassword() {
+            const val = confirmPassInput.value.trim();
+            const newVal = newPassInput.value.trim();
+            if (!val) {
+                errorConfirm.textContent = "Confirm password is required.";
+                confirmPassInput.classList.add('border-red-500');
+                return false;
+            }
+            if (val !== newVal) {
+                errorConfirm.textContent = "Confirm password does not match the new password.";
+                confirmPassInput.classList.add('border-red-500');
+                return false;
+            }
+            errorConfirm.textContent = "";
+            confirmPassInput.classList.remove('border-red-500');
+            return true;
+        }
+
+        oldPassInput.addEventListener('input', () => {
+            if (oldPassInput.value.trim()) {
+                validateOldPassword();
+            }
+            // Re-validate new password since "new password cannot be same as old password" condition might have changed
+            if (newPassInput.value.trim()) {
+                validateNewPassword();
+            }
+        });
+
+        newPassInput.addEventListener('input', () => {
+            validateNewPassword();
+            if (confirmPassInput.value.trim()) {
+                validateConfirmPassword();
+            }
+        });
+
+        confirmPassInput.addEventListener('input', validateConfirmPassword);
+
+        changeForm.addEventListener('submit', function(e) {
+            const isOldValid = validateOldPassword();
+            const isNewValid = validateNewPassword();
+            const isConfirmValid = validateConfirmPassword();
+
+            if (!isOldValid || !isNewValid || !isConfirmValid) {
+                e.preventDefault();
+            }
+        });
+
+        // Toggle password visibility logic
+        const toggleButtons = changeForm.querySelectorAll('.toggle-password-btn');
+        toggleButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const targetInput = document.getElementById(targetId);
+                const icon = this.querySelector('i');
+                if (targetInput) {
+                    if (targetInput.type === 'password') {
+                        targetInput.type = 'text';
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    } else {
+                        targetInput.type = 'password';
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    }
+                }
             });
-        }
-    });
-}
+        });
+    }
 
         
         const urlParams = new URLSearchParams(window.location.search);

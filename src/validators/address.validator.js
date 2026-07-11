@@ -1,12 +1,12 @@
 import Joi from 'joi';
+import { phoneCustomValidator } from '../utils/phoneValidator.js';
 
 export const addressSchema = Joi.object({
     name: Joi.string().trim().min(2).required().messages({
         'string.empty': 'Name is required.',
         'string.min': 'Name must be at least 2 characters.'
     }),
-    phone: Joi.string().trim().pattern(/^\d{10}$/).required().messages({
-        'string.pattern.base': 'Phone number must be a 10-digit number.',
+    phone: Joi.string().required().custom(phoneCustomValidator).messages({
         'string.empty': 'Phone number is required.'
     }),
     pincode: Joi.string().trim().pattern(/^\d{6}$/).required().messages({
