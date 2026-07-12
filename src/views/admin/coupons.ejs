@@ -112,7 +112,6 @@
                                 const isExpired = new Date(coupon.expiryDate) <= new Date(); 
                                 const displayStatus = coupon.isActive && !isExpired;
                             %>
-                            <tr class="hover:bg-gray-50/30 transition-colors">
                                 <td class="px-6 py-5.5">
                                     <span class="font-extrabold text-gray-900 bg-gray-100 px-3 py-1.5 rounded-xl text-xs tracking-wider border border-gray-200"><%= coupon.code %></span>
                                 </td>
@@ -247,51 +246,58 @@
             </button>
         </div>
         
-        <form id="createCouponForm" class="p-6 space-y-4">
+        <form id="createCouponForm" class="p-6 space-y-4" novalidate>
             <div class="grid grid-cols-2 gap-4">
                 <div class="col-span-2">
                     <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Coupon Code *</label>
-                    <input type="text" name="code" placeholder="e.g. FURNI50" required
+                    <input type="text" name="code" placeholder="e.g. FURNI50"
                            class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all uppercase">
+                    <span id="create-error-code" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Discount Type</label>
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Discount Type *</label>
                     <select name="discountType"
                             class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all cursor-pointer">
                         <option value="flat">Flat Amount (₹)</option>
                         <option value="percentage">Percentage (%)</option>
                     </select>
+                    <span id="create-error-discountType" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
                 </div>
 
                 <div>
                     <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Discount Value *</label>
-                    <input type="number" name="discountValue" min="1" step="any" placeholder="e.g. 500 or 15" required
+                    <input type="number" name="discountValue" step="any" placeholder="e.g. 500 or 15"
                            class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                    <span id="create-error-discountValue" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Min Purchase Amount (₹)</label>
-                    <input type="number" name="minPurchase" min="0" placeholder="e.g. 1000" value="0"
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Min Purchase Amount * (₹)</label>
+                    <input type="number" name="minPurchase" placeholder="e.g. 1000" value="0"
                            class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                    <span id="create-error-minPurchase" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Max Discount (₹)</label>
-                    <input type="number" name="maxDiscount" min="0" placeholder="Percentage discount limit"
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Max Discount * (₹)</label>
+                    <input type="number" name="maxDiscount" placeholder="Percentage discount limit"
                            class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                    <span id="create-error-maxDiscount" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Usage Limit</label>
-                    <input type="number" name="usageLimit" min="1" placeholder="e.g. 100 uses total"
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Usage Limit *</label>
+                    <input type="number" name="usageLimit" placeholder="e.g. 100 uses total"
                            class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                    <span id="create-error-usageLimit" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
                 </div>
 
                 <div>
                     <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Expiry Date *</label>
-                    <input type="date" name="expiryDate" required
+                    <input type="date" name="expiryDate"
                            class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                    <span id="create-error-expiryDate" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
                 </div>
             </div>
 
@@ -317,52 +323,59 @@
             </button>
         </div>
         
-        <form id="editCouponForm" class="p-6 space-y-4">
+        <form id="editCouponForm" class="p-6 space-y-4" novalidate>
             <input type="hidden" id="editCouponId">
             <div class="grid grid-cols-2 gap-4">
                 <div class="col-span-2">
                     <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Coupon Code *</label>
-                    <input type="text" id="editCode" name="code" placeholder="e.g. FURNI50" required
+                    <input type="text" id="editCode" name="code" placeholder="e.g. FURNI50"
                            class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all uppercase">
+                    <span id="edit-error-code" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Discount Type</label>
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Discount Type *</label>
                     <select id="editDiscountType" name="discountType"
                             class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all cursor-pointer">
                         <option value="flat">Flat Amount (₹)</option>
                         <option value="percentage">Percentage (%)</option>
                     </select>
+                    <span id="edit-error-discountType" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
                 </div>
 
                 <div>
                     <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Discount Value *</label>
-                    <input type="number" id="editDiscountValue" name="discountValue" min="1" step="any" required
+                    <input type="number" id="editDiscountValue" name="discountValue" step="any"
                            class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                    <span id="edit-error-discountValue" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Min Purchase Amount (₹)</label>
-                    <input type="number" id="editMinPurchase" name="minPurchase" min="0" required
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Min Purchase Amount * (₹)</label>
+                    <input type="number" id="editMinPurchase" name="minPurchase"
                            class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                    <span id="edit-error-minPurchase" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Max Discount (₹)</label>
-                    <input type="number" id="editMaxDiscount" name="maxDiscount" min="0" placeholder="Percentage discount limit"
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Max Discount * (₹)</label>
+                    <input type="number" id="editMaxDiscount" name="maxDiscount" placeholder="Percentage discount limit"
                            class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                    <span id="edit-error-maxDiscount" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Usage Limit</label>
-                    <input type="number" id="editUsageLimit" name="usageLimit" min="1" placeholder="e.g. 100 uses total"
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Usage Limit *</label>
+                    <input type="number" id="editUsageLimit" name="usageLimit" placeholder="e.g. 100 uses total"
                            class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                    <span id="edit-error-usageLimit" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
                 </div>
 
                 <div>
                     <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Expiry Date *</label>
-                    <input type="date" id="editExpiryDate" name="expiryDate" required
+                    <input type="date" id="editExpiryDate" name="expiryDate"
                            class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                    <span id="edit-error-expiryDate" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
                 </div>
             </div>
 
@@ -382,12 +395,14 @@
     const defaultColor = '#B88E2F';
 
     function openCreateModal() {
+        clearAllErrors('create');
         document.getElementById('createModal').classList.replace('hidden', 'flex');
     }
 
     function closeCreateModal() {
         document.getElementById('createModal').classList.replace('flex', 'hidden');
         document.getElementById('createCouponForm').reset();
+        clearAllErrors('create');
     }
 
     function openEditModal(id, code, type, value, minP, maxD, usageL, expiry) {
@@ -400,11 +415,13 @@
         document.getElementById('editUsageLimit').value = usageL;
         document.getElementById('editExpiryDate').value = expiry;
         document.getElementById('editModal').classList.replace('hidden', 'flex');
+        clearAllErrors('edit');
     }
 
     function closeEditModal() {
         document.getElementById('editModal').classList.replace('flex', 'hidden');
         document.getElementById('editCouponForm').reset();
+        clearAllErrors('edit');
     }
 
     // Bridge: reads data-* attrs from the Edit button and calls openEditModal
@@ -421,9 +438,177 @@
         );
     }
 
+    // Validation helpers
+    function showError(formType, fieldName, message) {
+        const errorSpan = document.getElementById(`${formType}-error-${fieldName}`);
+        if (errorSpan) {
+            errorSpan.innerText = message;
+        }
+        const input = document.querySelector(`#${formType}CouponForm [name="${fieldName}"]`);
+        if (input) {
+            input.classList.add('border-red-500');
+            input.classList.remove('border-gray-200');
+        }
+    }
+
+    function clearError(formType, fieldName) {
+        const errorSpan = document.getElementById(`${formType}-error-${fieldName}`);
+        if (errorSpan) {
+            errorSpan.innerText = '';
+        }
+        const input = document.querySelector(`#${formType}CouponForm [name="${fieldName}"]`);
+        if (input) {
+            input.classList.remove('border-red-500');
+            input.classList.add('border-gray-200');
+        }
+    }
+
+    function clearAllErrors(formType) {
+        const fields = ['code', 'discountType', 'discountValue', 'minPurchase', 'maxDiscount', 'usageLimit', 'expiryDate'];
+        fields.forEach(f => clearError(formType, f));
+    }
+
+    function validateField(formType, fieldName) {
+        const form = document.getElementById(`${formType}CouponForm`);
+        if (!form) return true;
+        
+        const val = form.elements[fieldName]?.value;
+
+        if (fieldName === 'code') {
+            if (!val || !val.trim()) {
+                showError(formType, 'code', 'Coupon code is required.');
+                return false;
+            }
+            const codeRegex = /^[a-zA-Z0-9_-]+$/;
+            if (!codeRegex.test(val.trim())) {
+                showError(formType, 'code', 'Please enter a valid coupon code.');
+                return false;
+            }
+            clearError(formType, 'code');
+        }
+
+        if (fieldName === 'discountValue') {
+            const discountType = form.elements['discountType']?.value;
+            const numVal = Number(val);
+            if (!val || isNaN(numVal) || numVal <= 0) {
+                showError(formType, 'discountValue', 'Discount value must be greater than 0.');
+                return false;
+            }
+            if (discountType === 'percentage' && numVal > 90) {
+                showError(formType, 'discountValue', 'Percentage discount cannot exceed 90%.');
+                return false;
+            }
+            clearError(formType, 'discountValue');
+        }
+
+        if (fieldName === 'minPurchase') {
+            const numVal = Number(val);
+            if (val === '' || isNaN(numVal)) {
+                showError(formType, 'minPurchase', 'Minimum purchase amount is required.');
+                return false;
+            }
+            if (numVal < 0) {
+                showError(formType, 'minPurchase', 'Minimum purchase amount cannot be negative.');
+                return false;
+            }
+            clearError(formType, 'minPurchase');
+        }
+
+        if (fieldName === 'maxDiscount') {
+            const discountType = form.elements['discountType']?.value;
+            const numVal = Number(val);
+            if (discountType === 'percentage') {
+                if (val === '' || isNaN(numVal)) {
+                    showError(formType, 'maxDiscount', 'Maximum discount is required.');
+                    return false;
+                }
+                if (numVal <= 0) {
+                    showError(formType, 'maxDiscount', 'Maximum discount must be greater than 0.');
+                    return false;
+                }
+            } else {
+                if (val !== '' && !isNaN(numVal) && numVal <= 0) {
+                    showError(formType, 'maxDiscount', 'Maximum discount must be greater than 0.');
+                    return false;
+                }
+            }
+            clearError(formType, 'maxDiscount');
+        }
+
+        if (fieldName === 'usageLimit') {
+            const numVal = Number(val);
+            if (val === '' || isNaN(numVal)) {
+                showError(formType, 'usageLimit', 'Usage limit is required.');
+                return false;
+            }
+            if (numVal <= 0 || !Number.isInteger(numVal)) {
+                showError(formType, 'usageLimit', 'Usage limit must be a positive integer greater than 0.');
+                return false;
+            }
+            clearError(formType, 'usageLimit');
+        }
+
+        if (fieldName === 'expiryDate') {
+            if (!val) {
+                showError(formType, 'expiryDate', 'Expiry date is required.');
+                return false;
+            }
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const exp = new Date(val);
+            exp.setHours(0,0,0,0);
+            if (exp < today) {
+                showError(formType, 'expiryDate', 'Expiry date cannot be in the past.');
+                return false;
+            }
+            clearError(formType, 'expiryDate');
+        }
+
+        return true;
+    }
+
+    function validateForm(formType) {
+        let isValid = true;
+        const fields = ['code', 'discountType', 'discountValue', 'minPurchase', 'maxDiscount', 'usageLimit', 'expiryDate'];
+        fields.forEach(f => {
+            if (!validateField(formType, f)) {
+                isValid = false;
+            }
+        });
+        return isValid;
+    }
+
+    // Bind real-time input event listeners
+    document.addEventListener('DOMContentLoaded', () => {
+        ['create', 'edit'].forEach(formType => {
+            const form = document.getElementById(`${formType}CouponForm`);
+            if (!form) return;
+            
+            const fields = ['code', 'discountType', 'discountValue', 'minPurchase', 'maxDiscount', 'usageLimit', 'expiryDate'];
+            fields.forEach(fieldName => {
+                const element = form.elements[fieldName];
+                if (element) {
+                    const handleValidation = () => {
+                        validateField(formType, fieldName);
+                        if (fieldName === 'discountType') {
+                            validateField(formType, 'discountValue');
+                            validateField(formType, 'maxDiscount');
+                        }
+                    };
+                    element.addEventListener('input', handleValidation);
+                    element.addEventListener('change', handleValidation);
+                }
+            });
+        });
+    });
+
     // Handle coupon form submit with ajax
     document.getElementById('createCouponForm').addEventListener('submit', async function(e) {
         e.preventDefault();
+        if (!validateForm('create')) {
+            return;
+        }
+
         const formData = new FormData(this);
         const body = Object.fromEntries(formData.entries());
 
@@ -476,6 +661,10 @@
     // Handle coupon update
     document.getElementById('editCouponForm').addEventListener('submit', async function(e) {
         e.preventDefault();
+        if (!validateForm('edit')) {
+            return;
+        }
+
         const id = document.getElementById('editCouponId').value;
         const formData = new FormData(this);
         const body = Object.fromEntries(formData.entries());

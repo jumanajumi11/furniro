@@ -15,13 +15,20 @@ const categoryOfferSchema = new mongoose.Schema({
     category: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Category',
-        required: true
+        required: [true, 'Please select a category.']
+    },
+    discountType: {
+        type: String,
+        enum: ['Percentage', 'Fixed Amount'],
+        required: [true, 'Discount type is required']
+    },
+    discountValue: {
+        type: Number,
+        required: [true, 'Discount value is required']
     },
     offerPercentage: {
         type: Number,
-        required: true,
-        min: 1,
-        max: 90
+        default: 0
     },
     startDate: {
         type: Date,

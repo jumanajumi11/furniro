@@ -11,21 +11,18 @@ export const autoDeactivateExpiredCoupons = async () => {
 export const validateCoupon = async (data, isEdit = false, couponId = null) => {
     const { code, discountType, discountValue, minPurchase, maxDiscount, usageLimit, expiryDate } = data;
 
+    // Coupon Code
     if (!code || !code.trim()) {
         throw new Error('Coupon code is required.');
     }
     
     const formattedCode = code.trim().toUpperCase();
-    if (formattedCode.length < 3 || formattedCode.length > 20) {
-        throw new Error('Coupon code length must be between 3 and 20 characters.');
-    }
-
     const codeRegex = /^[A-Z0-9_-]+$/;
     if (!codeRegex.test(formattedCode)) {
-        throw new Error('Coupon code must contain only letters, numbers, underscores, and hyphens.');
+        throw new Error('Please enter a valid coupon code.');
     }
 
-    
+    // Uniqueness
     const query = { code: formattedCode };
     if (isEdit && couponId) {
         query._id = { $ne: couponId };
@@ -35,6 +32,12 @@ export const validateCoupon = async (data, isEdit = false, couponId = null) => {
         throw new Error('Coupon code already exists.');
     }
 
+    // Discount Type
+    if (!discountType || (discountType !== 'percentage' && discountType !== 'flat')) {
+        throw new Error('Discount type is required.');
+    }
+
+    // Discount Value
     const val = parseFloat(discountValue);
     if (isNaN(val) || val <= 0) {
         throw new Error('Discount value must be greater than 0.');
@@ -44,27 +47,35 @@ export const validateCoupon = async (data, isEdit = false, couponId = null) => {
         throw new Error('Percentage discount cannot exceed 90%.');
     }
 
-    const minP = parseFloat(minPurchase) || 0;
-    if (minP < 0) {
+    // Minimum Purchase Amount
+    if (minPurchase === undefined || minPurchase === null || minPurchase === '') {
+        throw new Error('Minimum purchase amount is required.');
+    }
+    const minP = parseFloat(minPurchase);
+    if (isNaN(minP) || minP < 0) {
         throw new Error('Minimum purchase amount cannot be negative.');
     }
 
+    // Maximum Discount
     let maxD = null;
-    if (maxDiscount !== undefined && maxDiscount !== null && maxDiscount !== '') {
+    if (discountType === 'percentage') {
+        if (maxDiscount === undefined || maxDiscount === null || maxDiscount === '') {
+            throw new Error('Maximum discount is required.');
+        }
         maxD = parseFloat(maxDiscount);
-        if (isNaN(maxD) || maxD < 0) {
-            throw new Error('Maximum discount cannot be negative.');
+        if (isNaN(maxD) || maxD <= 0) {
+            throw new Error('Maximum discount must be greater than 0.');
+        }
+    } else {
+        if (maxDiscount !== undefined && maxDiscount !== null && maxDiscount !== '') {
+            maxD = parseFloat(maxDiscount);
+            if (isNaN(maxD) || maxD <= 0) {
+                throw new Error('Maximum discount must be greater than 0.');
+            }
         }
     }
 
-    let usageL = null;
-    if (usageLimit !== undefined && usageLimit !== null && usageLimit !== '') {
-        usageL = parseInt(usageLimit);
-        if (isNaN(usageL) || usageL <= 0) {
-            throw new Error('Usage limit must be a positive integer.');
-        }
-    }
-
+    // Expiry Date
     if (!expiryDate) {
         throw new Error('Expiry date is required.');
     }
@@ -74,8 +85,21 @@ export const validateCoupon = async (data, isEdit = false, couponId = null) => {
         throw new Error('Invalid expiry date.');
     }
 
-    if (!isEdit && expDate <= new Date()) {
-        throw new Error('Expiry date must be a future date during creation.');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const checkExp = new Date(expDate);
+    checkExp.setHours(0, 0, 0, 0);
+    if (checkExp < today) {
+        throw new Error('Expiry date cannot be in the past.');
+    }
+
+    // Usage Limit
+    if (usageLimit === undefined || usageLimit === null || usageLimit === '') {
+        throw new Error('Usage limit is required.');
+    }
+    const usageL = parseInt(usageLimit);
+    if (isNaN(usageL) || usageL <= 0) {
+        throw new Error('Usage limit must be a positive integer greater than 0.');
     }
 
     return {

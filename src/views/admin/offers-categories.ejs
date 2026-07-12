@@ -137,7 +137,13 @@
                                 </td>
                                 
                                 <td class="px-6 py-5.5 text-sm font-black text-red-500">
-                                    <%= offer.offerPercentage %>% OFF
+                                    <% if (offer.discountType === 'Percentage') { %>
+                                        <%= offer.discountValue %>% OFF
+                                    <% } else if (offer.discountType === 'Fixed Amount') { %>
+                                        ₹<%= offer.discountValue %> OFF
+                                    <% } else { %>
+                                        <%= offer.offerPercentage %>% OFF
+                                    <% } %>
                                 </td>
 
                                 <td class="px-6 py-5.5 text-xs text-gray-500 font-semibold">
@@ -176,7 +182,7 @@
                                                 <i class="fas fa-edit"></i> Edit
                                             </button>
                                         <% } else { %>
-                                            <button onclick="openEditModal('<%= offer._id %>', '<%= offer.offerName.replace(/\x27/g, `\\x27`) %>', '<%= offer.category ? offer.category._id : (offer.category || ``) %>', '<%= offer.offerPercentage %>', '<%= new Date(offer.startDate).toISOString().split('T')[0] %>', '<%= new Date(offer.expiryDate).toISOString().split('T')[0] %>')"
+                                            <button onclick="openEditModal('<%= offer._id %>', '<%= offer.offerName.replace(/\x27/g, `\\x27`) %>', '<%= offer.category ? offer.category._id : (offer.category || ``) %>', '<%= offer.discountType || `Percentage` %>', '<%= offer.discountValue !== undefined ? offer.discountValue : offer.offerPercentage %>', '<%= new Date(offer.startDate).toISOString().split('T')[0] %>', '<%= new Date(offer.expiryDate).toISOString().split('T')[0] %>')"
                                                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-100 text-gray-500 hover:bg-[#B88E2F] hover:text-white hover:border-[#B88E2F] transition text-[10px] font-bold shadow-sm">
                                                 <i class="fas fa-edit"></i> Edit
                                             </button>
@@ -251,40 +257,57 @@
             </button>
         </div>
         
-        <form id="createOfferForm" class="p-6 space-y-4">
+        <form id="createOfferForm" class="p-6 space-y-4" novalidate>
             <div>
                 <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Offer Name *</label>
-                <input type="text" name="offerName" placeholder="e.g. Living Room Sale" required
+                <input type="text" name="offerName" placeholder="e.g. Living Room Sale"
                        class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                <span id="create-error-offerName" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
             </div>
 
             <div>
                 <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Select Category *</label>
-                <select name="category" required
+                <select name="category"
                         class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all cursor-pointer">
                     <option value="" disabled selected>Choose category...</option>
                     <% categories.forEach(c => { %>
                         <option value="<%= c._id %>"><%= c.name %></option>
                     <% }) %>
                 </select>
+                <span id="create-error-category" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
             </div>
 
-            <div>
-                <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Offer Percentage * (1-90%)</label>
-                <input type="number" name="offerPercentage" min="1" max="90" placeholder="e.g. 20" required
-                       class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Discount Type *</label>
+                    <select name="discountType"
+                            class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all cursor-pointer">
+                        <option value="" disabled selected>Choose type...</option>
+                        <option value="Percentage">Percentage</option>
+                        <option value="Fixed Amount">Fixed Amount</option>
+                    </select>
+                    <span id="create-error-discountType" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Discount Value *</label>
+                    <input type="number" name="discountValue" placeholder="e.g. 20"
+                           class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                    <span id="create-error-discountValue" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
+                </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Start Date *</label>
-                    <input type="date" name="startDate" required
+                    <input type="date" name="startDate"
                            class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                    <span id="create-error-startDate" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
                 </div>
                 <div>
                     <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Expiry Date *</label>
-                    <input type="date" name="expiryDate" required
+                    <input type="date" name="expiryDate"
                            class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                    <span id="create-error-expiryDate" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
                 </div>
             </div>
 
@@ -310,41 +333,58 @@
             </button>
         </div>
         
-        <form id="editOfferForm" class="p-6 space-y-4">
+        <form id="editOfferForm" class="p-6 space-y-4" novalidate>
             <input type="hidden" id="editOfferId">
             <div>
                 <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Offer Name *</label>
-                <input type="text" id="editOfferName" name="offerName" placeholder="e.g. Living Room Sale" required
+                <input type="text" id="editOfferName" name="offerName" placeholder="e.g. Living Room Sale"
                        class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                <span id="edit-error-offerName" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
             </div>
 
             <div>
                 <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Select Category *</label>
-                <select id="editCategory" name="category" required
+                <select id="editCategory" name="category"
                         class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all cursor-pointer">
                     <option value="" disabled>Choose category...</option>
                     <% categories.forEach(c => { %>
                         <option value="<%= c._id %>"><%= c.name %></option>
                     <% }) %>
                 </select>
+                <span id="edit-error-category" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
             </div>
 
-            <div>
-                <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Offer Percentage * (1-90%)</label>
-                <input type="number" id="editOfferPercentage" name="offerPercentage" min="1" max="90" required
-                       class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Discount Type *</label>
+                    <select id="editDiscountType" name="discountType"
+                            class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all cursor-pointer">
+                        <option value="" disabled>Choose type...</option>
+                        <option value="Percentage">Percentage</option>
+                        <option value="Fixed Amount">Fixed Amount</option>
+                    </select>
+                    <span id="edit-error-discountType" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Discount Value *</label>
+                    <input type="number" id="editDiscountValue" name="discountValue" placeholder="e.g. 20"
+                           class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                    <span id="edit-error-discountValue" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
+                </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Start Date *</label>
-                    <input type="date" id="editStartDate" name="startDate" required
+                    <input type="date" id="editStartDate" name="startDate"
                            class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                    <span id="edit-error-startDate" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
                 </div>
                 <div>
                     <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Expiry Date *</label>
-                    <input type="date" id="editExpiryDate" name="expiryDate" required
+                    <input type="date" id="editExpiryDate" name="expiryDate"
                            class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B88E2F]/20 focus:border-[#B88E2F] transition-all">
+                    <span id="edit-error-expiryDate" class="text-red-500 text-[11px] mt-1 ml-2 block"></span>
                 </div>
             </div>
 
@@ -364,32 +404,190 @@
     const defaultColor = '#B88E2F';
 
     function openCreateModal() {
+        clearAllErrors('create');
         document.getElementById('createModal').classList.replace('hidden', 'flex');
     }
 
     function closeCreateModal() {
         document.getElementById('createModal').classList.replace('flex', 'hidden');
         document.getElementById('createOfferForm').reset();
+        clearAllErrors('create');
     }
 
-    function openEditModal(id, name, categoryId, percentage, start, expiry) {
+    function openEditModal(id, name, categoryId, discountType, discountValue, start, expiry) {
         document.getElementById('editOfferId').value = id;
         document.getElementById('editOfferName').value = name;
         document.getElementById('editCategory').value = categoryId;
-        document.getElementById('editOfferPercentage').value = percentage;
+        document.getElementById('editDiscountType').value = discountType;
+        document.getElementById('editDiscountValue').value = discountValue;
         document.getElementById('editStartDate').value = start;
         document.getElementById('editExpiryDate').value = expiry;
         document.getElementById('editModal').classList.replace('hidden', 'flex');
+        clearAllErrors('edit');
     }
 
     function closeEditModal() {
         document.getElementById('editModal').classList.replace('flex', 'hidden');
         document.getElementById('editOfferForm').reset();
+        clearAllErrors('edit');
     }
+
+    // Validation helpers
+    function showError(formType, fieldName, message) {
+        const errorSpan = document.getElementById(`${formType}-error-${fieldName}`);
+        if (errorSpan) {
+            errorSpan.innerText = message;
+        }
+        const input = document.querySelector(`#${formType}OfferForm [name="${fieldName}"]`);
+        if (input) {
+            input.classList.add('border-red-500');
+            input.classList.remove('border-gray-200');
+        }
+    }
+
+    // Clear error function
+    function clearError(formType, fieldName) {
+        const errorSpan = document.getElementById(`${formType}-error-${fieldName}`);
+        if (errorSpan) {
+            errorSpan.innerText = '';
+        }
+        const input = document.querySelector(`#${formType}OfferForm [name="${fieldName}"]`);
+        if (input) {
+            input.classList.remove('border-red-500');
+            input.classList.add('border-gray-200');
+        }
+    }
+
+    function clearAllErrors(formType) {
+        const fields = ['offerName', 'category', 'discountType', 'discountValue', 'startDate', 'expiryDate'];
+        fields.forEach(f => clearError(formType, f));
+    }
+
+    function validateField(formType, fieldName) {
+        const form = document.getElementById(`${formType}OfferForm`);
+        if (!form) return true;
+        const val = form.elements[fieldName]?.value;
+
+        if (fieldName === 'offerName') {
+            if (!val || !val.trim()) {
+                showError(formType, 'offerName', 'Offer name is required.');
+                return false;
+            }
+            clearError(formType, 'offerName');
+        }
+
+        if (fieldName === 'category') {
+            if (!val) {
+                showError(formType, 'category', 'Please select a category.');
+                return false;
+            }
+            clearError(formType, 'category');
+        }
+
+        if (fieldName === 'discountType') {
+            if (!val) {
+                showError(formType, 'discountType', 'Discount type is required.');
+                return false;
+            }
+            clearError(formType, 'discountType');
+        }
+
+        if (fieldName === 'discountValue') {
+            const discountType = form.elements['discountType']?.value;
+            const numVal = Number(val);
+            if (!val || isNaN(numVal) || numVal <= 0) {
+                showError(formType, 'discountValue', 'Discount value must be greater than 0.');
+                return false;
+            }
+            if (discountType === 'Percentage' && numVal > 90) {
+                showError(formType, 'discountValue', 'Percentage discount cannot exceed 90%.');
+                return false;
+            }
+            clearError(formType, 'discountValue');
+        }
+
+        if (fieldName === 'startDate') {
+            if (!val) {
+                showError(formType, 'startDate', 'Start date is required.');
+                return false;
+            }
+            if (formType === 'create') {
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                const start = new Date(val);
+                start.setHours(0,0,0,0);
+                if (start < today) {
+                    showError(formType, 'startDate', 'Start date cannot be in the past.');
+                    return false;
+                }
+            }
+            clearError(formType, 'startDate');
+        }
+
+        if (fieldName === 'expiryDate') {
+            const startVal = form.elements['startDate']?.value;
+            if (!val) {
+                showError(formType, 'expiryDate', 'End date is required.');
+                return false;
+            }
+            if (startVal) {
+                const start = new Date(startVal);
+                const end = new Date(val);
+                if (end <= start) {
+                    showError(formType, 'expiryDate', 'End date must be later than the start date.');
+                    return false;
+                }
+            }
+            clearError(formType, 'expiryDate');
+        }
+
+        return true;
+    }
+
+    function validateForm(formType) {
+        let isValid = true;
+        const fields = ['offerName', 'category', 'discountType', 'discountValue', 'startDate', 'expiryDate'];
+        fields.forEach(f => {
+            if (!validateField(formType, f)) {
+                isValid = false;
+            }
+        });
+        return isValid;
+    }
+
+    // Bind real-time input event listeners
+    document.addEventListener('DOMContentLoaded', () => {
+        ['create', 'edit'].forEach(formType => {
+            const form = document.getElementById(`${formType}OfferForm`);
+            if (!form) return;
+            
+            const fields = ['offerName', 'category', 'discountType', 'discountValue', 'startDate', 'expiryDate'];
+            fields.forEach(fieldName => {
+                const element = form.elements[fieldName];
+                if (element) {
+                    const handleValidation = () => {
+                        validateField(formType, fieldName);
+                        if (fieldName === 'discountType') {
+                            validateField(formType, 'discountValue');
+                        }
+                        if (fieldName === 'startDate') {
+                            validateField(formType, 'expiryDate');
+                        }
+                    };
+                    element.addEventListener('input', handleValidation);
+                    element.addEventListener('change', handleValidation);
+                }
+            });
+        });
+    });
 
     // Ajax create category offer
     document.getElementById('createOfferForm').addEventListener('submit', async function(e) {
         e.preventDefault();
+        if (!validateForm('create')) {
+            return;
+        }
+
         const formData = new FormData(this);
         const body = Object.fromEntries(formData.entries());
 
@@ -442,6 +640,10 @@
     // Ajax edit category offer
     document.getElementById('editOfferForm').addEventListener('submit', async function(e) {
         e.preventDefault();
+        if (!validateForm('edit')) {
+            return;
+        }
+
         const id = document.getElementById('editOfferId').value;
         const formData = new FormData(this);
         const body = Object.fromEntries(formData.entries());

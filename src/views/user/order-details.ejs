@@ -511,10 +511,22 @@
                                         <p class="text-[10px] text-gray-400 font-medium mt-0.5">
                                             Qty: <%= item.quantity %> × ₹<%= item.price.toLocaleString('en-IN') %>
                                         </p>
-                                        <% if ((itemStatus === 'Cancelled' || itemStatus === 'Return Approved' || itemStatus === 'Returned') && item.refundAmount != null) { %>
-                                            <p class="text-[10px] text-green-600 font-bold mt-1">
-                                                Refunded: ₹<%= item.refundAmount.toLocaleString('en-IN') %>
-                                            </p>
+                                        <% if (itemStatus === 'Cancelled') { %>
+                                            <% if (item.refundAmount != null && item.refundAmount > 0) { %>
+                                                <p class="text-[10px] text-green-600 font-bold mt-1">
+                                                    Refunded: ₹<%= item.refundAmount.toLocaleString('en-IN') %>
+                                                </p>
+                                            <% } %>
+                                        <% } else if (itemStatus === 'Return Approved' || itemStatus === 'Returned') { %>
+                                            <% if (item.refundAmount != null && item.refundAmount > 0) { %>
+                                                <p class="text-[10px] text-green-600 font-bold mt-1">
+                                                    Refunded: ₹<%= item.refundAmount.toLocaleString('en-IN') %>
+                                                </p>
+                                            <% } else { %>
+                                                <p class="text-[10px] text-amber-600 font-bold mt-1">
+                                                    Refund Pending
+                                                </p>
+                                            <% } %>
                                         <% } else if (itemStatus === 'Return Requested') { %>
                                             <p class="text-[10px] text-amber-600 font-bold mt-1">
                                                 Refund Pending Approval

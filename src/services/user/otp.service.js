@@ -156,40 +156,54 @@ export const sendEmailUpdateOtp = async (newEmail, currentUserId, isResend = fal
 
 
 export const verifyOtp = async (otp, tempData, purpose) => {
-    if (!tempData || !tempData.otp) {
-        throw new Error("Session expired.");
+    const ENABLE_OTP_DEBUG = false;
+    if (ENABLE_OTP_DEBUG) {
+        console.log("========== OTP VERIFICATION DEBUG ==========");
+        console.log("Purpose:", purpose);
+        console.log("tempData:", tempData);
+        console.log("Entered OTP:", otp);
+        if (tempData) {
+            console.log("Stored OTP:", tempData.otp);
+            console.log("OTP Expiry:", tempData.otpGeneratedAt ? new Date(tempData.otpGeneratedAt + 2 * 60 * 1000) : "N/A");
+        }
+        console.log("============================================");
     }
 
-    
+    if (!tempData) {
+        throw new Error("Your session has expired. Please restart the verification process.");
+    }
+
+    if (!tempData.otp) {
+        throw new Error("OTP not found. Please request a new OTP.");
+    }
+
     const currentTime = Date.now();
     const otpTime = tempData.otpGeneratedAt;
     const expirationLimit = 2 * 60 * 1000; 
 
     if (currentTime > (otpTime + expirationLimit)) {
-        throw new Error("OTP has expired. Please click Resend.");
+        throw new Error("OTP has expired. Please request a new OTP.");
     }
 
-    if (otp.toString() !== tempData.otp.toString()) {
-        throw new Error("invalid OTP!");
+    const cleanEntered = (otp || '').toString().trim();
+    const cleanStored = (tempData.otp || '').toString().trim();
+
+    if (cleanEntered !== cleanStored) {
+        throw new Error("Invalid OTP. Please try again.");
     }
 
     if (purpose === 'forgot') {
         return { allowReset: true, redirectUrl: '/reset-password' };
     } else {
-        
-        
-        
         const existingUser = await User.findOne({ email: tempData.email.toLowerCase().trim() });
         
         if (existingUser) {
-            
             return {
                 savedUser: existingUser,
                 redirectUrl: '/'
             };
         }
 
-        
         let referredByUser = null;
         let settings = { referralEnabled: false, referrerReward: 0, referredReward: 0 };
         if (tempData.referredByCode) {
@@ -214,17 +228,14 @@ export const verifyOtp = async (otp, tempData, purpose) => {
             const referrerReward = settings.referrerReward || 200;
             const referredReward = settings.referredReward || 100;
 
-         
             referredByUser.wallet = (referredByUser.wallet || 0) + referrerReward;
             await referredByUser.save();
 
-           
             savedUser.wallet = (savedUser.wallet || 0) + referredReward;
             await savedUser.save();
 
             const WalletTransaction = (await import('../../models/walletTransaction.js')).default;
             
-          
             await WalletTransaction.create({
                 userId: referredByUser._id,
                 amount: referrerReward,
@@ -234,7 +245,6 @@ export const verifyOtp = async (otp, tempData, purpose) => {
                 transactionDate: new Date()
             });
 
-           
             await WalletTransaction.create({
                 userId: savedUser._id,
                 amount: referredReward,
@@ -263,12 +273,38 @@ export const verifyOtp = async (otp, tempData, purpose) => {
 
 
 export const verifyEmailOtp = async (otp, sessionData) => {
-    if (!sessionData) {
-        throw new Error("Session expired");
+    const ENABLE_OTP_DEBUG = false;
+    if (ENABLE_OTP_DEBUG) {
+        console.log("========== EMAIL OTP VERIFICATION DEBUG ==========");
+        console.log("sessionData:", sessionData);
+        console.log("Entered OTP:", otp);
+        if (sessionData) {
+            console.log("Stored OTP:", sessionData.otp);
+        }
+        console.log("==================================================");
     }
 
-    if (otp.toString() !== sessionData.otp.toString()) {
-        throw new Error("Invalid OTP");
+    if (!sessionData) {
+        throw new Error("Your session has expired. Please restart the verification process.");
+    }
+
+    if (!sessionData.otp) {
+        throw new Error("OTP not found. Please request a new OTP.");
+    }
+
+    if (sessionData.otpGeneratedAt) {
+        const currentTime = Date.now();
+        const expirationLimit = 2 * 60 * 1000; 
+        if (currentTime > (sessionData.otpGeneratedAt + expirationLimit)) {
+            throw new Error("OTP has expired. Please request a new OTP.");
+        }
+    }
+
+    const cleanEntered = (otp || '').toString().trim();
+    const cleanStored = (sessionData.otp || '').toString().trim();
+
+    if (cleanEntered !== cleanStored) {
+        throw new Error("Invalid OTP. Please try again.");
     }
 
     return true;
@@ -276,14 +312,36 @@ export const verifyEmailOtp = async (otp, sessionData) => {
 
 
 export const verifyAndSaveEmail = async (otp, sessionData, sessionOtpExpiry, userId) => {
-    const currentTime = Date.now();
-    
-    if (currentTime > sessionOtpExpiry) {
-        throw new Error("OTP expired! Please resend.");
+    const ENABLE_OTP_DEBUG = false;
+    if (ENABLE_OTP_DEBUG) {
+        console.log("========== EMAIL SAVE OTP VERIFICATION DEBUG ==========");
+        console.log("sessionData:", sessionData);
+        console.log("sessionOtpExpiry:", sessionOtpExpiry ? new Date(sessionOtpExpiry) : "N/A");
+        console.log("Entered OTP:", otp);
+        if (sessionData) {
+            console.log("Stored OTP:", sessionData.otp);
+        }
+        console.log("=======================================================");
     }
 
-    if (!sessionData || otp.toString() !== sessionData.otp.toString()) {
-        throw new Error("Incorrect OTP! Please try again.");
+    if (!sessionData) {
+        throw new Error("Your session has expired. Please restart the verification process.");
+    }
+
+    if (!sessionData.otp) {
+        throw new Error("OTP not found. Please request a new OTP.");
+    }
+
+    const currentTime = Date.now();
+    if (sessionOtpExpiry && currentTime > sessionOtpExpiry) {
+        throw new Error("OTP has expired. Please request a new OTP.");
+    }
+
+    const cleanEntered = (otp || '').toString().trim();
+    const cleanStored = (sessionData.otp || '').toString().trim();
+
+    if (cleanEntered !== cleanStored) {
+        throw new Error("Invalid OTP. Please try again.");
     }
 
     const updatedUser = await User.findByIdAndUpdate(

@@ -485,6 +485,7 @@ export const cancelOrder = async (req, res) => {
 
         order.status = calculateOrderStatus(order);
         order.cancellationReason = reason;
+        order.markModified('items');
         await order.save();
 
         return res.json({ success: true, message: 'Order cancelled successfully.' });
@@ -587,6 +588,7 @@ export const cancelOrderItem = async (req, res) => {
         item.cancelledAt = new Date();
         item.refundAmount = refundAmount;
 
+        order.markModified('items');
         order.status = calculateOrderStatus(order);
         await order.save();
 
@@ -666,6 +668,7 @@ export const returnOrder = async (req, res) => {
             item.returnStatus = 'Requested';
         }
 
+        order.markModified('items');
         order.status = calculateOrderStatus(order);
         await order.save();
 
@@ -747,6 +750,7 @@ export const returnOrderItem = async (req, res) => {
         item.returnReason = reason.trim();
         item.returnStatus = 'Requested';
 
+        order.markModified('items');
         order.status = calculateOrderStatus(order);
         await order.save();
 

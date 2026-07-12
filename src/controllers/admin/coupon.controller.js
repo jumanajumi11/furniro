@@ -10,16 +10,12 @@ export const getCoupons = async (req, res) => {
         const page = Math.max(1, parseInt(req.query.page) || 1);
         const skip = (page - 1) * ITEMS_PER_PAGE;
 
-        const search = (req.query.search || '').trim().toUpperCase();
+        const search = (req.query.search || '').trim();
         const status = req.query.status || 'All';
 
         const filter = {};
-
-        if (search) {
-            filter.code = { $regex: search, $options: 'i' };
-        }
-
         const now = new Date();
+
         if (status === 'Active') {
             filter.isActive = true;
             filter.expiryDate = { $gt: now };
@@ -28,6 +24,18 @@ export const getCoupons = async (req, res) => {
             filter.expiryDate = { $gt: now };
         } else if (status === 'Expired') {
             filter.expiryDate = { $lte: now };
+        }
+
+        if (search) {
+            const $or = [
+                { code: { $regex: search, $options: 'i' } },
+                { discountType: { $regex: search, $options: 'i' } }
+            ];
+            const searchNum = Number(search);
+            if (!isNaN(searchNum)) {
+                $or.push({ discountValue: searchNum });
+            }
+            filter.$and = [ { $or } ];
         }
 
         const coupons = await Coupon.find(filter)

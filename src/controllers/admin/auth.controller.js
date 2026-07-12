@@ -190,21 +190,42 @@ export const verifyOTP = async (req, res) => {
     const sessionOTP = req.session.resetOTP;
     const expiry = req.session.otpExpiry;
 
-    if (!expiry || Date.now() > expiry) {
-        delete req.session.resetOTP;
+    const ENABLE_OTP_DEBUG = false;
+    if (ENABLE_OTP_DEBUG) {
+        console.log("========== ADMIN OTP VERIFICATION DEBUG ==========");
+        console.log("sessionOTP:", sessionOTP);
+        console.log("Entered OTP:", otp);
+        console.log("expiry:", expiry ? new Date(expiry) : "N/A");
+        console.log("==================================================");
+    }
+
+    if (!sessionOTP) {
         return res.render('admin/verify-otp', {
-            error: 'OTP Expired! Please resend.',
-            email: req.session.resetEmail
+            error: 'OTP not found. Please request a new OTP.',
+            email: req.session.resetEmail || null,
+            otpExpiry: req.session.otpExpiry || null
         });
     }
 
-    if (otp === sessionOTP) {
+    if (!expiry || Date.now() > expiry) {
+        delete req.session.resetOTP;
+        return res.render('admin/verify-otp', {
+            error: 'OTP has expired. Please request a new OTP.',
+            email: req.session.resetEmail || null,
+            otpExpiry: null
+        });
+    }
+
+    const cleanEntered = (otp || '').toString().trim();
+    const cleanStored = (sessionOTP || '').toString().trim();
+
+    if (cleanEntered === cleanStored) {
         res.render('admin/reset-password', {
             error: null
         });
     } else {
         res.render('admin/verify-otp', {
-            error: 'Invalid OTP!',
+            error: 'Invalid OTP. Please try again.',
             email: req.session.resetEmail || null,
             otpExpiry: req.session.otpExpiry || null
         });

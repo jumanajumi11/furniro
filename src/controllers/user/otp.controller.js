@@ -4,6 +4,20 @@ import User from '../../models/user.js';
 import { logger } from '../../utils/logger.js';
 import { validateEmailFormat } from '../../utils/emailValidator.js';
 
+const handleOtpError = (error, prefix = 'Verification Error:') => {
+    const expectedMessages = [
+        "Invalid OTP. Please try again.",
+        "OTP has expired. Please request a new OTP.",
+        "Your session has expired. Please restart the verification process.",
+        "OTP not found. Please request a new OTP."
+    ];
+    if (expectedMessages.includes(error.message)) {
+        console.error(error.message);
+    } else {
+        console.error(prefix, error);
+    }
+};
+
 export const getForgotPage = (req, res) => {
     res.render('user/forgot-password', { error: null });
 };
@@ -67,7 +81,7 @@ export const verifyOTP = async (req, res, next) => {
             delete req.session.userTempData;
             delete req.session.purpose;
             delete req.session.otpExpiry;
-            return res.status(400).json({ success: false, message: "Session expired. Please request a new OTP.", redirectUrl: '/signup' });
+            return res.status(400).json({ success: false, message: "OTP has expired. Please request a new OTP.", redirectUrl: '/signup' });
         }
 
         const { otp } = req.body;
@@ -97,7 +111,7 @@ export const verifyOTP = async (req, res, next) => {
             return res.json({ success: true, redirectUrl: result.redirectUrl });
         }
     } catch (error) {
-        console.error("Verification Error:", error);
+        handleOtpError(error, "Verification Error:");
         res.status(400).json({ success: false, message: error.message || "server error!" });
     }
 };
@@ -220,6 +234,7 @@ export const verifyEmailOtp = async (req, res, next) => {
         req.session.emailUpdateData.isVerified = true;
         return res.json({ success: true });
     } catch (error) {
+        handleOtpError(error, "Verify Email OTP Error:");
         res.status(400).json({ success: false, message: error.message || "Server error" });
     }
 };
@@ -288,7 +303,7 @@ export const verifyAndSaveEmail = async (req, res, next) => {
 
         res.json({ success: true, message: "Email updated successfully." });
     } catch (error) {
-        console.error(error);
+        handleOtpError(error, "Verify and Save Email Error:");
         res.status(400).json({ success: false, message: error.message || "Server Error" });
     }
 };

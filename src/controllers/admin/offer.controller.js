@@ -19,11 +19,8 @@ export const getProductOffers = async (req, res) => {
         const status = req.query.status || 'All';
 
         const filter = {};
-        if (search) {
-            filter.offerName = { $regex: search, $options: 'i' };
-        }
-
         const now = new Date();
+
         if (status === 'Active') {
             filter.isActive = true;
             filter.expiryDate = { $gt: now };
@@ -33,6 +30,80 @@ export const getProductOffers = async (req, res) => {
             filter.expiryDate = { $gt: now };
         } else if (status === 'Expired') {
             filter.expiryDate = { $lte: now };
+        }
+
+        if (search) {
+            let productIds = [];
+            const priceNum = Number(search);
+            const productQuery = {
+                $or: [
+                    { productName: { $regex: search, $options: 'i' } }
+                ]
+            };
+            if (!isNaN(priceNum)) {
+                productQuery.$or.push({ regularPrice: priceNum });
+            }
+            const matchingProducts = await Product.find(productQuery).select('_id').lean();
+            productIds = matchingProducts.map(p => p._id);
+
+            const $or = [
+                { offerName: { $regex: search, $options: 'i' } },
+                { discountType: { $regex: search, $options: 'i' } }
+            ];
+
+            const searchNum = Number(search);
+            if (!isNaN(searchNum)) {
+                $or.push({ discountValue: searchNum });
+                $or.push({ offerPercentage: searchNum });
+            }
+
+            if (productIds.length > 0) {
+                $or.push({ product: { $in: productIds } });
+            }
+
+            const searchLower = search.toLowerCase();
+            if (searchLower === 'active') {
+                $or.push({
+                    isActive: true,
+                    startDate: { $lte: now },
+                    expiryDate: { $gte: now }
+                });
+            } else if (searchLower === 'expired') {
+                $or.push({
+                    expiryDate: { $lte: now }
+                });
+            } else if (searchLower === 'inactive') {
+                $or.push({
+                    isActive: false,
+                    expiryDate: { $gt: now }
+                });
+            }
+
+            if (/^\d{4}$/.test(search)) {
+                const year = parseInt(search);
+                $or.push({
+                    startDate: { $gte: new Date(`${year}-01-01`), $lte: new Date(`${year}-12-31T23:59:59.999`) }
+                });
+                $or.push({
+                    expiryDate: { $gte: new Date(`${year}-01-01`), $lte: new Date(`${year}-12-31T23:59:59.999`) }
+                });
+            } else {
+                const searchDate = new Date(search);
+                if (!isNaN(searchDate.getTime())) {
+                    const startOfDay = new Date(searchDate);
+                    startOfDay.setHours(0, 0, 0, 0);
+                    const endOfDay = new Date(searchDate);
+                    endOfDay.setHours(23, 59, 59, 999);
+                    $or.push({
+                        startDate: { $gte: startOfDay, $lte: endOfDay }
+                    });
+                    $or.push({
+                        expiryDate: { $gte: startOfDay, $lte: endOfDay }
+                    });
+                }
+            }
+
+            filter.$and = [ { $or } ];
         }
 
         const productOffers = await ProductOffer.find(filter)
@@ -127,11 +198,8 @@ export const getCategoryOffers = async (req, res) => {
         const status = req.query.status || 'All';
 
         const filter = {};
-        if (search) {
-            filter.offerName = { $regex: search, $options: 'i' };
-        }
-
         const now = new Date();
+
         if (status === 'Active') {
             filter.isActive = true;
             filter.expiryDate = { $gt: now };
@@ -141,6 +209,73 @@ export const getCategoryOffers = async (req, res) => {
             filter.expiryDate = { $gt: now };
         } else if (status === 'Expired') {
             filter.expiryDate = { $lte: now };
+        }
+
+        if (search) {
+            let categoryIds = [];
+            const matchingCategories = await Category.find({
+                name: { $regex: search, $options: 'i' }
+            }).select('_id').lean();
+            categoryIds = matchingCategories.map(c => c._id);
+
+            const $or = [
+                { offerName: { $regex: search, $options: 'i' } },
+                { discountType: { $regex: search, $options: 'i' } }
+            ];
+
+            const searchNum = Number(search);
+            if (!isNaN(searchNum)) {
+                $or.push({ discountValue: searchNum });
+                $or.push({ offerPercentage: searchNum });
+            }
+
+            if (categoryIds.length > 0) {
+                $or.push({ category: { $in: categoryIds } });
+            }
+
+            const searchLower = search.toLowerCase();
+            if (searchLower === 'active') {
+                $or.push({
+                    isActive: true,
+                    startDate: { $lte: now },
+                    expiryDate: { $gte: now }
+                });
+            } else if (searchLower === 'expired') {
+                $or.push({
+                    expiryDate: { $lte: now }
+                });
+            } else if (searchLower === 'inactive') {
+                $or.push({
+                    isActive: false,
+                    expiryDate: { $gt: now }
+                });
+            }
+
+            if (/^\d{4}$/.test(search)) {
+                const year = parseInt(search);
+                $or.push({
+                    startDate: { $gte: new Date(`${year}-01-01`), $lte: new Date(`${year}-12-31T23:59:59.999`) }
+                });
+                $or.push({
+                    expiryDate: { $gte: new Date(`${year}-01-01`), $lte: new Date(`${year}-12-31T23:59:59.999`) }
+                });
+            } else {
+                const searchDate = new Date(search);
+                if (!isNaN(searchDate.getTime())) {
+                    const startOfDay = new Date(searchDate);
+                    startOfDay.setHours(0, 0, 0, 0);
+                    const endOfDay = new Date(searchDate);
+                    endOfDay.setHours(23, 59, 59, 999);
+                    $or.push({
+                        startDate: { $gte: startOfDay, $lte: endOfDay }
+                    });
+                    $or.push({
+                        expiryDate: { $gte: startOfDay, $lte: endOfDay }
+                    });
+                }
+            }
+
+            filter.$and = [ { $or } ];
         }
 
         const categoryOffers = await CategoryOffer.find(filter)

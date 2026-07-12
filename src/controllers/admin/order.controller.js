@@ -534,9 +534,6 @@ export const approveReturnRequest = async (req, res) => {
         item.status = "Returned";
         item.returnedAt = new Date();
 
-        order.markModified('items');
-        await order.save();
-
         for (const reqItem of returnRequest.items) {
             const product = await Product.findById(reqItem.productId);
             if (product) {
@@ -596,6 +593,7 @@ export const approveReturnRequest = async (req, res) => {
 
         item.refundAmount = refundAmount;
 
+        order.markModified('items');
         order.status = calculateOrderStatus(order);
         await order.save();
 
