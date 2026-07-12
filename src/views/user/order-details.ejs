@@ -516,6 +516,10 @@
                                                 <p class="text-[10px] text-green-600 font-bold mt-1">
                                                     Refunded: ₹<%= item.refundAmount.toLocaleString('en-IN') %>
                                                 </p>
+                                            <% } else if (order.paymentMethod === 'COD') { %>
+                                                <p class="text-[10px] text-gray-500 font-bold mt-1">
+                                                    No refund required (Cash on Delivery)
+                                                </p>
                                             <% } %>
                                         <% } else if (itemStatus === 'Return Approved' || itemStatus === 'Returned') { %>
                                             <% if (item.refundStatus === 'Refunded' || item.refundStatus === 'Processed') { %>
@@ -1070,7 +1074,9 @@ async function requestCancelItem(itemId) {
                 icon: 'success',
                 title: 'Item Cancelled',
                 html: `<p class="text-sm text-gray-500">${data.message}</p>
-                       <p class="text-xs text-green-600 mt-2 font-bold">Refunded: ₹${data.refundAmount ? data.refundAmount.toLocaleString('en-IN') : '0'}</p>`,
+                       ${'<%= order.paymentMethod %>' === 'COD' 
+                           ? '<p class="text-xs text-gray-500 mt-2 font-bold">No refund required (Cash on Delivery)</p>' 
+                           : (data.refundAmount ? `<p class="text-xs text-green-600 mt-2 font-bold">Refunded: ₹${data.refundAmount.toLocaleString('en-IN')}</p>` : '')}`,
                 confirmButtonColor: '#B88E2F',
                 customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-xl text-xs font-bold px-6 py-2.5' }
             });

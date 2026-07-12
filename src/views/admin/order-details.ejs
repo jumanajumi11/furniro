@@ -65,11 +65,16 @@
             if (item.refundAmount !== undefined && item.refundAmount !== null) {
                 totalRefunded += item.refundAmount;
             } else {
-                const itemTotal = item.price * item.quantity;
-                const ratio = orderSubtotal > 0 ? (itemTotal / orderSubtotal) : 0;
-                const couponShare = Math.round((order.couponDiscount || 0) * ratio);
-                const taxShare   = Math.round((order.tax || 0) * ratio);
-                totalRefunded += Math.max(0, itemTotal - couponShare + taxShare);
+                const isOnlinePayment = ['Wallet', 'Razorpay'].includes(order.paymentMethod);
+                const isCODPaid = order.paymentMethod === 'COD' && order.paymentStatus === 'Paid';
+                const shouldRefund = (isOnlinePayment && order.paymentStatus === 'Paid') || isCODPaid || (item.status === 'Returned' || item.returnStatus === 'Approved');
+                if (shouldRefund) {
+                    const itemTotal = item.price * item.quantity;
+                    const ratio = orderSubtotal > 0 ? (itemTotal / orderSubtotal) : 0;
+                    const couponShare = Math.round((order.couponDiscount || 0) * ratio);
+                    const taxShare   = Math.round((order.tax || 0) * ratio);
+                    totalRefunded += Math.max(0, itemTotal - couponShare + taxShare);
+                }
             }
         }
     });

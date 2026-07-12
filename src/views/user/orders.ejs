@@ -441,7 +441,7 @@ async function cancelItem(orderId, itemId) {
             await Swal.fire({
                 icon: 'success', title: 'Item Cancelled',
                 html: `<p class="text-sm text-gray-500">${data.message}</p>` +
-                      (data.refundAmount ? `<p class="text-xs text-green-600 mt-2 font-bold">Refunded: ₹${data.refundAmount.toLocaleString('en-IN')}</p>` : ''),
+                      (data.refundAmount ? `<p class="text-xs text-green-600 mt-2 font-bold">Refunded: ₹${data.refundAmount.toLocaleString('en-IN')}</p>` : `<p class="text-xs text-gray-500 mt-2 font-bold">No refund required</p>`),
                 confirmButtonColor: '#B88E2F',
                 customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-xl text-xs font-bold px-6 py-2.5' }
             });

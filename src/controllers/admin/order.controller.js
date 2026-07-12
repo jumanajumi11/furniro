@@ -829,7 +829,7 @@ export const updateOrderItemStatus = async (req, res) => {
                 }
             }
 
-            item.refundAmount = refundAmount;
+            item.refundAmount = shouldRefund ? refundAmount : 0;
             item.refundStatus = (shouldRefund && refundAmount > 0) ? 'Refunded' : (status === 'Returned' ? 'Pending' : 'None');
             if (status === 'Cancelled') {
                 item.cancelledAt = new Date();
@@ -962,7 +962,7 @@ export const cancelOrderItem = async (req, res) => {
         item.status = 'Cancelled';
         item.cancelledAt = new Date();
         item.cancellationReason = 'Cancelled by Administrator';
-        item.refundAmount = refundAmount;
+        item.refundAmount = shouldRefund ? refundAmount : 0;
         item.refundStatus = (shouldRefund && refundAmount > 0) ? 'Refunded' : 'None';
 
         order.markModified('items');
