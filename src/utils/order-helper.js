@@ -1,4 +1,4 @@
-
+import { logger } from './logger.js';
 
 /**
  * Automatically calculates and returns the overall order status based on item statuses.
@@ -113,12 +113,7 @@ export const calculateItemRefund = (order, item) => {
 };
 
 export const processPendingRefunds = async (order) => {
-    const isOnlinePayment = ['Wallet', 'Razorpay'].includes(order.paymentMethod);
-    const isCODPaid = order.paymentMethod === 'COD' && order.paymentStatus === 'Paid';
-    const shouldRefund = (isOnlinePayment && order.paymentStatus === 'Paid') || isCODPaid;
-    const isAlreadyRefunded = order.paymentStatus === 'Refunded';
-
-    if (!shouldRefund && !isAlreadyRefunded) return;
+    logger.info(`[Refund Started] Processing refund for Order #${order.orderNumber}. paymentMethod: ${order.paymentMethod}, paymentStatus: ${order.paymentStatus}`);
 
     // Dynamically import models to prevent circular dependency / initialization issues
     const User = (await import('../models/user.js')).default;
@@ -128,45 +123,57 @@ export const processPendingRefunds = async (order) => {
     let orderModified = false;
     for (const item of order.items) {
         if (item.status === 'Returned' || item.returnStatus === 'Approved') {
-            if (!item.refundAmount || item.refundAmount === 0) {
+            if (item.refundStatus !== 'Refunded') {
                 const refundAmount = calculateItemRefund(order, item);
-                if (shouldRefund && refundAmount > 0) {
-                    const product = await Product.findById(item.productId);
-                    const prodName = product ? product.productName : 'Item';
-                    
-                    const escapedProdName = prodName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                    const existingRefund = await WalletTransaction.findOne({
-                        userId: order.userId,
-                        orderId: order._id,
-                        type: 'credit',
-                        description: { $regex: new RegExp(`Refund for Returned Item:.*${escapedProdName}.*#${order.orderNumber}`) }
-                    });
+                if (refundAmount > 0) {
+                    try {
+                        const product = await Product.findById(item.productId);
+                        const prodName = product ? product.productName : 'Item';
+                        
+                        const escapedProdName = prodName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        const existingRefund = await WalletTransaction.findOne({
+                            userId: order.userId,
+                            orderId: order._id,
+                            type: 'credit',
+                            description: { $regex: new RegExp(`Refund for Returned Item:.*${escapedProdName}.*#${order.orderNumber}`) }
+                        });
 
-                    if (!existingRefund) {
-                        const user = await User.findById(order.userId);
-                        if (user) {
-                            user.wallet = (user.wallet || 0) + refundAmount;
-                            await user.save();
+                        if (!existingRefund) {
+                            const user = await User.findById(order.userId);
+                            if (user) {
+                                user.wallet = (user.wallet || 0) + refundAmount;
+                                await user.save();
+                                logger.info(`[Wallet Credited] User wallet credited with ₹${refundAmount}. New balance: ₹${user.wallet}`);
 
-                            order.refundedAmount = (order.refundedAmount || 0) + refundAmount;
-                            order.refundDate = new Date();
+                                order.refundedAmount = (order.refundedAmount || 0) + refundAmount;
+                                order.refundDate = new Date();
+                                logger.info(`[Order Updated] Order refundedAmount incremented to ₹${order.refundedAmount}`);
 
-                            const refundDescription = `Refund for Returned Item: ${prodName} (#${order.orderNumber})`;
-                            await WalletTransaction.create({
-                                userId: order.userId,
-                                amount: refundAmount,
-                                type: 'credit',
-                                description: refundDescription,
-                                orderId: order._id,
-                                status: 'completed',
-                                transactionDate: new Date()
-                            });
+                                const refundDescription = `Refund for Returned Item: ${prodName} (#${order.orderNumber})`;
+                                await WalletTransaction.create({
+                                    userId: order.userId,
+                                    amount: refundAmount,
+                                    type: 'credit',
+                                    description: refundDescription,
+                                    orderId: order._id,
+                                    status: 'completed',
+                                    transactionDate: new Date()
+                                });
+                            }
                         }
+                        item.refundAmount = refundAmount;
+                        item.refundStatus = 'Refunded';
+                        logger.info(`[Refund Status Updated] Item ${item.productId} refundStatus set to Refunded`);
+                        orderModified = true;
+                    } catch (err) {
+                        console.error('Failed to process refund for item:', item._id, err);
+                        item.refundStatus = 'Failed';
+                        orderModified = true;
                     }
-                    item.refundAmount = refundAmount;
-                    orderModified = true;
-                } else if (isAlreadyRefunded) {
-                    item.refundAmount = refundAmount;
+                } else {
+                    item.refundAmount = 0;
+                    item.refundStatus = 'Refunded';
+                    logger.info(`[Refund Status Updated] Item ${item.productId} refundStatus set to Refunded (₹0 refund)`);
                     orderModified = true;
                 }
             }

@@ -551,8 +551,10 @@ export const approveReturnRequest = async (req, res) => {
             }
         }
 
+        logger.info(`[Return Approved] Return request approved for Order #${order.orderNumber}. itemId: ${item._id}`);
         await processPendingRefunds(order);
 
+        order.markModified('items');
         order.status = calculateOrderStatus(order);
         await order.save();
 
@@ -828,6 +830,7 @@ export const updateOrderItemStatus = async (req, res) => {
             }
 
             item.refundAmount = refundAmount;
+            item.refundStatus = (shouldRefund && refundAmount > 0) ? 'Refunded' : (status === 'Returned' ? 'Pending' : 'None');
             if (status === 'Cancelled') {
                 item.cancelledAt = new Date();
                 item.cancellationReason = 'Cancelled by Administrator';
@@ -960,6 +963,7 @@ export const cancelOrderItem = async (req, res) => {
         item.cancelledAt = new Date();
         item.cancellationReason = 'Cancelled by Administrator';
         item.refundAmount = refundAmount;
+        item.refundStatus = (shouldRefund && refundAmount > 0) ? 'Refunded' : 'None';
 
         order.markModified('items');
         order.status = calculateOrderStatus(order);

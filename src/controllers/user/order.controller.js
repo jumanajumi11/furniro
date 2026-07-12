@@ -448,6 +448,7 @@ export const cancelOrder = async (req, res) => {
             item.cancelledAt = new Date();
             item.cancellationReason = reason;
             item.refundAmount = itemRefund;
+            item.refundStatus = (isOnlinePayment && isPaid && itemRefund > 0) ? 'Refunded' : 'None';
         }
 
         if (totalRefund > 0) {
@@ -588,6 +589,9 @@ export const cancelOrderItem = async (req, res) => {
         item.cancellationReason = reason;
         item.cancelledAt = new Date();
         item.refundAmount = refundAmount;
+        const userIsPaid = order.paymentStatus === 'Paid';
+        const userIsOnlinePayment = ['Wallet', 'Razorpay'].includes(order.paymentMethod);
+        item.refundStatus = (userIsOnlinePayment && userIsPaid && refundAmount > 0) ? 'Refunded' : 'None';
 
         order.markModified('items');
         order.status = calculateOrderStatus(order);

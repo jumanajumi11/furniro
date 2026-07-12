@@ -16,6 +16,7 @@ const orderItemSchema = new mongoose.Schema({
     cancellationReason: { type: String },
     cancelledAt: { type: Date },
     refundAmount: { type: Number },
+    refundStatus: { type: String, enum: ['None', 'Pending', 'Refunded', 'Failed'], default: 'None' },
     deliveredAt: { type: Date },
     returnedAt: { type: Date },
     returnReason: { type: String },
