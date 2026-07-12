@@ -7,7 +7,7 @@ import ReturnRequest from '../../models/returnRequest.js';
 import WalletTransaction from '../../models/walletTransaction.js';
 import cartService from '../../services/user/cart.service.js';
 import { applyOffers } from '../../services/user/offer.service.js';
-import { calculateOrderStatus, calculateItemRefund } from '../../utils/order-helper.js';
+import { calculateOrderStatus, calculateItemRefund, processPendingRefunds } from '../../utils/order-helper.js';
 import razorpayInstance from '../../config/razorpay.js';
 import { COD_LIMIT } from '../../config/constants.js';
 
@@ -358,8 +358,9 @@ export const loadOrderDetails = async (req, res) => {
             return res.redirect('/orders?error=Order not found');
         }
 
+        await processPendingRefunds(order);
         const computedStatus = calculateOrderStatus(order);
-        if (order.status !== computedStatus) {
+        if (order.status !== computedStatus || order.isModified()) {
             order.status = computedStatus;
             await order.save();
         }

@@ -4,7 +4,7 @@ import Product from '../../models/product.js';
 import ReturnRequest from '../../models/returnRequest.js';
 import mongoose from 'mongoose';
 import WalletTransaction from '../../models/walletTransaction.js';
-import { calculateOrderStatus, calculateItemRefund } from '../../utils/order-helper.js';
+import { calculateOrderStatus, calculateItemRefund, processPendingRefunds } from '../../utils/order-helper.js';
 import { logger } from '../../utils/logger.js';
 
 const ALLOWED_STATUSES = [
@@ -168,8 +168,9 @@ export const getAdminOrderDetail = async (req, res) => {
             return res.status(404).render('admin/orders', { error: 'Order not found.' });
         }
 
+        await processPendingRefunds(order);
         const computedStatus = calculateOrderStatus(order);
-        if (order.status !== computedStatus) {
+        if (order.status !== computedStatus || order.isModified()) {
             order.status = computedStatus;
             await order.save();
         }
@@ -449,6 +450,7 @@ export const updateOrderStatus = async (req, res) => {
             }
         }
 
+        await processPendingRefunds(order);
         order.status = status;
         await order.save();
 
@@ -549,51 +551,8 @@ export const approveReturnRequest = async (req, res) => {
             }
         }
 
-        const isOnlinePayment = ['Wallet', 'Razorpay'].includes(order.paymentMethod);
-        const isCODPaid = order.paymentMethod === 'COD' && order.paymentStatus === 'Paid';
-        const shouldRefund = (isOnlinePayment && order.paymentStatus === 'Paid') || isCODPaid;
+        await processPendingRefunds(order);
 
-        let refundAmount = 0;
-        if (shouldRefund) {
-            refundAmount = calculateItemRefund(order, item);
-            if (refundAmount > 0) {
-                const product = await Product.findById(item.productId);
-                const prodName = product ? product.productName : 'Item';
-                const refundDescription = `Refund for Returned Item: ${prodName} (#${order.orderNumber}) - Return ID: ${returnRequest._id}`;
-                
-                const existingRefund = await WalletTransaction.findOne({
-                    userId: order.userId,
-                    orderId: order._id,
-                    type: 'credit',
-                    description: refundDescription
-                });
-
-                if (!existingRefund) {
-                    const user = await User.findById(order.userId);
-                    if (user) {
-                        user.wallet = (user.wallet || 0) + refundAmount;
-                        await user.save();
-
-                        order.refundedAmount = (order.refundedAmount || 0) + refundAmount;
-                        order.refundDate = new Date();
-
-                        await WalletTransaction.create({
-                            userId: order.userId,
-                            amount: refundAmount,
-                            type: 'credit',
-                            description: refundDescription,
-                            orderId: order._id,
-                            status: 'completed',
-                            transactionDate: new Date()
-                        });
-                    }
-                }
-            }
-        }
-
-        item.refundAmount = refundAmount;
-
-        order.markModified('items');
         order.status = calculateOrderStatus(order);
         await order.save();
 
@@ -893,6 +852,7 @@ export const updateOrderItemStatus = async (req, res) => {
 
         item.status = status;
 
+        await processPendingRefunds(order);
         order.markModified('items');
         order.status = calculateOrderStatus(order);
 
