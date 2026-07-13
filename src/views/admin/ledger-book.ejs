@@ -157,8 +157,9 @@
                             <tr class="hover:bg-gray-50/30 transition-colors">
                                 <td class="px-6 py-4 text-xs text-gray-500 font-semibold whitespace-nowrap">
                                     <%= new Date(row.date).toLocaleString('en-IN', {
-                                        day: '2-digit', month: 'short', year: 'numeric',
-                                        hour: '2-digit', minute: '2-digit'
+                                        dateStyle: 'medium',
+                                        timeStyle: 'short',
+                                        timeZone: 'Asia/Kolkata'
                                     }) %>
                                 </td>
 
@@ -202,6 +203,47 @@
                     <% } %>
                 </tbody>
             </table>
+        </div>
+
+        <!-- ── Pagination ─────────────────────────────── -->
+        <div class="px-6 py-4 border-t border-gray-50 flex items-center justify-between">
+            <p class="text-xs text-gray-400 font-semibold">
+                Showing <%= Math.min((currentPage-1)*limit+1, total) %>–<%= Math.min(currentPage*limit, total) %> of <%= total %> entries
+            </p>
+            <div class="flex items-center gap-2">
+                <% const buildUrl = (p) => {
+                    const params = new URLSearchParams();
+                    if (filter)         params.set('filter',      filter);
+                    if (customStart)    params.set('customStart', customStart);
+                    if (customEnd)      params.set('customEnd',   customEnd);
+                    params.set('page',  p);
+                    params.set('limit', limit);
+                    return '/admin/ledger?' + params.toString();
+                } %>
+                <% if (currentPage > 1) { %>
+                <a href="<%= buildUrl(currentPage - 1) %>"
+                   class="px-4 py-2 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">← Previous</a>
+                <% } else { %>
+                <button disabled class="px-4 py-2 rounded-xl border border-gray-100 text-sm font-bold text-gray-300 cursor-not-allowed">← Previous</button>
+                <% } %>
+
+                <div class="flex items-center gap-1">
+                <% for (let i = Math.max(1, currentPage-2); i <= Math.min(totalPages, currentPage+2); i++) { %>
+                    <a href="<%= buildUrl(i) %>"
+                       class="w-9 h-9 flex items-center justify-center rounded-xl text-sm font-bold transition-colors
+                              <%= i === currentPage ? 'bg-[#B88E2F] text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100' %>">
+                        <%= i %>
+                    </a>
+                <% } %>
+                </div>
+
+                <% if (currentPage < totalPages) { %>
+                <a href="<%= buildUrl(currentPage + 1) %>"
+                   class="px-4 py-2 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">Next →</a>
+                <% } else { %>
+                <button disabled class="px-4 py-2 rounded-xl border border-gray-100 text-sm font-bold text-gray-300 cursor-not-allowed">Next →</button>
+                <% } %>
+            </div>
         </div>
     </div>
 </main>
@@ -437,8 +479,9 @@
         var margin = 14;
 
         var generatedAt = new Date().toLocaleString('en-IN', {
-            day: '2-digit', month: 'short', year: 'numeric',
-            hour: '2-digit', minute: '2-digit', second: '2-digit'
+            dateStyle: 'medium',
+            timeStyle: 'short',
+            timeZone: 'Asia/Kolkata'
         });
 
         // Colour palette

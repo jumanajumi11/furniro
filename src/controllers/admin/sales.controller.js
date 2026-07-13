@@ -8,18 +8,29 @@ export const getLedgerBook = async (req, res) => {
         const filter      = req.query.filter      || 'Monthly';
         const customStart = req.query.customStart || '';
         const customEnd   = req.query.customEnd   || '';
+        const page        = parseInt(req.query.page) || 1;
+        const limit       = parseInt(req.query.limit) || 15;
 
         const data = await computeLedgerData(filter, customStart, customEnd);
+
+        const total = data.detailedTable.length;
+        const totalPages = Math.ceil(total / limit) || 1;
+        const currentPage = Math.max(1, Math.min(page, totalPages));
+        const paginatedTable = data.detailedTable.slice((currentPage - 1) * limit, currentPage * limit);
 
         res.render('admin/ledger-book', {
             openingBalance: data.openingBalance,
             closingBalance: data.closingBalance,
             totalCredits:   data.totalCredits,
             totalDebits:    data.totalDebits,
-            detailedTable:  data.detailedTable,
+            detailedTable:  paginatedTable,
             filter,
             customStart,
             customEnd,
+            currentPage,
+            totalPages,
+            limit,
+            total,
             activePage: 'ledger'
         });
     } catch (error) {
@@ -78,8 +89,9 @@ export const generateLedgerBookPDF = async (req, res) => {
 
         const serialisedTable = data.detailedTable.map(row => ({
             date:           new Date(row.date).toLocaleString('en-IN', {
-                                day: '2-digit', month: 'short', year: 'numeric',
-                                hour: '2-digit', minute: '2-digit'
+                                dateStyle: 'medium',
+                                timeStyle: 'short',
+                                timeZone: 'Asia/Kolkata'
                             }),
             category:       row.category,
             description:    row.description,
@@ -95,10 +107,12 @@ export const generateLedgerBookPDF = async (req, res) => {
             customStart,
             customEnd,
             startDate: data.startDate.toLocaleDateString('en-IN', {
-                day: '2-digit', month: 'short', year: 'numeric'
+                timeZone: 'Asia/Kolkata',
+                dateStyle: 'medium'
             }),
             endDate: data.endDate.toLocaleDateString('en-IN', {
-                day: '2-digit', month: 'short', year: 'numeric'
+                timeZone: 'Asia/Kolkata',
+                dateStyle: 'medium'
             }),
             openingBalance: data.openingBalance,
             closingBalance: data.closingBalance,
@@ -149,7 +163,9 @@ export const exportSalesReportCSV = async (req, res) => {
 
         let csv = 'Sales Report\n';
         csv += `Filter: ${filter}\n`;
-        csv += `Date Range: ${startDate.toLocaleDateString()} to ${endDate.toLocaleDateString()}\n\n`;
+        const formattedStart = startDate.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium' });
+        const formattedEnd = endDate.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium' });
+        csv += `Date Range: ${formattedStart} to ${formattedEnd}\n\n`;
         
         csv += 'SUMMARY SECTION\n';
         csv += `Total Orders,${report.summary.totalOrders}\n`;
@@ -164,7 +180,12 @@ export const exportSalesReportCSV = async (req, res) => {
         csv += 'Order ID,Date,Customer,Payment Method,Order Amount (Gross),Coupon Deduction,Offer Deduction,Final Amount (Net)\n';
 
         report.detailedTable.forEach(row => {
-            csv += `"${row.orderId}","${new Date(row.date).toLocaleDateString()}",WrappedTextHere,"${row.customer}","${row.paymentMethod}",${row.orderAmount},${row.couponDeduction},${row.offerDeduction},${row.finalAmount}\n`
+            const formattedDate = new Date(row.date).toLocaleString('en-IN', {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+                timeZone: 'Asia/Kolkata'
+            });
+            csv += `"${row.orderId}","${formattedDate}",WrappedTextHere,"${row.customer}","${row.paymentMethod}",${row.orderAmount},${row.couponDeduction},${row.offerDeduction},${row.finalAmount}\n`
                 .replace('WrappedTextHere,', '');
         });
 

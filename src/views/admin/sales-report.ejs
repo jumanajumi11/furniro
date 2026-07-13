@@ -137,8 +137,12 @@
                                 <td class="px-6 py-5.5 font-bold text-gray-900 text-xs">
                                     <%= row.orderId %>
                                 </td>
-                                <td class="px-6 py-5.5 text-xs text-gray-500 font-semibold">
-                                    <%= new Date(row.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) %>
+                                <td class="px-6 py-5.5 text-xs text-gray-500 font-semibold whitespace-nowrap">
+                                    <%= new Date(row.date).toLocaleString('en-IN', {
+                                        dateStyle: 'medium',
+                                        timeStyle: 'short',
+                                        timeZone: 'Asia/Kolkata'
+                                    }) %>
                                 </td>
                                 <td class="px-6 py-5.5 font-bold text-gray-800 text-xs">
                                     <%= row.customer %>

@@ -88,45 +88,54 @@ export const getLedgerEntries = async () => {
 };
 
 export const computeDateRange = (filter, customStart, customEnd) => {
-    const now = new Date();
-    let startDate = new Date();
-    let endDate = new Date();
+    const kolkataNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    let startKolkata = new Date(kolkataNow);
+    let endKolkata = new Date(kolkataNow);
 
     switch (filter) {
         case 'Daily':
-            startDate.setHours(0, 0, 0, 0);
-            endDate.setHours(23, 59, 59, 999);
+            startKolkata.setHours(0, 0, 0, 0);
+            endKolkata.setHours(23, 59, 59, 999);
+            break;
+        case 'Weekly':
+            startKolkata.setDate(kolkataNow.getDate() - 6); // 7 days including today
+            startKolkata.setHours(0, 0, 0, 0);
+            endKolkata.setHours(23, 59, 59, 999);
             break;
         case 'Monthly':
-            startDate.setDate(1);
-            startDate.setHours(0, 0, 0, 0);
-            endDate.setHours(23, 59, 59, 999);
+            startKolkata.setDate(1);
+            startKolkata.setHours(0, 0, 0, 0);
+            endKolkata.setHours(23, 59, 59, 999);
             break;
         case 'Yearly':
-            startDate.setMonth(0, 1);
-            startDate.setHours(0, 0, 0, 0);
-            endDate.setHours(23, 59, 59, 999);
+            startKolkata.setMonth(0, 1);
+            startKolkata.setHours(0, 0, 0, 0);
+            endKolkata.setHours(23, 59, 59, 999);
             break;
         case 'Custom':
             if (customStart) {
-                startDate = new Date(customStart);
-                startDate.setHours(0, 0, 0, 0);
+                const [y, m, d] = customStart.split('-').map(Number);
+                startKolkata = new Date(y, m - 1, d, 0, 0, 0, 0);
             } else {
-                startDate.setDate(now.getDate() - 30);
-                startDate.setHours(0, 0, 0, 0);
+                startKolkata.setDate(kolkataNow.getDate() - 30);
+                startKolkata.setHours(0, 0, 0, 0);
             }
             if (customEnd) {
-                endDate = new Date(customEnd);
-                endDate.setHours(23, 59, 59, 999);
+                const [y, m, d] = customEnd.split('-').map(Number);
+                endKolkata = new Date(y, m - 1, d, 23, 59, 59, 999);
             } else {
-                endDate.setHours(23, 59, 59, 999);
+                endKolkata.setHours(23, 59, 59, 999);
             }
             break;
         default:
-            startDate.setDate(now.getDate() - 30);
-            startDate.setHours(0, 0, 0, 0);
-            endDate.setHours(23, 59, 59, 999);
+            startKolkata.setDate(kolkataNow.getDate() - 30);
+            startKolkata.setHours(0, 0, 0, 0);
+            endKolkata.setHours(23, 59, 59, 999);
     }
+
+    const kolkataOffsetMs = 5.5 * 60 * 60 * 1000;
+    const startDate = new Date(startKolkata.getTime() - kolkataOffsetMs);
+    const endDate = new Date(endKolkata.getTime() - kolkataOffsetMs);
 
     return { startDate, endDate };
 };
@@ -176,53 +185,7 @@ export const computeLedgerData = async (filter, customStart, customEnd) => {
 };
 
 // --- Sales Report Calculations ---
-export const getDateRange = (filter, customStart, customEnd) => {
-    const now = new Date();
-    let startDate = new Date();
-    let endDate = new Date();
-
-    switch (filter) {
-        case 'Daily':
-            startDate.setHours(0, 0, 0, 0);
-            endDate.setHours(23, 59, 59, 999);
-            break;
-        case 'Weekly':
-            startDate.setDate(now.getDate() - 7);
-            startDate.setHours(0, 0, 0, 0);
-            endDate.setHours(23, 59, 59, 999);
-            break;
-        case 'Monthly':
-            startDate.setDate(1); 
-            startDate.setHours(0, 0, 0, 0);
-            endDate.setHours(23, 59, 59, 999);
-            break;
-        case 'Yearly':
-            startDate.setMonth(0, 1); 
-            startDate.setHours(0, 0, 0, 0);
-            endDate.setHours(23, 59, 59, 999);
-            break;
-        case 'Custom':
-            if (customStart) {
-                startDate = new Date(customStart);
-                startDate.setHours(0, 0, 0, 0);
-            } else {
-                startDate.setDate(now.getDate() - 30);
-                startDate.setHours(0, 0, 0, 0);
-            }
-            if (customEnd) {
-                endDate = new Date(customEnd);
-                endDate.setHours(23, 59, 59, 999);
-            } else {
-                endDate.setHours(23, 59, 59, 999);
-            }
-            break;
-        default:
-            startDate.setDate(now.getDate() - 30);
-            startDate.setHours(0, 0, 0, 0);
-            endDate.setHours(23, 59, 59, 999);
-    }
-    return { startDate, endDate };
-};
+export const getDateRange = computeDateRange;
 
 export const compileReportData = async (startDate, endDate) => {
     const orders = await Order.find({
